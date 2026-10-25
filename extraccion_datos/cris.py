@@ -1,0 +1,120 @@
+"""Adaptador inicial de CRIS; verificar selectores contra el piloto real antes del censo."""
+
+import hashlib
+import re
+import unicodedata
+from urllib.parse import urljoin, urlsplit, urlunsplit
+
+from bs4 import BeautifulSoup, NavigableString
+
+
+def clean_text(value):
+    return " ".join(unicodedata.normalize("NFC", value).split())
+
+
+def canonical_profile_url(url):
+    parts = urlsplit(url)
+    match = re.fullmatch(r"/(?:es|en)/persons/([^/]+)/?", parts.path)
+    if parts.scheme != "https" or parts.hostname != "cris.utec.edu.pe" or not match:
+        raise ValueError(f"URL de perfil no admitida: {url}")
+    return urlunsplit(("https", "cris.utec.edu.pe", f"/es/persons/{match[1]}/", "", ""))
+
+
+def stable_id(url):
+    # El orden del directorio no determina la identidad.
+    # 52 bits: entero representable exactamente en JavaScript.
+    return int(hashlib.sha256(canonical_profile_url(url).encode()).hexdigest()[:13], 16)
+
+
+def profile_links(html, page_url):
+    soup = BeautifulSoup(html, "html.parser")
+    result = set()
+    for link in soup.select("a[href]"):
+        try:
+            result.add(canonical_profile_url(urljoin(page_url, link["href"])))
+        except ValueError:
+            pass
+    return sorted(result)
+
+
+def next_page(html, page_url):
+    soup = BeautifulSoup(html, "html.parser")
+    for link in soup.select('a[rel~="next"], a.next, li.next a'):
+        if link.get("href"):
+            candidate = urljoin(page_url, link["href"])
+            parts = urlsplit(candidate)
+            if parts.hostname == "cris.utec.edu.pe" and parts.path == "/es/persons/":
+                return candidate
+    return None
+
+
+def section_text(soup, title):
+    heading = soup.find(
+        lambda tag: (
+            tag.name in ("h2", "h3", "h4")
+            and clean_text(tag.get_text(" ", strip=True)).casefold() == title.casefold()
+        )
+    )
+    if heading is None:
+        return []
+    values = []
+    for element in heading.next_elements:
+        if element is heading or element in heading.descendants:
+            continue
+        if getattr(element, "name", None) in ("h1", "h2", "h3", "h4"):
+            break
+        if isinstance(element, NavigableString):
+            value = clean_text(str(element))
+            if value:
+                values.append(value)
+    return list(dict.fromkeys(values))
+
+
+def parse_profile(html, url, retrieved_at, snapshot):
+    soup = BeautifulSoup(html, "html.parser")
+    heading = soup.find("h1")
+    if heading is None or not clean_text(heading.get_text(" ", strip=True)):
+        raise ValueError(f"Perfil sin nombre reconocible: {url}")
+    name = clean_text(heading.get_text(" ", strip=True))
+    if any(marker in name.casefold() for marker in ("access denied", "just a moment", "forbidden")):
+        raise ValueError(f"La página parece ser un bloqueo: {url}")
+    organisations = list(
+        dict.fromkeys(
+            clean_text(link.get_text(" ", strip=True))
+            for link in soup.select('a[href*="/organisations/"]')
+            if clean_text(link.get_text(" ", strip=True))
+        )
+    )
+    departments = [x for x in organisations if x.casefold().startswith("departamento")]
+    groups = [x for x in organisations if x.casefold().startswith(("grupo de", "centro de"))]
+    mail = soup.select_one('a[href^="mailto:"]')
+    image = soup.select_one('img[src*="/files-asset/"]')
+    identifiers = {}
+    for link in soup.select("a[href]"):
+        href = link["href"]
+        if re.match(r"https?://orcid\.org/\d{4}-\d{4}-\d{4}-[\dX]{4}/?$", href):
+            identifiers["orcid"] = href.rstrip("/").rsplit("/", 1)[-1]
+        if urlsplit(href).hostname in ("www.scopus.com", "scopus.com"):
+            identifiers["scopus_url"] = href
+        if urlsplit(href).hostname == "scholar.google.com" and "/citations" in href:
+            identifiers["google_scholar_url"] = href
+    return {
+        "id": stable_id(url),
+        "name": name,
+        "image_url": urljoin(url, image["src"]) if image else None,
+        "department": departments[0] if departments else None,
+        "departments": departments,
+        "email": mail["href"][7:].split("?", 1)[0].strip() if mail else None,
+        "research_groups": groups,
+        "research_areas": section_text(soup, "Temas de Interés de Investigación"),
+        "biography": " ".join(section_text(soup, "Perfil profesional")) or None,
+        "education": section_text(soup, "Educación"),
+        "external_ids": identifiers,
+        # No extraer un entero cercano a 'Citas': hay varias ventanas y proveedores.
+        "citations": None,
+        "citation_source": None,
+        "citation_retrieved_at": None,
+        "source_url": canonical_profile_url(url),
+        "retrieved_at": retrieved_at,
+        "raw_snapshot": snapshot,
+    }

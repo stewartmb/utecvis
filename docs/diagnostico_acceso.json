@@ -1,0 +1,24 @@
+{
+  "run_id": "20261025T233038Z-12fb2398",
+  "mode": "probe",
+  "started_at": "2026-10-25T23:30:38.360884+00:00",
+  "status": "failed",
+  "coverage": "pilot",
+  "directory_complete": false,
+  "adapter_version": "0.1.0-pilot",
+  "pages": [],
+  "profiles": [],
+  "errors": [
+    {
+      "error": "HTTP 403: https://cris.utec.edu.pe/es/persons/"
+    }
+  ],
+  "settings": {
+    "directory_url": "https://cris.utec.edu.pe/es/persons/",
+    "user_agent": "UtecVis/0.1 (academic faculty network project)",
+    "timeout_seconds": 30,
+    "delay_seconds": 5,
+    "max_attempts": 3
+  },
+  "finished_at": "2026-10-25T23:30:43.431264+00:00"
+}
