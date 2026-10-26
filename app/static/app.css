@@ -1033,16 +1033,16 @@ input[type="range"] {
 }
 .observed-edge {
   stroke: #718b90;
-  stroke-opacity: 0.72;
+  stroke-opacity: 0.38;
   fill: none;
   vector-effect: non-scaling-stroke;
   stroke-linecap: round;
 }
 .predicted-edge {
   stroke: var(--prediction);
-  stroke-opacity: 0.55;
+  stroke-opacity: 0.3;
   stroke-dasharray: 7 6;
-  stroke-width: 2.2;
+  stroke-width: 1.4;
   fill: none;
   vector-effect: non-scaling-stroke;
   stroke-linecap: round;
@@ -1094,14 +1094,17 @@ input[type="range"] {
   opacity: 0.2;
 }
 .edge-dimmed {
-  opacity: 0.1;
+  opacity: 0.06;
 }
 .edge-focused {
   stroke-opacity: 0.95;
   opacity: 1;
 }
+.observed-edge.edge-focused {
+  stroke: #315b60;
+}
 .predicted-edge.selected {
-  stroke-width: 4;
+  stroke-width: 2.5;
   stroke-opacity: 0.95;
 }
 .node.selected .node-label {
@@ -1454,13 +1457,13 @@ dialog::backdrop {
 }
 .width-samples i {
   width: 12px;
-  border-top: 2px solid #718b90;
+  border-top: 1.5px solid #718b90;
 }
 .width-samples i:nth-child(2) {
   border-top-width: 4px;
 }
 .width-samples i:nth-child(3) {
-  border-top-width: 7px;
+  border-top-width: 6px;
 }
 @media (min-width: 1100px) {
   .prediction-controls,

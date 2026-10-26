@@ -306,7 +306,13 @@ function focusStyles() {
       if (e.source === seed) adjacent.add(e.target);
       if (e.target === seed) adjacent.add(e.source);
     }
-  if (state.selectedPair) state.selectedPair.forEach((id) => adjacent.add(id));
+  const pair = !seed ? state.selectedPair : null;
+  if (pair) pair.forEach((id) => adjacent.add(id));
+  const focusActive = Boolean(seed || pair);
+  const focusedEdge = (e) =>
+    pair
+      ? pairKey(e.source, e.target) === pairKey(...pair)
+      : Boolean(seed && (e.source === seed || e.target === seed));
   nodeSelection
     .classed(
       "selected",
@@ -315,7 +321,7 @@ function focusStyles() {
     .classed("hovered", (n) => n.id === state.hovered)
     .classed(
       "dimmed",
-      (n) => seed && !adjacent.has(n.id) && !state.selectedPair?.includes(n.id),
+      (n) => focusActive && !adjacent.has(n.id),
     );
   nodeSelection
     .select(".node-label")
@@ -325,27 +331,17 @@ function focusStyles() {
         : "none",
     );
   edgeSelection
-    .classed(
-      "edge-dimmed",
-      (e) => seed && e.source !== seed && e.target !== seed,
-    )
-    .classed(
-      "edge-focused",
-      (e) =>
-        state.selectedPair &&
-        pairKey(e.source, e.target) === pairKey(...state.selectedPair),
-    );
+    .classed("edge-dimmed", (e) => focusActive && !focusedEdge(e))
+    .classed("edge-focused", focusedEdge);
+  edgeSelection.filter(focusedEdge).raise();
   predictionSelection
-    ?.classed(
-      "edge-dimmed",
-      (p) => seed && p.source !== seed && p.target !== seed,
-    )
+    ?.classed("edge-dimmed", (e) => focusActive && !focusedEdge(e))
+    .classed("edge-focused", focusedEdge)
     .classed(
       "selected",
-      (p) =>
-        state.selectedPair &&
-        pairKey(p.source, p.target) === pairKey(...state.selectedPair),
+      (p) => pair && pairKey(p.source, p.target) === pairKey(...pair),
     );
+  predictionSelection?.filter(focusedEdge).raise();
 }
 
 function edgePath(edge) {
@@ -428,7 +424,7 @@ function renderGraph() {
         d3.max(observed, (e) => e.weight),
       ),
     ])
-    .range([2.2, 13]);
+    .range([1.5, 6]);
   edgeSelection = layer
     .select(".observed-layer")
     .selectAll("path")

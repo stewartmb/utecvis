@@ -75,7 +75,26 @@ def run(url, channel):
         widths = page.locator(".observed-edge").evaluate_all(
             'els=>els.map(el=>Number(el.getAttribute("stroke-width")))'
         )
-        assert min(widths) >= 2.2 and max(widths) >= 12.9
+        assert math.isclose(min(widths), 1.5) and math.isclose(max(widths), 6)
+        assert (
+            page.locator(".observed-edge").first.evaluate(
+                "el=>Number(getComputedStyle(el).strokeOpacity)"
+            )
+            == 0.38
+        )
+        hover_id = page.locator("g.node").evaluate_all(
+            "els=>els.find(el=>Number(el.dataset.visibleDegree)>1).dataset.id"
+        )
+        page.locator(f'g.node[data-id="{hover_id}"] .node-core').hover()
+        assert page.locator(".observed-edge.edge-focused").count() > 0
+        assert page.locator(".observed-edge.edge-dimmed").count() > 0
+        assert (
+            page.locator(".observed-edge.edge-focused").first.evaluate(
+                "el=>Number(getComputedStyle(el).strokeOpacity)"
+            )
+            == 0.95
+        )
+        page.mouse.move(10, 10)
         page.screenshot(path="/tmp/utecvis-desktop.png")
         dragged_id = page.locator("g.node").evaluate_all(
             "els=>els.find(el=>Number(el.dataset.visibleDegree)>1).dataset.id"
@@ -212,6 +231,10 @@ def run(url, channel):
         page.wait_for_selector(".signal-row")
         assert page.locator(".signal-row").count() == 3
         assert "No es una probabilidad" in page.locator("#inspector").inner_text()
+        page.mouse.move(10, 10)
+        assert page.locator(".predicted-edge.edge-focused").count() == 1
+        assert page.locator(".observed-edge.edge-focused").count() == 0
+        assert page.locator(".observed-edge.edge-dimmed").count() == 73
         page.wait_for_timeout(350)
         page.screenshot(path="/tmp/utecvis-detail.png")
         page.locator("#inspector-close").click()

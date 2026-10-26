@@ -213,13 +213,13 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
         d3
           .forceLink(links)
           .id((n) => n.id)
-          .distance((e) => nodeRadius(e.source) + nodeRadius(e.target) + 85)
+          .distance((e) => nodeRadius(e.source) + nodeRadius(e.target) + 115)
           .strength(0.32)
           .iterations(2),
       )
       .force(
         "charge",
-        d3.forceManyBody().strength((n) => (isIsolated(n) ? 0 : -240)),
+        d3.forceManyBody().strength((n) => (isIsolated(n) ? 0 : -340)),
       )
       .force(
         "collision",
@@ -230,8 +230,8 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
       )
       .force("drag-x", d3.forceX().strength(0))
       .force("drag-y", d3.forceY().strength(0))
-      .force("x", d3.forceX(0).strength(0.008))
-      .force("y", d3.forceY(0).strength(0.008))
+      .force("x", d3.forceX(0).strength(0.006))
+      .force("y", d3.forceY(0).strength(0.006))
       .force("boundary", enforceBounds)
       .on("tick", () => {
         // forceCollide is a soft velocity constraint. Project positions after

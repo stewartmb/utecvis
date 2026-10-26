@@ -108,7 +108,12 @@ manual mientras están visibles.
 Los escenarios densos amplían el espacio de cálculo y se encuadran
 automáticamente. El ajuste usa toda la altura disponible; en pantallas amplias los
 controles de sugerencias ocupan el margen derecho. El grosor de las aristas va de
-2,2 a 13 px en escala logarítmica y permanece legible al ajustar el zoom.
+1,5 a 6 px en escala logarítmica y permanece legible al ajustar el zoom.
+La vista general usa transparencia para reducir la acumulación visual en los
+cruces; al pasar el cursor o seleccionar, se resaltan solo las conexiones de esa
+persona o pareja y se atenúan las demás. Los enlaces más largos y una repulsión
+mayor dan más espacio a la red. Estos ajustes facilitan seguir las conexiones;
+no garantizan eliminar todos los cruces del grafo.
 Zoom, selección y etiquetas evitan superponer
 104 nombres. La animación mantiene el contexto y respeta movimiento reducido.
 La interfaz prioriza el grafo, con navegación y controles flotantes compactos;
