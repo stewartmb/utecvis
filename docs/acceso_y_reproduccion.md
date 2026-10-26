@@ -1,32 +1,29 @@
 # Acceso real y reproducción sin agente
 
-## Diagnóstico del 25/10/2026
+## Vía comprobada: Safari abierto en macOS
 
-El HTTP directo devuelve **403**, con `Server: cloudflare`,
-`Cf-Mitigated: challenge` y título `Just a moment...`. Esa respuesta no contiene
-el directorio de profesores. Cambiar BeautifulSoup no resuelve esta etapa.
+El 25/10/2026 se comprobó una adquisición ejecutada enteramente por Python:
+`run --transport safari --limit 5` recorrió las tres páginas del directorio,
+descubrió 104 perfiles y descargó, normalizó y exportó cinco perfiles sin errores.
+Manifiesto del piloto: `20261026T002845Z-643d8b32` (fechas internas en UTC).
 
-El navegador de la aplicación sí permitió recorrer las tres páginas del directorio:
-**104 URLs distintas**, coincidentes con el total visible. Se capturaron cinco
-perfiles reales, se normalizaron y se exportó un piloto sin errores de parseo.
-Esos cinco registros proceden de captura asistida; no acreditan extracción autónoma.
+`SafariClient` usa `subprocess` y AppleScript mediante `/usr/bin/osascript` para
+navegar y leer el DOM. Reutiliza la sesión del Safari que ya admite CRIS. No
+transfiere cookies a requests ni inicia un navegador con un perfil distinto.
+El agente no ejecuta los pasos de navegación: los ejecuta el programa Python.
 
-Chrome automatizado, con y sin ventana, y la prueba inicial con WebKit no
-confirmaron acceso al directorio. No está demostrada una descarga autónoma completa.
+### Requisitos
 
-## Comparación con Conference
+- macOS, Python 3.12 o superior y Safari abierto.
+- Una pestaña de Safari que ya muestre el directorio o un perfil público de CRIS.
+- Permisos de macOS para controlar Safari y JavaScript desde Apple Events admitido
+  en Safari. En el equipo de prueba esto ya estaba disponible; el programa no
+  cambia ajustes del navegador. Si faltan permisos, se detiene con el error recibido.
 
-El flujo existente de Conference usa `launch_persistent_context` y un perfil
-preparado mediante `login_once.py`. Luego lee tablas del DOM con Playwright.
-En CRIS empezamos con HTTP directo y un contexto nuevo: faltaba preparar y
-comprobar el acceso real. Un perfil persistente vacío no garantiza que Cloudflare
-admita la sesión; esto aún debe validarse.
+Referencia oficial de los ajustes de desarrollo de Safari:
+https://developer.apple.com/documentation/safari-developer-tools/developer-settings
 
-## Implementación Python disponible
-
-Toda la lógica productiva está en Python. `BrowserClient` navega con Playwright,
-conserva un perfil propio para CRIS en `local_state/` (ignorado por Git), espera
-el documento y entrega su DOM al mismo ETL. No usa el perfil de Conference.
+### Ejecutar
 
 Desde la raíz del proyecto, con el entorno virtual activado:
 
@@ -34,45 +31,59 @@ Desde la raíz del proyecto, con el entorno virtual activado:
 python -m pip install -r requirements.lock
 python -m pip install --no-deps -e .
 
-# Chrome instalado: preparar el acceso en una terminal interactiva.
-python -m extraccion_datos.cli access --browser-channel chrome
+# Probar una página conservando el resultado y su manifiesto.
+python -m extraccion_datos.cli probe --transport safari
 
-# Verificar acceso sin un agente; reutiliza el perfil dedicado.
-python -m extraccion_datos.cli probe --transport browser --browser-channel chrome --headed
+# Piloto: adquisición, transformación, validación y exportación.
+python -m extraccion_datos.cli run --transport safari --limit 5
 
-# Piloto completo: adquirir, normalizar, validar y exportar cinco perfiles.
-python -m extraccion_datos.cli run --transport browser --browser-channel chrome --headed --limit 5
-
-# Solo cuando el piloto funcione: ejecutar el censo con el mismo flujo.
-python -m extraccion_datos.cli run --transport browser --browser-channel chrome --headed --all
+# Directorio completo, una vez revisado el piloto.
+python -m extraccion_datos.cli run --transport safari --all
 ```
 
-`access` deja la preparación de la sesión en manos de la persona: si aparece una
-verificación, el programa no la completa. Al pulsar ENTER comprueba el directorio
-y conserva el perfil para posteriores ejecuciones. La sesión puede caducar.
+El programa localiza una pestaña CRIS y crea otra pestaña de trabajo dentro de
+esa misma ventana. Al finalizar cierra su pestaña si conserva la URL esperada.
+La pestaña original permanece abierta. Se puede usar otra pestaña, pero no se
+debe cerrar, reordenar ni navegar la pestaña de trabajo durante la ejecución.
 
-Si no hay Chrome instalado, se puede instalar un navegador de Playwright y elegir
-el motor correspondiente; esto no garantiza que el sitio lo admita:
+La preparación inicial de la sesión depende de la persona. Una vez admitida,
+la adquisición y el ETL se ejecutan sin agente. Si aparece otra verificación de
+Cloudflare, el programa registra el fallo y se detiene; la vigencia del acceso
+no está garantizada para futuras ejecuciones.
+
+Se respeta el `Crawl-Delay: 5` observado en robots.txt. Cada documento conserva URL,
+fecha UTC, SHA-256 y DOM original. El estado HTTP figura como `null`, porque Apple
+Events permite leer el documento renderizado, pero no observar su respuesta HTTP.
+Esto se identifica explícitamente como `content_origin: rendered_dom`.
+
+## Diagnóstico de las otras vías
+
+HTTP directo devuelve **403**, `Cf-Mitigated: challenge` y `Just a moment...`.
+Chrome automatizado, con y sin ventana, y WebKit no confirmaron acceso. El usuario
+tampoco pudo completar la verificación en el Chrome dedicado. Estos fallos no
+impiden utilizar la sesión admitida de Safari.
+
+El navegador de la aplicación también permitió capturar cinco perfiles durante
+el diagnóstico inicial. Ese piloto fue asistido y es distinto del piloto Python
+Safari. Ver `investigacion_acceso.md` para las pruebas y alternativas de API.
+
+El transporte Playwright sigue disponible para entornos donde el sitio lo admita:
 
 ```bash
-python -m playwright install chromium
-python -m extraccion_datos.cli access --browser-channel chromium
+python -m extraccion_datos.cli access --browser-channel chrome
+python -m extraccion_datos.cli run --transport browser --browser-channel chrome --headed --limit 5
 ```
 
-Si incluso el acceso normal en esa ventana falla, la alternativa es obtener una
-vía de acceso/exportación admitida por UTEC. No etiquetar el pipeline como resuelto
-solo porque sus pruebas offline pasan.
+## Repetir las transformaciones sin navegador
 
-## Datos y estado
+Con el manifiesto y sus snapshots guardados:
 
-- Inventario: 104 enlaces de perfiles, no 104 perfiles completos descargados.
-- Piloto asistido: 5 perfiles normalizados; todos con departamento, correo y áreas.
-- Citas: no se han extraído; permanecen `null`.
-- Automatización Python: implementada; acceso autónomo real pendiente de validar.
-- Pipeline offline: transforma/exporta snapshots guardados sin agente ni navegador.
+```bash
+python -m extraccion_datos.cli transform --manifest data/manifests/ID.json
+python -m extraccion_datos.cli export --manifest data/manifests/ID.json
+```
 
-El manifiesto del piloto es `20261025T234454926Z-browser-276c9a78`.
-Los archivos generados permanecen fuera de Git según la política del proyecto.
-
-Referencia del navegador Python:
-https://playwright.dev/python/docs/browsers
+Para un piloto, añadir `--allow-pilot` al exportar. Un piloto se guarda en `interim`;
+solo una ejecución completa y validada llega a `processed`. Las citas no extraídas
+permanecen `null`. Publicaciones, proyectos, aristas y métricas de red son etapas
+posteriores a esta adquisición de perfiles.

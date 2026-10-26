@@ -86,22 +86,24 @@ Una descarga 403 queda como ejecución fallida y devuelve código de salida 1.
 El pipeline no publica silenciosamente una muestra como si fuera el directorio
 completo. La transformación puede repetirse sobre los snapshots sin acceder a la web.
 
-**Estado de acceso:** HTTP devuelve un desafío de Cloudflare. El navegador de la
-aplicación permitió inventariar 104 perfiles y capturar cinco perfiles reales;
-el parser ya se comprobó con ese piloto. La adquisición autónoma en Python sigue
-pendiente de validar el acceso: Chrome nuevo y la prueba con WebKit no recibieron
-el directorio. Ver `docs/acceso_y_reproduccion.md`.
+**Acceso comprobado con Python y Safari:** el piloto del 25/10/2026 recorrió las
+tres páginas, encontró 104 perfiles y descargó, normalizó y exportó cinco de ellos
+sin errores. Safari debe tener una pestaña CRIS con acceso admitido. Python utiliza
+Apple Events para crear una pestaña de trabajo en esa misma sesión, sin exportar
+cookies. La navegación la realiza el programa, sin un agente.
 
-Existe un transporte Python con Playwright y perfil persistente dedicado. Tras
-preparar y verificar su acceso, un solo comando ejecuta el ETL completo:
+En macOS, con Safari preparado:
 
 ```bash
-python -m extraccion_datos.cli access --browser-channel chrome
-python -m extraccion_datos.cli run --transport browser --browser-channel chrome --headed --limit 5
+python -m extraccion_datos.cli probe --transport safari
+python -m extraccion_datos.cli run --transport safari --limit 5
+python -m extraccion_datos.cli run --transport safari --all
 ```
 
-La primera orden requiere una terminal interactiva y comprobación humana del
-acceso. No se ha demostrado que el censo pueda ejecutarse sin esa preparación.
+La sesión puede caducar. Si reaparece una verificación, se registra y se detiene.
+HTTP directo y los navegadores automatizados nuevos no obtuvieron acceso en las
+pruebas. Los requisitos, límites y variantes están en
+[Acceso y reproducción](docs/acceso_y_reproduccion.md).
 Los adaptadores de publicaciones, proyectos y Scholar siguen pendientes.
 
 ## Formato del profesor

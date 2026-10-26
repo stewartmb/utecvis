@@ -51,7 +51,11 @@ def snapshot(root, run_id, url, body):
 def acquire(args):
     root = args.root.resolve()
     settings = tomllib.loads((root / "config/sources.toml").read_text())["cris"]
-    if args.transport == "browser":
+    if args.transport == "safari":
+        from extraccion_datos.safari import SafariClient
+
+        client = SafariClient(settings)
+    elif args.transport == "browser":
         from extraccion_datos.browser import BrowserClient
 
         client = BrowserClient(
@@ -129,6 +133,9 @@ def acquire(args):
                 )
             except AcquisitionError as exc:
                 manifest["errors"].append({"url": profile_url, "error": str(exc)})
+                if args.transport == "safari" or "cloudflare" in str(exc).casefold():
+                    manifest["status"] = "partial"
+                    return 1
             write_json(manifest_path, manifest)
         if manifest["errors"]:
             manifest["status"] = "partial"
@@ -283,7 +290,7 @@ def main(argv=None):
         sub.add_argument("--max-pages", type=positive_int, default=20)
         sub.add_argument("--limit", type=positive_int, default=5)
         sub.add_argument("--all", action="store_true", help="Solicitar censo completo")
-        sub.add_argument("--transport", choices=("http", "browser"), default="http")
+        sub.add_argument("--transport", choices=("http", "browser", "safari"), default="http")
         sub.add_argument(
             "--browser-channel",
             choices=("chromium", "chrome", "msedge", "webkit"),

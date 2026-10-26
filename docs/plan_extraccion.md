@@ -5,10 +5,10 @@
 **Listo:** repositorio, arquitectura, CLI ETL, contratos iniciales, entorno aislado,
 pruebas sintéticas, base Flask y comprobaciones automáticas.
 
-La estructura está preparada. Hay un inventario de 104 perfiles y un piloto
-asistido de cinco perfiles normalizados. No hay un censo de perfiles completos
-ni una visualización final. La adquisición autónoma Python aún no tiene acceso
-confirmado; ver `acceso_y_reproduccion.md`.
+La estructura está preparada. Además del piloto asistido inicial, se comprobó
+un piloto de cinco perfiles adquirido, normalizado y exportado por Python mediante
+la sesión admitida de Safari. El censo de 104 perfiles está en ejecución. La
+visualización final sigue pendiente; ver `acceso_y_reproduccion.md`.
 
 ## Hito 1. Resolver acceso y validar un piloto real
 
