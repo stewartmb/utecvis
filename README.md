@@ -50,8 +50,9 @@ requirements.txt     Dependencias para ejecutar la aplicación
    agrupaciones calculadas con pertenencias institucionales y filtrar RIC, DADS
    o un centro. Una persona puede pertenecer a varios grupos.
 
-**Mantra:** panorama de los 104 perfiles → zoom, búsqueda y filtros → detalles al
-seleccionar personas o conexiones. Las sugerencias no desplazan los nodos. El
+**Mantra:** el grafo ocupa toda la pantalla al abrir; filtros y rankings aparecen
+solo al solicitarlos. Panorama de los 104 perfiles → zoom, búsqueda y filtros →
+detalles al seleccionar personas o conexiones. Las sugerencias no desplazan los nodos. El
 botón Restablecer recupera la vista y los parámetros iniciales.
 
 ## Cómo interpretar la red
@@ -70,7 +71,15 @@ coautorías individuales comprobadas.
 **Métricas:** grado = vecinos distintos; grado ponderado = suma de trabajos
 compartidos; intermediación = caminos mínimos sin usar frecuencia como distancia;
 comunidades = modularidad ponderada. Se calculan sobre la red observada completa.
-Los filtros cambian la vista y los candidatos; las sugerencias no alteran métricas.
+Los filtros cambian la vista y los candidatos; las sugerencias no alteran estas métricas.
+
+**Tamaño dinámico:** por defecto cuenta vecinos por las aristas visibles, tanto
+registradas como sugeridas. Radio = `5,5 + 5,8 × √conexiones_visibles`. La escala
+es fija: cada nueva conexión hace crecer sus dos extremos, y al quitarla disminuyen.
+Los filtros cuentan solo aristas con ambos extremos visibles. Las sugerencias se
+distinguen en el tooltip y con líneas violetas discontinuas. Esta medida de la
+vista es independiente del grado observado que muestran los rankings y detalles.
+Los selectores alternativos conservan grado ponderado e intermediación observados.
 
 **Diseño:** color por departamento principal o comunidad; tamaño de nodo en escala
 de raíz cuadrada, con un mínimo para conservar visibles los aislados; grosor de
@@ -80,6 +89,10 @@ para sugerencias. La posición facilita explorar la topología, no mide similitu
 Los aislados se distribuyen en el perímetro para hacer visible su presencia sin
 ocultar las conexiones del centro. Zoom, selección y etiquetas evitan superponer
 104 nombres. La animación mantiene el contexto y respeta movimiento reducido.
+La interfaz prioriza el grafo, con navegación y controles flotantes compactos;
+las explicaciones extensas permanecen en el diálogo de método y en los detalles.
+Referencias de interacción: [D3 ForceGraph](https://old.observablehq.com/@d3/force-directed-graph-component)
+y [Gephi](https://gephi.org/quickstart/).
 
 ## Fundamento de las sugerencias
 

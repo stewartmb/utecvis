@@ -6,6 +6,36 @@ export const DEFAULT_WEIGHTS = {
 };
 export const pairKey = (a, b) => [Math.min(a, b), Math.max(a, b)].join(":");
 
+// Display-only degree. It never changes observed metrics or recommendation inputs.
+export function visibleConnections(ids, observed, suggested) {
+  const counts = new Map(
+    [...ids].map((id) => [id, { recorded: 0, suggested: 0, total: 0 }]),
+  );
+  const seen = new Set();
+  for (const [kind, edges] of [
+    ["recorded", observed],
+    ["suggested", suggested],
+  ]) {
+    for (const edge of edges) {
+      const { source, target } = edge;
+      const key = pairKey(source, target);
+      if (
+        source === target ||
+        !counts.has(source) ||
+        !counts.has(target) ||
+        seen.has(key)
+      )
+        continue;
+      seen.add(key);
+      for (const id of [source, target]) {
+        counts.get(id)[kind] += 1;
+        counts.get(id).total += 1;
+      }
+    }
+  }
+  return counts;
+}
+
 export function adjustWeights(previous, key, value) {
   if (!KEYS.includes(key)) throw new Error("Señal desconocida");
   const chosen = Math.max(0, Math.min(100, Math.round(Number(value))));

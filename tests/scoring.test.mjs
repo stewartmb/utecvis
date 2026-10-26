@@ -6,7 +6,36 @@ import {
   selectTop,
   rankCandidates,
   DEFAULT_WEIGHTS,
+  visibleConnections,
 } from "../app/static/scoring.mjs";
+
+test("el grado visible cuenta nuevas aristas sin duplicar ni alterar la red observada", () => {
+  const observed = [{ source: 1, target: 2 }];
+  const suggested = [
+    { source: 2, target: 3 },
+    { source: 3, target: 2 },
+    { source: 1, target: 2 },
+    { source: 4, target: 5 },
+  ];
+  const before = JSON.stringify(observed);
+  const counts = visibleConnections(new Set([1, 2, 3, 4]), observed, suggested);
+  assert.deepEqual(counts.get(2), { recorded: 1, suggested: 1, total: 2 });
+  assert.deepEqual(counts.get(3), { recorded: 0, suggested: 1, total: 1 });
+  assert.deepEqual(counts.get(4), { recorded: 0, suggested: 0, total: 0 });
+  assert.equal(
+    [...counts.values()].reduce((sum, n) => sum + n.total, 0),
+    4,
+  );
+  assert.equal(
+    visibleConnections(new Set([1, 2]), observed, suggested).get(2).total,
+    1,
+  );
+  assert.equal(
+    visibleConnections(new Set([1, 2, 3]), observed, []).get(3).total,
+    0,
+  );
+  assert.equal(JSON.stringify(observed), before);
+});
 
 test("los controles conservan 100 % incluso en los extremos", () => {
   assert.deepEqual(adjustWeights(DEFAULT_WEIGHTS, "thematic", 80), {
