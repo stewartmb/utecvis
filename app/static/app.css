@@ -574,18 +574,18 @@ input[type="range"] {
   gap: 3px;
 }
 .size-circles i {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #8c9c9b;
 }
 .size-circles i:nth-child(2) {
-  width: 7px;
-  height: 7px;
+  width: 11px;
+  height: 11px;
 }
 .size-circles i:nth-child(3) {
-  width: 10px;
-  height: 10px;
+  width: 18px;
+  height: 18px;
 }
 #footer-method {
   font-size: 9px;
@@ -1036,21 +1036,25 @@ input[type="range"] {
   margin-top: 4px;
 }
 .observed-edge {
-  stroke: #809492;
-  stroke-opacity: 0.45;
+  stroke: #718b90;
+  stroke-opacity: 0.72;
   fill: none;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
 }
 .observed-edge.association {
-  stroke-dasharray: 2 4;
   stroke: #7c8793;
-  stroke-opacity: 0.6;
+  stroke-opacity: 0.72;
+  stroke-dasharray: 1 12;
 }
 .predicted-edge {
   stroke: var(--prediction);
-  stroke-opacity: 0.42;
-  stroke-dasharray: 6 5;
-  stroke-width: 1.3;
+  stroke-opacity: 0.55;
+  stroke-dasharray: 7 6;
+  stroke-width: 2.2;
   fill: none;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
 }
 .edge-hit {
   stroke: transparent;
@@ -1063,15 +1067,17 @@ input[type="range"] {
   outline: none;
 }
 .node .node-core {
-  stroke-width: 1.5;
+  stroke-width: 1;
+  stroke: #fff;
 }
 .node .node-halo {
-  fill: #fbfcf9;
+  fill: var(--paper);
   stroke: none;
 }
 .node .node-initials {
+  fill: white;
   font-size: 8px;
-  font-weight: 650;
+  font-weight: 600;
   pointer-events: none;
   text-anchor: middle;
   dominant-baseline: central;
@@ -1087,11 +1093,11 @@ input[type="range"] {
 }
 .node.selected .node-halo {
   stroke: var(--ink);
-  stroke-width: 1.8;
+  stroke-width: 2;
 }
 .node.hovered .node-halo {
-  stroke: #5b8b79;
-  stroke-width: 1.6;
+  stroke: var(--ink);
+  stroke-width: 1.5;
 }
 .node.dimmed {
   opacity: 0.2;
@@ -1104,7 +1110,7 @@ input[type="range"] {
   opacity: 1;
 }
 .predicted-edge.selected {
-  stroke-width: 2.7;
+  stroke-width: 4;
   stroke-opacity: 0.95;
 }
 .node.selected .node-label {
@@ -1180,36 +1186,11 @@ dialog::backdrop {
   background: var(--structural);
 }
 /* Darker marks give the graph visual priority over its controls. */
-.node .node-core {
-  stroke-width: 1;
-  stroke: #fff;
-}
-.node .node-initials {
-  fill: white;
-  font-weight: 600;
-}
-.node .node-halo {
-  fill: var(--paper);
-}
+
 .node-label {
   font-weight: 550;
 }
-.observed-edge {
-  stroke: #84979c;
-  stroke-opacity: 0.55;
-}
-.predicted-edge {
-  stroke-opacity: 0.48;
-  stroke-width: 1.5;
-}
-.node.selected .node-halo {
-  stroke: var(--ink);
-  stroke-width: 2;
-}
-.node.hovered .node-halo {
-  stroke: var(--ink);
-  stroke-width: 1.5;
-}
+
 .node:focus-visible .node-halo {
   stroke: var(--accent);
   stroke-width: 3;
@@ -1457,5 +1438,77 @@ dialog::backdrop {
     animation-duration: 0ms !important;
     transition-duration: 0ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* D3 layout: strong quantitative contrast, a circular perimeter and real space. */
+.isolate-ring {
+  stroke: #dce5e1;
+  stroke-width: 1;
+  stroke-dasharray: 2 9;
+  vector-effect: non-scaling-stroke;
+}
+.observed-edge,
+.width-key {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 9px 0;
+  font-size: 10px;
+}
+.width-samples {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.width-samples i {
+  width: 12px;
+  border-top: 2px solid #718b90;
+}
+.width-samples i:nth-child(2) {
+  border-top-width: 4px;
+}
+.width-samples i:nth-child(3) {
+  border-top-width: 7px;
+}
+@media (min-width: 1100px) {
+  .prediction-controls,
+  .prediction-controls.showing-predictions {
+    left: auto;
+    right: 24px;
+    bottom: 24px;
+    transform: none;
+    width: 270px;
+    min-width: 0;
+  }
+  .prediction-controls .weights-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .prediction-controls .weight-control label {
+    font-size: 10px;
+  }
+  .prediction-controls .prediction-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .prediction-controls #candidate-count {
+    margin-left: auto;
+    font-size: 9px;
+  }
+  .network-panel:has(.showing-predictions) .inspector-panel {
+    bottom: 295px;
+  }
+  .view-tools {
+    right: 310px;
+  }
+}
+@media (max-width: 720px) {
+  .width-key {
+    font-size: 8px;
+    margin: 0;
+  }
+  .width-samples {
+    display: none;
   }
 }

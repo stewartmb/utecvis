@@ -14,6 +14,31 @@ def snapshot(page):
     }]))""")
 
 
+def screen_radii(page):
+    return page.locator("g.node").evaluate_all(
+        "els=>Object.fromEntries(els.map(el=>[el.dataset.id,el.querySelector('.node-core').getBoundingClientRect().width/2]))"
+    )
+
+
+def verify_layout(page):
+    assert page.evaluate("""() => {
+      const layout=window.utecvis.layout;
+      if(layout.maxOverlap>0.06) return false;
+      const dots=[...document.querySelectorAll('g.node .node-core')].map(el=>el.getBoundingClientRect());
+      for(let i=0;i<dots.length;i++)for(let j=i+1;j<dots.length;j++){
+        const a=dots[i],b=dots[j];
+        if(Math.hypot(a.x+a.width/2-b.x-b.width/2,a.y+a.height/2-b.y-b.height/2)<(a.width+b.width)/2-0.2)return false;
+      }
+      for(const n of layout.nodes){
+        const r=document.querySelector(`g.node[data-id="${n.id}"] .node-core`).r.baseVal.value;
+        if(layout.isIsolated(n)){
+          if(Math.abs(Math.hypot(n.x,n.y)-layout.ringRadius)>0.001)return false;
+        }else if(Math.hypot(n.x,n.y)+r>layout.coreRadius+0.01)return false;
+      }
+      return true;
+    }""")
+
+
 def run(url, channel):
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(channel=channel, headless=True)
@@ -39,14 +64,37 @@ def run(url, channel):
         assert page.locator("#graph-container").bounding_box()["height"] > 800
         assert page.evaluate("document.documentElement.scrollWidth") == 1440
         baseline = snapshot(page)
+        baseline_screen = screen_radii(page)
         assert sum(n["degree"] for n in baseline.values()) == 148
         assert all(
-            math.isclose(n["radius"], 5.5 + 5.8 * math.sqrt(n["degree"]))
+            math.isclose(n["radius"], 7 + 12 * math.sqrt(n["degree"]))
             for n in baseline.values()
         )
-        positions = page.evaluate("window.utecvis.nodes.map(n => [n.id,n.x,n.y])")
         metrics = page.evaluate("window.utecvis.nodes.map(n => n.network_metrics)")
+        verify_layout(page)
+        widths = page.locator(".observed-edge").evaluate_all(
+            'els=>els.map(el=>Number(el.getAttribute("stroke-width")))'
+        )
+        assert min(widths) >= 2.2 and max(widths) >= 12.9
         page.screenshot(path="/tmp/utecvis-desktop.png")
+        dragged_id = page.locator("g.node").evaluate_all(
+            "els=>els.find(el=>Number(el.dataset.visibleDegree)>1).dataset.id"
+        )
+        circle = page.locator(
+            f'g.node[data-id="{dragged_id}"] .node-core'
+        ).bounding_box()
+        viewport = page.locator("#network-svg").bounding_box()
+        page.mouse.move(
+            circle["x"] + circle["width"] / 2, circle["y"] + circle["height"] / 2
+        )
+        page.mouse.down()
+        page.mouse.move(
+            viewport["x"] + viewport["width"] - 3,
+            viewport["y"] + viewport["height"] - 3,
+            steps=8,
+        )
+        page.mouse.up()
+        verify_layout(page)
         page.locator("g.node").first.hover()
         assert page.locator("#tooltip").is_visible()
 
@@ -54,10 +102,14 @@ def run(url, channel):
         page.wait_for_timeout(400)
         assert page.locator(".predicted-edge").count() == 53
         assert page.locator("#inspector-panel").is_hidden()
-        assert positions == page.evaluate(
-            "window.utecvis.nodes.map(n => [n.id,n.x,n.y])"
-        )
+        verify_layout(page)
         first = snapshot(page)
+        first_screen = screen_radii(page)
+        assert all(
+            first_screen[id] > baseline_screen[id]
+            for id, n in first.items()
+            if n["degree"] > baseline[id]["degree"]
+        )
         assert sum(n["degree"] for n in first.values()) == 2 * (74 + 53)
         assert all(n["radius"] >= baseline[id]["radius"] for id, n in first.items())
         assert any(n["radius"] > baseline[id]["radius"] for id, n in first.items())
@@ -66,12 +118,19 @@ def run(url, channel):
         )
         page.wait_for_timeout(400)
         second = snapshot(page)
+        second_screen = screen_radii(page)
+        assert all(
+            second_screen[id] > first_screen[id]
+            for id, n in second.items()
+            if n["degree"] > first[id]["degree"]
+        )
         assert page.locator(".predicted-edge").count() == 106
         assert sum(n["degree"] for n in second.values()) == 2 * (74 + 106)
         assert all(n["radius"] >= first[id]["radius"] for id, n in second.items())
         page.locator("#prediction-toggle").click()
         page.wait_for_timeout(400)
         assert snapshot(page) == baseline
+        verify_layout(page)
         assert metrics == page.evaluate(
             "window.utecvis.nodes.map(n => n.network_metrics)"
         )
@@ -82,8 +141,19 @@ def run(url, channel):
         page.wait_for_timeout(400)
         assert page.locator(".predicted-edge").count() == 0
         assert snapshot(page) == baseline
+        verify_layout(page)
         page.locator("#top-percent").evaluate(
             "el => {el.value=1;el.dispatchEvent(new Event('input'));}"
+        )
+        page.wait_for_timeout(400)
+        verify_layout(page)
+        page.locator("#top-percent").evaluate(
+            "el=>{el.value=10;el.dispatchEvent(new Event('input'));}"
+        )
+        page.wait_for_timeout(400)
+        verify_layout(page)
+        page.locator("#top-percent").evaluate(
+            "el=>{el.value=1;el.dispatchEvent(new Event('input'));}"
         )
         page.wait_for_timeout(400)
         page.screenshot(path="/tmp/utecvis-predictions.png")
@@ -190,7 +260,11 @@ def run(url, channel):
         )
         page.locator("#reset").click()
         page.locator('[data-task="affinities"]').click()
-        for viewport in [{"width": 1280, "height": 800}, {"width": 390, "height": 844}]:
+        for viewport in [
+            {"width": 1920, "height": 1080},
+            {"width": 1280, "height": 800},
+            {"width": 390, "height": 844},
+        ]:
             page.set_viewport_size(viewport)
             page.wait_for_timeout(450)
             assert (
@@ -213,6 +287,7 @@ def run(url, channel):
                     return r.left>=svg.left && r.right<=svg.right && r.top>=svg.top && r.bottom<=svg.bottom;
                 });
             }""")
+            verify_layout(page)
             page.screenshot(path=f"/tmp/utecvis-{viewport['width']}.png")
         assert not errors, errors
         assert not external_requests, external_requests
@@ -243,7 +318,8 @@ def run(url, channel):
                     "candidate_pairs": 5282,
                     "top_1_percent": 53,
                     "dynamic_node_sizes": "PASS",
-                    "viewports": [1440, 1280, 390],
+                    "viewports": [1920, 1440, 1280, 390],
+                    "collision_and_boundary": "PASS",
                     "errors": errors,
                 },
                 ensure_ascii=False,

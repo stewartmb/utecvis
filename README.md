@@ -52,7 +52,8 @@ requirements.txt     Dependencias para ejecutar la aplicación
 
 **Mantra:** el grafo ocupa toda la pantalla al abrir; filtros y rankings aparecen
 solo al solicitarlos. Panorama de los 104 perfiles → zoom, búsqueda y filtros →
-detalles al seleccionar personas o conexiones. Las sugerencias no desplazan los nodos. El
+detalles al seleccionar personas o conexiones. D3 reacomoda los nodos cuando cambian
+sus radios o las conexiones visibles, para mantener la separación. El
 botón Restablecer recupera la vista y los parámetros iniciales.
 
 ## Cómo interpretar la red
@@ -74,7 +75,7 @@ comunidades = modularidad ponderada. Se calculan sobre la red observada completa
 Los filtros cambian la vista y los candidatos; las sugerencias no alteran estas métricas.
 
 **Tamaño dinámico:** por defecto cuenta vecinos por las aristas visibles, tanto
-registradas como sugeridas. Radio = `5,5 + 5,8 × √conexiones_visibles`. La escala
+registradas como sugeridas. Radio = `7 + 12 × √conexiones_visibles`. La escala
 es fija: cada nueva conexión hace crecer sus dos extremos, y al quitarla disminuyen.
 Los filtros cuentan solo aristas con ambos extremos visibles. Las sugerencias se
 distinguen en el tooltip y con líneas violetas discontinuas. Esta medida de la
@@ -86,8 +87,15 @@ de raíz cuadrada, con un mínimo para conservar visibles los aislados; grosor d
 arista logarítmico para manejar pesos entre 1 y 432. Líneas continuas para vínculos
 registrados, punteadas para la asociación de publicaciones y discontinuas violetas
 para sugerencias. La posición facilita explorar la topología, no mide similitud.
-Los aislados se distribuyen en el perímetro para hacer visible su presencia sin
-ocultar las conexiones del centro. Zoom, selección y etiquetas evitan superponer
+Los nodos sin conexiones visibles forman un círculo equidistante en el perímetro;
+al recibir una sugerencia pasan al interior. D3 usa fuerzas de enlaces observados,
+repulsión y colisión, actualizando el radio de colisión en cada escenario. Un límite
+circular mantiene los nodos dentro y una corrección con `d3.quadtree` deja separación
+entre sus círculos. Los escenarios densos amplían el espacio de cálculo y se encuadran
+automáticamente. El ajuste usa toda la altura disponible; en pantallas amplias los
+controles de sugerencias ocupan el margen derecho. El grosor de las aristas va de
+2,2 a 13 px en escala logarítmica y permanece legible al ajustar el zoom.
+Zoom, selección y etiquetas evitan superponer
 104 nombres. La animación mantiene el contexto y respeta movimiento reducido.
 La interfaz prioriza el grafo, con navegación y controles flotantes compactos;
 las explicaciones extensas permanecen en el diálogo de método y en los detalles.
@@ -155,6 +163,7 @@ La extracción conserva listas completas de la cohorte y fichas detalladas de lo
 ```bash
 python -m pytest -q
 node --test tests/scoring.test.mjs
+node --test tests/layout.test.mjs
 ```
 
 Las pruebas no visitan CRIS ni descargan el modelo. La prueba del preparador RWR

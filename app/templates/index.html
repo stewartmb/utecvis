@@ -287,6 +287,15 @@
               ><i></i><i></i><i></i></span
             ><span id="metric-key">Conexiones visibles</span>
           </div>
+          <div
+            class="width-key"
+            title="Grosor logarítmico de las conexiones registradas"
+          >
+            <span class="width-samples" aria-hidden="true"
+              ><i></i><i></i><i></i
+            ></span>
+            <span>Trabajos compartidos</span>
+          </div>
           <a id="footer-method" href="#">Método y fuentes</a>
         </div>
         <aside
@@ -378,14 +387,17 @@
             reconocer pertenencias. <strong>Tamaño:</strong> por defecto cuenta
             las conexiones visibles, registradas más sugeridas. Cada nueva
             arista hace crecer sus dos extremos; al quitarla disminuyen. El
-            radio es 5,5 + 5,8 × raíz del número de conexiones, con un mínimo
-            para aislados. <strong>Grosor:</strong> escala logarítmica para que
-            un vínculo de gran peso no oculte los demás.
+            radio es 7 + 12 × raíz del número de conexiones, con un mínimo para
+            aislados. <strong>Grosor:</strong> escala logarítmica para que un
+            vínculo de gran peso no oculte los demás.
           </p>
           <p>
             La posición utiliza fuerzas de las conexiones observadas. La
-            distancia visual no es una medida de afinidad. Agregar sugerencias
-            no modifica el layout.
+            distancia visual no es una medida de afinidad. Los nodos sin
+            conexiones visibles forman un círculo en el contorno. Al cambiar los
+            tamaños, D3 reacomoda los nodos con colisiones y un límite circular
+            para que queden separados y dentro de la red. Las sugerencias no se
+            usan como fuerzas de enlace ni modifican las métricas observadas.
           </p>
         </section>
         <section>

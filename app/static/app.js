@@ -7,6 +7,8 @@ import {
   visibleConnections,
 } from "./scoring.mjs";
 
+import { createNetworkLayout } from "./layout.mjs";
+
 const $ = (id) => document.getElementById(id);
 const d3 = window.d3;
 const nf = new Intl.NumberFormat("es-PE");
@@ -88,7 +90,6 @@ const state = {
 let network,
   nodes,
   nodeById,
-  graphNodes,
   observed,
   recommendations = [],
   preparation = {},
@@ -98,7 +99,7 @@ let departments,
   colors,
   communityColors,
   nontrivialCommunities,
-  simulation,
+  layout,
   svg,
   layer,
   zoom,
@@ -109,6 +110,7 @@ let width = 700,
   height = 600,
   zoomLevel = 1,
   top = { ranked: [], display: [], eligible: 0 };
+let lastFitRadius = null;
 let requestSerial = 0;
 let connectionCounts = new Map();
 let displayedPredictions = [];
@@ -137,11 +139,11 @@ function radius(node) {
       connectionCounts.get(node.id)?.total ?? node.network_metrics.degree;
     // Fixed scale: adding a connection always grows its endpoints, even when
     // another node becomes the new maximum. Zero-degree nodes remain visible.
-    return 5.5 + 5.8 * Math.sqrt(count);
+    return 7 + 12 * Math.sqrt(count);
   }
   const max = d3.max(nodes, (n) => n.network_metrics[state.metric]) || 1;
   return (
-    5.5 + Math.sqrt(Math.max(0, node.network_metrics[state.metric]) / max) * 24
+    7 + Math.sqrt(Math.max(0, node.network_metrics[state.metric]) / max) * 44
   );
 }
 
@@ -362,6 +364,7 @@ function predictedPath(edge) {
 }
 
 function tick() {
+  layer?.select(".isolate-ring").attr("r", layout?.ringRadius || 0);
   nodeSelection?.attr("transform", (n) => `translate(${n.x},${n.y})`);
   edgeSelection?.attr("d", edgePath);
   layer?.selectAll(".observed-hit").attr("d", edgePath);
@@ -375,6 +378,11 @@ function setupGraph() {
   width = container.clientWidth;
   height = container.clientHeight;
   layer = svg.append("g");
+  layer
+    .append("circle")
+    .attr("class", "isolate-ring")
+    .attr("fill", "none")
+    .attr("pointer-events", "none");
   layer.append("g").attr("class", "observed-layer");
   layer.append("g").attr("class", "observed-hit-layer");
   layer.append("g").attr("class", "prediction-layer");
@@ -393,49 +401,7 @@ function setupGraph() {
   svg.on("click", (event) => {
     if (event.target === svg.node()) clearSelection();
   });
-  const nonempty = nodes.filter((n) => n.network_metrics.degree > 0);
-  const isolated = nodes.filter((n) => n.network_metrics.degree === 0);
-  nonempty.forEach((node, i) => {
-    const angle = i * Math.PI * (3 - Math.sqrt(5));
-    const distance = 22 * Math.sqrt(i);
-    node.x = distance * Math.cos(angle);
-    node.y = distance * Math.sin(angle);
-  });
-  isolated.forEach((node, i) => {
-    const angle = (i / isolated.length) * Math.PI * 2 - Math.PI / 2;
-    node.x = 435 * Math.cos(angle);
-    node.y = 280 * Math.sin(angle);
-    node.fx = node.x;
-    node.fy = node.y;
-  });
-  graphNodes = nodes;
-  const links = observed.map((e) => ({ source: e.source, target: e.target }));
-  simulation = d3
-    .forceSimulation(graphNodes)
-    .randomSource(d3.randomLcg(0.42))
-    .force(
-      "link",
-      d3
-        .forceLink(links)
-        .id((n) => n.id)
-        .distance(83)
-        .strength(0.25),
-    )
-    .force(
-      "charge",
-      d3
-        .forceManyBody()
-        .strength((n) => (n.network_metrics.degree ? -225 : -25)),
-    )
-    .force("collision", d3.forceCollide((n) => radius(n) + 5).strength(0.9))
-    .force("x", d3.forceX(0).strength(0.08))
-    .force("y", d3.forceY(0).strength(0.08))
-    .stop();
-  for (let i = 0; i < 260; i++) simulation.tick();
-  nodes.forEach((n) => {
-    n.home = { x: n.x, y: n.y };
-  });
-  simulation.on("tick", tick);
+  layout = createNetworkLayout(d3, radius);
   new ResizeObserver(() => {
     const w = container.clientWidth,
       h = container.clientHeight;
@@ -463,7 +429,7 @@ function renderGraph() {
         d3.max(observed, (e) => e.weight),
       ),
     ])
-    .range([1.2, 5]);
+    .range([2.2, 13]);
   edgeSelection = layer
     .select(".observed-layer")
     .selectAll("path")
@@ -561,6 +527,15 @@ function renderGraph() {
       event.stopPropagation();
       selectPair(p.source, p.target);
     });
+  const layoutChanged = layout.configure(
+    nodes.filter((n) => visibleIds.has(n.id)),
+    visibleEdges,
+    connectionCounts,
+  );
+  layer
+    .select(".isolate-ring")
+    .attr("r", layout.ringRadius)
+    .style("display", layout.isolatedCount > 2 ? null : "none");
   nodeSelection = layer
     .select(".node-layer")
     .selectAll("g.node")
@@ -624,35 +599,42 @@ function renderGraph() {
     .call(
       d3
         .drag()
-        .on("start", (event, n) => {
-          if (!event.active && !reducedMotion)
-            simulation.alphaTarget(0.06).restart();
-          n.fx = n.x;
-          n.fy = n.y;
+        .filter((event, n) => !event.button && !layout.isIsolated(n))
+        .on("start", () => {
+          $("tooltip").hidden = true;
         })
         .on("drag", (event, n) => {
-          n.fx = event.x;
-          n.fy = event.y;
-          n.x = event.x;
-          n.y = event.y;
+          layout.drag(n, event.x, event.y);
           tick();
         })
-        .on("end", (event) => {
-          if (!event.active) simulation.alphaTarget(0);
+        .on("end", (event, n) => {
+          layout.release(n);
+          tick();
+          if (lastFitRadius !== layout.outerRadius) fitGraph(false);
         }),
     );
-  nodeSelection
-    .select(".node-halo")
-    .transition()
-    .duration(duration)
-    .attr("r", (n) => radius(n) + 3);
+  // Shrink immediately; animate growth only. Final radii were already used
+  // for collision separation, so growing marks cannot overlap their neighbours.
+  for (const [klass, padding] of [
+    [".node-halo", 3],
+    [".node-core", 0],
+  ]) {
+    nodeSelection
+      .select(klass)
+      .interrupt()
+      .each(function (n) {
+        const mark = d3.select(this),
+          target = radius(n) + padding;
+        const previous = Number(mark.attr("r")) || 0;
+        if (target > previous)
+          mark.transition().duration(duration).attr("r", target);
+        else mark.attr("r", target);
+      });
+  }
   nodeSelection
     .select(".node-core")
     .attr("fill", nodeColor)
-    .attr("stroke", "#fff")
-    .transition()
-    .duration(duration)
-    .attr("r", radius);
+    .attr("stroke", "#fff");
   nodeSelection
     .select(".node-initials")
     .text((n) => initials(n.name))
@@ -668,30 +650,39 @@ function renderGraph() {
   focusStyles();
   updateStats();
   renderLegend();
+  if (layoutChanged && lastFitRadius !== layout.outerRadius) fitGraph(false);
 }
 
 function fitGraph(animated = true) {
   const visible = nodes.filter((n) => visibleIds?.has(n.id));
   if (!visible.length) return;
-  const x0 = d3.min(visible, (n) => n.x - radius(n)) - 24,
-    x1 = d3.max(visible, (n) => n.x + radius(n)) + 24;
-  const y0 = d3.min(visible, (n) => n.y - radius(n)) - 28,
-    y1 = d3.max(visible, (n) => n.y + radius(n)) + 28;
-  const topSpace = width <= 720 ? 100 : 70;
-  const bottomSpace = width <= 720 ? 220 : 120;
+  const small = visible.length <= 3;
+  const extent = layout.outerRadius;
+  const x0 = small ? d3.min(visible, (n) => n.x - radius(n)) - 20 : -extent;
+  const x1 = small ? d3.max(visible, (n) => n.x + radius(n)) + 20 : extent;
+  const y0 = small ? d3.min(visible, (n) => n.y - radius(n)) - 20 : -extent;
+  const y1 = small ? d3.max(visible, (n) => n.y + radius(n)) + 20 : extent;
+  // A circular graph uses the full height; the wide-screen controls occupy
+  // the otherwise empty right margin rather than covering the network.
+  const wide = width >= 1100;
+  const rightSpace = wide ? 320 : 24;
+  const topSpace = width <= 720 ? 105 : 70;
+  const bottomSpace = width <= 720 ? 225 : wide ? 28 : 165;
   const availableHeight = Math.max(120, height - topSpace - bottomSpace);
+  const availableWidth = Math.max(150, width - rightSpace - 24);
   const scale =
     Math.min(
-      (width - 35) / Math.max(100, x1 - x0),
+      availableWidth / Math.max(100, x1 - x0),
       availableHeight / Math.max(100, y1 - y0),
-      2.1,
-    ) * 0.95;
+      2.8,
+    ) * 0.98;
   const transform = d3.zoomIdentity
     .translate(
-      width / 2 - ((x0 + x1) / 2) * scale,
+      24 + availableWidth / 2 - ((x0 + x1) / 2) * scale,
       topSpace + availableHeight / 2 - ((y0 + y1) / 2) * scale,
     )
     .scale(scale);
+  lastFitRadius = layout.outerRadius;
   (animated && !reducedMotion ? svg.transition().duration(400) : svg).call(
     zoom.transform,
     transform,
@@ -1158,6 +1149,10 @@ function wireControls() {
       percent: 1,
       weights: { ...DEFAULT_WEIGHTS },
       rankMetric: "degree",
+      selected: null,
+      selectedPair: null,
+      hovered: null,
+      neighborsOnly: false,
     });
     $("department").value = "";
     $("organisation").value = "";
@@ -1169,13 +1164,7 @@ function wireControls() {
       $(`weight-${key}`).value = value;
       $(`value-${key}`).textContent = `${value} %`;
     }
-    simulation.stop();
-    nodes.forEach((n) => {
-      n.x = n.home.x;
-      n.y = n.home.y;
-      n.fx = n.network_metrics.degree ? null : n.home.x;
-      n.fy = n.network_metrics.degree ? null : n.home.y;
-    });
+    layout.reset(nodes);
     setTask("collaborators");
     setInspector(false);
     setFilters(false);
@@ -1298,6 +1287,9 @@ async function start() {
       },
       get preparation() {
         return preparation;
+      },
+      get layout() {
+        return layout;
       },
       get connectionCounts() {
         return connectionCounts;
