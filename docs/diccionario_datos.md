@@ -17,8 +17,12 @@ Objeto raíz `{"nodes": [...]}`. Este formato se usa para análisis y trazabilid
 | `biography` | texto o null | Perfil profesional. |
 | `education` | lista de textos | Formación; estructura adicional pendiente del piloto. |
 | `external_ids` | objeto | ORCID y enlaces explícitos de Scopus, Scholar y CTI Vitae si existen. |
-| `citations` | entero >= 0 o null | No inferir a partir de un bloque ambiguo de la página. |
-| `citation_source` | texto o null | Proveedor del valor de citas. |
+| `citations` | entero >= 0 o null | Citas del panel general de la persona `cite-hallindex` publicado en CRIS. |
+| `h_index` | entero >= 0 o null | Índice h del mismo panel general. |
+| `citation_source` | texto o null | Scopus o PlumX según la explicación de CRIS; CRIS UTEC si no declara proveedor. |
+| `citation_source_url` | URL o null | Página CRIS donde se observó el valor; no implica consulta directa al proveedor. |
+| `citation_window` | texto o null | `all` identifica el panel general; no se toma h5/h10 como total. |
+| `citation_basis` | texto o null | Explicación de cálculo publicada en CRIS, basada en publicaciones de Pure. |
 | `citation_retrieved_at` | fecha o null | Consulta de ese valor; necesaria si hay citas. |
 | `source_url` | URL | Perfil canónico CRIS en español. |
 | `retrieved_at` | fecha UTC | Momento de adquisición, no de transformación. |

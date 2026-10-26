@@ -108,6 +108,9 @@ HTTP directo y los navegadores automatizados nuevos no obtuvieron acceso en las
 pruebas. Los requisitos, límites y variantes están en
 [Acceso y reproducción](docs/acceso_y_reproduccion.md).
 Los adaptadores de publicaciones, proyectos y Scholar siguen pendientes.
+El parser ya recoge las métricas generales publicadas por CRIS: 78 perfiles con
+citas e índice h, 76 de Scopus y dos de PlumX, conservando proveedor y fecha.
+Los 26 perfiles sin ese panel mantienen `null`.
 
 ## Formato del profesor
 

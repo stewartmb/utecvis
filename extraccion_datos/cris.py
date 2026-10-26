@@ -7,6 +7,8 @@ from urllib.parse import parse_qs, urljoin, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup, NavigableString
 
+ADAPTER_VERSION = "0.3.0-cris-person-metrics"
+
 
 def clean_text(value):
     return " ".join(unicodedata.normalize("NFC", value).split())
@@ -73,6 +75,49 @@ def section_text(soup, title):
     return list(dict.fromkeys(values))
 
 
+def profile_metrics(soup, url, retrieved_at):
+    """Solo el panel general de la persona, sin sumar citas de publicaciones."""
+    result = {
+        "citations": None,
+        "h_index": None,
+        "citation_source": None,
+        "citation_source_url": None,
+        "citation_retrieved_at": None,
+        "citation_window": None,
+        "citation_basis": None,
+    }
+    panel = soup.select_one('#cite-hallindex[role="tabpanel"]')
+    if panel is None:
+        return result
+    for item in panel.select(".metrics-list > li"):
+        label, value = item.select_one(".source"), item.select_one(".value")
+        if label is None or value is None:
+            continue
+        field = {"citas": "citations", "índice h": "h_index"}.get(
+            clean_text(label.get_text()).casefold()
+        )
+        text = clean_text(value.get_text())
+        if field and re.fullmatch(r"\d+|\d{1,3}(?:[., ]\d{3})+", text):
+            result[field] = int(re.sub(r"[., ]", "", text))
+    if result["citations"] is not None or result["h_index"] is not None:
+        explanation = panel.parent.select_one("#search_index_metric_explanation")
+        basis = clean_text(explanation.get_text(" ", strip=True)) if explanation else None
+        source = "CRIS UTEC"
+        if basis:
+            for provider in ("Scopus", "PlumX"):
+                if provider.casefold() in basis.casefold():
+                    source = provider
+                    break
+        result.update(
+            citation_source=source,
+            citation_source_url=canonical_profile_url(url),
+            citation_retrieved_at=retrieved_at,
+            citation_window="all",
+            citation_basis=basis,
+        )
+    return result
+
+
 def parse_profile(html, url, retrieved_at, snapshot):
     soup = BeautifulSoup(html, "html.parser")
     heading = soup.find("h1")
@@ -136,10 +181,7 @@ def parse_profile(html, url, retrieved_at, snapshot):
         "biography": " ".join(section_text(soup, "Perfil profesional")) or None,
         "education": section_text(soup, "Educación"),
         "external_ids": identifiers,
-        # No extraer un entero cercano a 'Citas': hay varias ventanas y proveedores.
-        "citations": None,
-        "citation_source": None,
-        "citation_retrieved_at": None,
+        **profile_metrics(soup, url, retrieved_at),
         "source_url": canonical_profile_url(url),
         "retrieved_at": retrieved_at,
         "raw_snapshot": snapshot,

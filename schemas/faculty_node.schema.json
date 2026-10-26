@@ -62,6 +62,43 @@
       ],
       "minimum": 0
     },
+    "h_index": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "citation_source": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "citation_source_url": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "citation_retrieved_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "citation_window": {
+      "enum": [
+        "all",
+        null
+      ]
+    },
+    "citation_basis": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "source_url": {
       "type": "string",
       "pattern": "^https://cris\\.utec\\.edu\\.pe/es/persons/"

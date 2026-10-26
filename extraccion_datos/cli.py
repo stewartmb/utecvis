@@ -13,7 +13,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from jsonschema import ValidationError
 
-from extraccion_datos.cris import next_page, parse_profile, profile_links
+from extraccion_datos.cris import ADAPTER_VERSION, next_page, parse_profile, profile_links
 from extraccion_datos.http import AcquisitionError, SourceClient
 from extraccion_datos.quality import example_compatible, validate_nodes
 from extraccion_datos.storage import ROOT, utc_now, write_json
@@ -32,7 +32,7 @@ def new_run(root, mode):
         "status": "running",
         "coverage": "pilot",
         "directory_complete": False,
-        "adapter_version": "0.2.0-browser-pilot",
+        "adapter_version": ADAPTER_VERSION,
         "pages": [],
         "profiles": [],
         "errors": [],
@@ -186,7 +186,12 @@ def transform(args):
         except (ValueError, OSError) as exc:
             errors.append({"url": profile["url"], "error": str(exc)})
     out = root / "data/interim" / manifest["run_id"]
-    report = {"parse_errors": errors, "run_id": manifest["run_id"]}
+    report = {
+        "parse_errors": errors,
+        "run_id": manifest["run_id"],
+        "transformation_version": ADAPTER_VERSION,
+        "transformed_at": utc_now(),
+    }
     try:
         report.update(validate_nodes(nodes))
     except (ValueError, ValidationError) as exc:

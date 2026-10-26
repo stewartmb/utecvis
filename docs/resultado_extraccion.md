@@ -20,12 +20,23 @@ Ejecutado el 25/10/2026 (America/Lima). Identificador UTC: `20261026T002944Z-5ad
 | Intereses de investigación | 90 | 14 |
 | Correo público | 104 | 0 |
 | Imagen | 102 | 2 |
+| Citas e índice h generales publicados en CRIS | 78 | 26 |
 
 Se revisó el HTML de los perfiles sin departamento y sin sección de intereses:
 las ausencias corresponden al contenido de la fuente. Los grupos se identifican
 por afiliaciones cuyo nombre empieza por «Grupo de» o «Centro de»; institutos y
 facultades no se reclasifican automáticamente como grupos o departamentos.
-Las citas siguen en `null` en los 104 perfiles: no se intentó extraer esas métricas.
+La transformación inicial omitía las métricas y dejaba las citas en `null`.
+Se corrigió el parser y se reprocesaron los mismos 104 HTML, sin nuevas descargas:
+78 perfiles publican el panel general `cite-hallindex`, con citas e índice h.
+Sus 78 pares de valores se contrastaron con el HTML guardado; 76 declaran Scopus
+y dos PlumX como proveedor. Los otros 26 perfiles no contienen ese panel.
+
+Se conserva proveedor, URL de CRIS, explicación de cálculo y fecha de adquisición
+original. El valor general se calcula sobre publicaciones almacenadas en Pure;
+no debe presentarse como el total de un perfil completo consultado en Scopus o
+Scholar. No se suman citas de artículos ni se usan los paneles h5/h10 como total.
+Los conteos de proveedores distintos requieren análisis separado.
 
 Enlaces externos conservados: ORCID 96,
 Scopus 81,

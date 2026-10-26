@@ -62,7 +62,7 @@ Prioridad sugerida:
 | 1 | Proyectos CRIS, participantes y roles | Encontrar participación conjunta. | Adaptador pendiente. |
 | 2 | ORCID y enlaces de Scopus/Scholar | Resolver identidad y cruzar fuentes. | Extracción de enlaces inicial. |
 | 2 | Biografía y formación | Explorar afinidades y enriquecer detalles. | Parser inicial; validar en piloto. |
-| 3 | Citas e índice h por proveedor | Enriquecer perfil, sin sustituir las relaciones. | Pendiente de evaluar acceso/cobertura. |
+| 3 | Citas e índice h por proveedor | Enriquecer perfil, sin sustituir las relaciones. | Panel general CRIS extraído en 78 perfiles; consultas externas pendientes. |
 
 Buscar en Google Scholar no basta para afirmar que dos nombres son la misma
 persona. Verificar ORCID, afiliación, áreas, publicaciones y coautores. Guardar

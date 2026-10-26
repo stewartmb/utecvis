@@ -70,11 +70,15 @@
     "verified_snapshots": 107,
     "duration_seconds": 605.3,
     "quality": {
+      "parse_errors": [],
+      "run_id": "20261026T002944Z-5adcab54",
+      "transformation_version": "0.3.0-cris-person-metrics",
+      "transformed_at": "2026-10-26T00:51:56.701934+00:00",
       "node_count": 104,
       "missing_department": 9,
       "missing_research_groups": 51,
       "missing_research_areas": 14,
-      "missing_citations": 104
+      "missing_citations": 26
     },
     "missing_email": 0,
     "missing_image": 2,
@@ -87,7 +91,11 @@
     "transport": "safari",
     "initial_session": "human_prepared",
     "acquisition": "python_apple_events",
-    "raw_hashes_verified": true
+    "raw_hashes_verified": true,
+    "citation_sources": {
+      "Scopus": 76,
+      "PlumX": 2
+    }
   },
   "access_condition": "Safari abierto con una pestaña CRIS admitida y permisos Apple Events; la sesión puede caducar."
 }
