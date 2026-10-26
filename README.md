@@ -134,6 +134,7 @@ sitio externo esté disponible.
 
 ## Documentación
 
+- [Investigación de métodos y prueba de la API](docs/investigacion_acceso.md)
 - [Acceso y reproducción con Python](docs/acceso_y_reproduccion.md)
 - [Arquitectura y buenas prácticas](docs/arquitectura.md)
 - [Plan de extracción por hitos](docs/plan_extraccion.md)
