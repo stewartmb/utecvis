@@ -3,9 +3,11 @@
 ## Vía comprobada: Safari abierto en macOS
 
 El 25/10/2026 se comprobó una adquisición ejecutada enteramente por Python:
-`run --transport safari --limit 5` recorrió las tres páginas del directorio,
-descubrió 104 perfiles y descargó, normalizó y exportó cinco perfiles sin errores.
-Manifiesto del piloto: `20261026T002845Z-643d8b32` (fechas internas en UTC).
+`run --transport safari --all` recorrió las tres páginas del directorio y descargó,
+normalizó y exportó **104 perfiles**, sin errores. Los hashes de los 107 documentos
+se verificaron. Manifiesto completo: `20261026T002944Z-5adcab54` (UTC).
+Antes se comprobó el piloto de cinco: `20261026T002845Z-643d8b32`.
+Ver [resultado y calidad](resultado_extraccion.md).
 
 `SafariClient` usa `subprocess` y AppleScript mediante `/usr/bin/osascript` para
 navegar y leer el DOM. Reutiliza la sesión del Safari que ya admite CRIS. No

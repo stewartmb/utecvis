@@ -7,8 +7,9 @@ pruebas sintéticas, base Flask y comprobaciones automáticas.
 
 La estructura está preparada. Además del piloto asistido inicial, se comprobó
 un piloto de cinco perfiles adquirido, normalizado y exportado por Python mediante
-la sesión admitida de Safari. El censo de 104 perfiles está en ejecución. La
-visualización final sigue pendiente; ver `acceso_y_reproduccion.md`.
+la sesión admitida de Safari. El censo de 104 perfiles está descargado, normalizado
+y exportado sin errores. La visualización final sigue pendiente; ver
+`resultado_extraccion.md` y `acceso_y_reproduccion.md`.
 
 ## Hito 1. Resolver acceso y validar un piloto real
 
@@ -24,9 +25,11 @@ visualización final sigue pendiente; ver `acceso_y_reproduccion.md`.
 **Criterio de cierre:** los campos del piloto coinciden con los perfiles y se
 puede explicar cada ausencia. Los selectores se corrigieron y comprobaron contra los cinco perfiles reales:
 correo visible, enlaces de Scholar regionales, Scopus específico y límites de las
-secciones. Hace falta ampliar la muestra durante la adquisición autónoma.
+secciones. Posteriormente, el mismo ETL adquirió los 104 perfiles desde Safari.
 
 ## Hito 2. Completar el directorio
+
+**Listo:** 104/104 perfiles, tres páginas, 107 snapshots con hash verificado.
 
 1. Recorrer todas las páginas y deduplicar por URL canónica.
 2. Comparar el total descubierto con el total declarado por el directorio.

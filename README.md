@@ -86,11 +86,14 @@ Una descarga 403 queda como ejecución fallida y devuelve código de salida 1.
 El pipeline no publica silenciosamente una muestra como si fuera el directorio
 completo. La transformación puede repetirse sobre los snapshots sin acceder a la web.
 
-**Acceso comprobado con Python y Safari:** el piloto del 25/10/2026 recorrió las
-tres páginas, encontró 104 perfiles y descargó, normalizó y exportó cinco de ellos
-sin errores. Safari debe tener una pestaña CRIS con acceso admitido. Python utiliza
-Apple Events para crear una pestaña de trabajo en esa misma sesión, sin exportar
-cookies. La navegación la realiza el programa, sin un agente.
+**Extracción completa comprobada con Python y Safari:** el 25/10/2026 se
+recorrieron las tres páginas del directorio y se descargaron, normalizaron y
+exportaron **104 perfiles**, sin errores ni duplicados. Se verificaron los hashes
+de los 107 documentos originales. [Resultado y calidad](docs/resultado_extraccion.md).
+
+Safari debe tener una pestaña CRIS con acceso admitido. Python utiliza Apple Events
+para crear una pestaña de trabajo en esa misma sesión, sin exportar cookies. La
+navegación la realiza el programa, sin un agente.
 
 En macOS, con Safari preparado:
 
@@ -136,6 +139,7 @@ sitio externo esté disponible.
 
 ## Documentación
 
+- [Resultado de la extracción y calidad](docs/resultado_extraccion.md)
 - [Investigación de métodos y prueba de la API](docs/investigacion_acceso.md)
 - [Acceso y reproducción con Python](docs/acceso_y_reproduccion.md)
 - [Arquitectura y buenas prácticas](docs/arquitectura.md)

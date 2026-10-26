@@ -33,7 +33,7 @@ Por tanto, instalar Playwright no garantiza acceso a un sitio con esa protecció
 | curl_cffi 0.16.3, perfil Safari | 403, `cf-mitigated: challenge`, cero enlaces de profesores. |
 | GET `https://cris.utec.edu.pe/ws/api/persons?size=1` | 401, `application/problem+json`, sin encabezado de desafío Cloudflare. |
 | Navegador de la aplicación | Directorio de 104 perfiles y piloto de cinco perfiles descargados. |
-| Python + Apple Events + Safari ya admitido | Piloto completo: tres páginas, 104 URLs descubiertas, cinco perfiles descargados, normalizados y exportados. |
+| Python + Apple Events + Safari ya admitido | Censo completo: tres páginas, 104 perfiles descargados, normalizados y exportados sin errores. |
 
 Las pruebas curl se hicieron sin una sesión previa, sin proxies y sin servicios
 de resolución de desafíos. No permiten concluir que todas las configuraciones
@@ -68,8 +68,8 @@ las indicaciones del curso.
 
 ## Estado
 
-La adquisición Python con una sesión admitida de Safari quedó comprobada con un
-piloto completo de cinco perfiles. El censo se ejecuta con el mismo programa y
-`--all`. La preparación inicial de la sesión sigue siendo humana; no se garantiza
+La adquisición Python con una sesión admitida de Safari quedó comprobada con el
+censo completo de 104 perfiles, después del piloto de cinco. Se utilizó el mismo
+programa y `--all`. La preparación inicial de la sesión sigue siendo humana; no se garantiza
 que su admisión permanezca válida indefinidamente. Ver los comandos y requisitos
 en `acceso_y_reproduccion.md`.

@@ -60,5 +60,34 @@
       ]
     }
   ],
-  "autonomous_access_confirmed": false
+  "autonomous_access_confirmed": true,
+  "python_safari": {
+    "run_id": "20261026T002944Z-5adcab54",
+    "coverage": "full",
+    "directory_pages": 3,
+    "discovered_count": 104,
+    "downloaded_profiles": 104,
+    "verified_snapshots": 107,
+    "duration_seconds": 605.3,
+    "quality": {
+      "node_count": 104,
+      "missing_department": 9,
+      "missing_research_groups": 51,
+      "missing_research_areas": 14,
+      "missing_citations": 104
+    },
+    "missing_email": 0,
+    "missing_image": 2,
+    "external_ids": {
+      "google_scholar_url": 77,
+      "scopus_url": 81,
+      "orcid": 96,
+      "ctivitae_url": 41
+    },
+    "transport": "safari",
+    "initial_session": "human_prepared",
+    "acquisition": "python_apple_events",
+    "raw_hashes_verified": true
+  },
+  "access_condition": "Safari abierto con una pestaña CRIS admitida y permisos Apple Events; la sesión puede caducar."
 }

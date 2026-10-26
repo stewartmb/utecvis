@@ -61,7 +61,8 @@ de datos. Falta de información no significa ausencia demostrada de colaboració
 ## Evolución prevista
 
 Ya se comprobó un piloto de cinco perfiles adquirido y exportado por Python
-mediante Safari, además del piloto asistido inicial. Se completa el censo y se añaden
+mediante Safari, además del piloto asistido inicial. Se completó el censo de 104
+perfiles; las siguientes etapas añaden
 adaptadores de publicaciones/proyectos. Solo entonces se cierra la regla de aristas.
 La interfaz mantendrá una red principal con vista general, zoom/filtros y detalles
 bajo demanda. La animación acompañará cambios de foco y selección.
