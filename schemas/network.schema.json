@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UtecVis frozen network",
+  "type": "object",
+  "required": [
+    "nodes",
+    "edges",
+    "metadata"
+  ],
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "image_url",
+          "department",
+          "email",
+          "research_groups",
+          "research_areas",
+          "citations",
+          "source_url",
+          "retrieved_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4503599627370495
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "image_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "department": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "research_groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "research_areas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "citations": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "h_index": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "citation_source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "citation_source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "citation_retrieved_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "citation_window": {
+            "enum": [
+              "all",
+              null
+            ]
+          },
+          "citation_basis": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": "string",
+            "pattern": "^https://cris\\.utec\\.edu\\.pe/es/persons/"
+          },
+          "retrieved_at": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "relation",
+          "relations",
+          "counts",
+          "weight",
+          "evidence"
+        ],
+        "properties": {
+          "source": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4503599627370495
+          },
+          "target": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4503599627370495
+          },
+          "relation": {
+            "enum": [
+              "coauthorship",
+              "shared_project",
+              "shared_publication",
+              "academic_collaboration"
+            ]
+          },
+          "relations": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "coauthorship",
+                "shared_project",
+                "shared_publication"
+              ]
+            }
+          },
+          "counts": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "weight": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "record_id",
+                "relation",
+                "source_url",
+                "basis",
+                "listing_sources",
+                "detail_sources"
+              ],
+              "properties": {
+                "record_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_url": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "basis": {
+                  "enum": [
+                    "explicit_authors",
+                    "project_participation",
+                    "profile_publication_association"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "dataset_version",
+        "coverage",
+        "collection_run",
+        "details_run"
+      ]
+    }
+  }
+}

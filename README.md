@@ -142,6 +142,8 @@ sitio externo esté disponible.
 
 ## Documentación
 
+- [Pipeline de listas, evidencia y congelación de la red](docs/pipeline_red.md)
+
 - [Auditoría de información adicional para la red](docs/auditoria_cris.md)
 - [Resultado de la extracción y calidad](docs/resultado_extraccion.md)
 - [Investigación de métodos y prueba de la API](docs/investigacion_acceso.md)

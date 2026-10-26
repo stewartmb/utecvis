@@ -30,11 +30,14 @@ def fingerprint_concepts(scope):
     for button in scope.select("[data-concept-uuid][data-rank-value]"):
         label = button.select_one(".concept")
         if label:
+            group = button.find_parent("div", class_="person-fingerprint-thesauri")
+            subject = group.find(["h2", "h3", "h4"]) if group else None
             result.append(
                 {
                     "concept_id": button["data-concept-uuid"],
                     "label": clean_text(label.get_text()),
                     "weight": float(button["data-rank-value"]),
+                    "subject": clean_text(subject.get_text()) if subject else None,
                 }
             )
     return result
