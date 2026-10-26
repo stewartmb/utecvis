@@ -1,11 +1,449 @@
 <!doctype html>
 <html lang="es">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>UtecVis</title>
-<main>
-  <h1>UtecVis</h1>
-  <p>Red académica de investigadores de UTEC.</p>
-  <p>Los datos están disponibles en <a href="/api/network">/api/network</a>. La interfaz interactiva D3 está pendiente.</p>
-</main>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#173d43" />
+    <title>UTECVis · Conexiones que abren posibilidades</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23173d43'/%3E%3Cpath d='M9 23L16 8L25 20L9 23' fill='none' stroke='%239ad9bd' stroke-width='2'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
+    <script
+      defer
+      src="{{ url_for('static', filename='vendor/d3.min.js') }}"
+    ></script>
+    <script
+      type="module"
+      src="{{ url_for('static', filename='app.js') }}"
+    ></script>
+  </head>
+  <body>
+    <header class="masthead">
+      <a class="brand" href="/" aria-label="UTECVis, inicio">
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+          <path d="M9 29L19 9L32 26L9 29" />
+          <circle cx="9" cy="29" r="4" />
+          <circle cx="19" cy="9" r="4" />
+          <circle cx="32" cy="26" r="4" />
+        </svg>
+        <span
+          >UTEC<span class="brand-light">Vis</span
+          ><small>RED ACADÉMICA</small></span
+        >
+      </a>
+      <div class="page-title">
+        <h1>Conexiones que abren posibilidades</h1>
+        <p>Explora la colaboración. Descubre afinidades.</p>
+      </div>
+      <div class="header-actions">
+        <span class="data-badge"><i></i> Datos CRIS · UTEC</span
+        ><button id="method-open" class="button subtle">
+          Cómo interpretar <span aria-hidden="true">↗</span>
+        </button>
+      </div>
+    </header>
+    <main class="workspace">
+      <aside class="controls" aria-label="Controles de exploración">
+        <div class="eyebrow">EXPLORA LA RED</div>
+        <nav class="task-nav" aria-label="Tareas analíticas">
+          <button data-task="collaborators" class="task active">
+            <span class="task-number">01</span
+            ><span>Colaboradores<small>Quiénes investigan juntos</small></span
+            ><span class="task-arrow">↗</span>
+          </button>
+          <button data-task="bridges" class="task">
+            <span class="task-number">02</span
+            ><span>Puentes<small>Quiénes conectan la red</small></span
+            ><span class="task-arrow">↗</span>
+          </button>
+          <button data-task="affinities" class="task">
+            <span class="task-number">03</span
+            ><span>Afinidades<small>Nuevas conexiones posibles</small></span
+            ><span class="task-arrow">↗</span>
+          </button>
+          <button data-task="communities" class="task">
+            <span class="task-number">04</span
+            ><span
+              >Grupos y comunidades<small
+                >Cómo se organiza la investigación</small
+              ></span
+            ><span class="task-arrow">↗</span>
+          </button>
+        </nav>
+        <div class="control-section">
+          <label for="search">Encontrar investigador</label>
+          <div class="search-wrap">
+            <span aria-hidden="true">⌕</span
+            ><input
+              id="search"
+              type="search"
+              placeholder="Nombre o apellido"
+              autocomplete="off"
+              aria-controls="search-results"
+            />
+          </div>
+          <div id="search-results" class="search-results" hidden></div>
+          <label for="department">Departamento</label
+          ><select id="department">
+            <option value="">Todos los departamentos</option>
+          </select>
+          <label for="organisation">Grupo o centro</label
+          ><select id="organisation">
+            <option value="">Todos los grupos y centros</option>
+          </select>
+          <div class="select-row">
+            <div>
+              <label for="metric">Tamaño del nodo</label
+              ><select id="metric">
+                <option value="degree">Colaboradores</option>
+                <option value="weighted_degree">Trabajos compartidos</option>
+                <option value="betweenness">Intermediación</option>
+              </select>
+            </div>
+            <div>
+              <label for="color">Color</label
+              ><select id="color">
+                <option value="department">Departamento</option>
+                <option value="community">Comunidad</option>
+              </select>
+            </div>
+          </div>
+          <button id="neighbors-only" class="button neighbor-button" disabled>
+            Ver solo su vecindario
+          </button>
+        </div>
+        <section
+          class="prediction-controls"
+          aria-label="Controles de recomendaciones"
+        >
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">DESCUBRIR AFINIDADES</span>
+              <p>Conexiones sugeridas</p>
+            </div>
+            <button
+              id="prediction-toggle"
+              class="switch"
+              role="switch"
+              aria-checked="false"
+              aria-label="Mostrar conexiones sugeridas"
+            >
+              <span></span>
+            </button>
+          </div>
+          <div id="prediction-options" class="prediction-options" hidden>
+            <label for="top-percent" class="range-label"
+              >Mostrar el mejor
+              <strong id="top-percent-value">1 %</strong></label
+            >
+            <input
+              id="top-percent"
+              type="range"
+              min="0"
+              max="10"
+              step="0.1"
+              value="1"
+              aria-label="Top porcentaje de parejas candidatas"
+            />
+            <div class="range-ends">
+              <span>Top 0 %</span><span>Top 10 %</span>
+            </div>
+            <p id="candidate-count" class="microcopy">Preparando candidatos…</p>
+            <div class="weights-heading">
+              ¿Qué quieres priorizar?<span>Suman 100 %</span>
+            </div>
+            <div class="weight-control">
+              <label for="weight-thematic"
+                ><span class="signal-dot thematic"></span>Afinidad
+                temática<strong id="value-thematic">60 %</strong></label
+              ><input
+                id="weight-thematic"
+                data-weight="thematic"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value="60"
+              />
+            </div>
+            <div class="weight-control">
+              <label for="weight-institutional"
+                ><span class="signal-dot institutional"></span>Cercanía
+                institucional<strong id="value-institutional"
+                  >30 %</strong
+                ></label
+              ><input
+                id="weight-institutional"
+                data-weight="institutional"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value="30"
+              />
+            </div>
+            <div class="weight-control">
+              <label for="weight-structural"
+                ><span class="signal-dot structural"></span>Proximidad en la
+                red<strong id="value-structural">10 %</strong></label
+              ><input
+                id="weight-structural"
+                data-weight="structural"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value="10"
+              />
+            </div>
+            <p class="model-note">
+              Un ranking para explorar.<br /><strong
+                >No es una probabilidad de colaboración.</strong
+              >
+            </p>
+          </div>
+          <p id="prediction-status" class="microcopy">
+            Activa las sugerencias para explorar nuevas parejas.
+          </p>
+        </section>
+        <div class="controls-bottom">
+          <button id="reset" class="button reset-button">
+            ↺ Restablecer vista
+          </button>
+          <p>
+            Métricas de la red observada completa.<br />Los filtros cambian lo
+            que ves.
+          </p>
+        </div>
+      </aside>
+      <section
+        class="network-panel"
+        aria-label="Red interactiva de investigadores"
+      >
+        <div class="network-heading">
+          <div>
+            <div class="eyebrow" id="view-eyebrow">
+              01 / COLABORACIÓN OBSERVADA
+            </div>
+            <h2 id="view-title">Una comunidad de investigadores</h2>
+            <p id="view-description">
+              Selecciona un nodo para conocer a sus colaboradores.
+            </p>
+          </div>
+          <button
+            id="fit"
+            class="icon-button"
+            title="Ajustar red a la pantalla"
+            aria-label="Ajustar red a la pantalla"
+          >
+            ⤢
+          </button>
+        </div>
+        <div class="network-stats" id="network-stats" aria-live="polite"></div>
+        <div id="graph-container">
+          <svg
+            id="network-svg"
+            role="img"
+            aria-label="Red de colaboración de 104 investigadores"
+          ></svg>
+          <div id="graph-message" class="graph-message">Preparando la red…</div>
+          <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+          <div class="graph-hint">
+            Arrastra el fondo para moverte · Rueda para acercar · Clic para
+            explorar
+          </div>
+        </div>
+        <div class="graph-key">
+          <span><i class="key-line observed"></i>Conexión registrada</span
+          ><span><i class="key-line association"></i>Publicación asociada</span
+          ><span><i class="key-line predicted"></i>Sugerencia</span
+          ><span id="metric-key">Tamaño: colaboradores distintos</span>
+        </div>
+        <details class="color-legend" open>
+          <summary id="legend-title">Departamentos</summary>
+          <div id="color-legend"></div>
+        </details>
+      </section>
+      <aside
+        id="inspector"
+        class="inspector"
+        aria-label="Detalles e insights"
+        aria-live="polite"
+      >
+        <div class="loading-placeholder">Cargando investigadores…</div>
+      </aside>
+    </main>
+    <footer class="footer">
+      <span
+        >104 perfiles del directorio CRIS. Una ausencia de vínculo aquí no
+        implica ausencia de colaboración externa.</span
+      ><a href="#" id="footer-method">Datos, método y decisiones</a>
+    </footer>
+    <dialog id="method-dialog">
+      <div class="dialog-heading">
+        <div>
+          <div class="eyebrow">LEER LA RED</div>
+          <h2>Qué ves y por qué</h2>
+        </div>
+        <button
+          id="method-close"
+          class="icon-button"
+          aria-label="Cerrar explicación"
+        >
+          ×
+        </button>
+      </div>
+      <div class="method-grid">
+        <section>
+          <h3>Cuatro preguntas, una red</h3>
+          <ol>
+            <li>
+              <strong>Colaboradores:</strong> ¿quién tiene más colaboradores o
+              trabajos compartidos?
+            </li>
+            <li>
+              <strong>Puentes:</strong> ¿quién conecta partes de la red y
+              departamentos?
+            </li>
+            <li>
+              <strong>Afinidades:</strong> ¿qué parejas sin vínculo registrado
+              son candidatas y por qué?
+            </li>
+            <li>
+              <strong>Comunidades:</strong> ¿qué agrupaciones existen y cómo se
+              relacionan con los grupos institucionales?
+            </li>
+          </ol>
+        </section>
+        <section>
+          <h3>Panorama → filtrar → detalle</h3>
+          <p>
+            Empieza con toda la cohorte. Acerca, busca y filtra sin perder el
+            contexto. Selecciona una persona o una línea para consultar la
+            evidencia. Las transiciones ayudan a reconocer lo que cambia.
+          </p>
+          <p>
+            <strong>Alcance:</strong> 104 perfiles, 74 pares conectados. La red
+            representa únicamente las conexiones identificadas dentro de esta
+            cohorte.
+          </p>
+        </section>
+        <section>
+          <h3>Las conexiones existentes</h3>
+          <p>
+            <strong>Coautoría:</strong> autores individuales identificados por
+            URL CRIS u ORCID.
+            <strong>Proyecto compartido:</strong> participantes de un mismo
+            proyecto. <strong>Publicación asociada:</strong> un trabajo aparece
+            en ambos perfiles, pero su autoría individual no está completamente
+            desglosada.
+          </p>
+          <p>
+            El peso cuenta registros distintos, deduplicados por DOI o URL. Una
+            pareja puede tener varios tipos. Las 432 publicaciones asociadas de
+            la pareja de Física no son 432 coautorías individuales comprobadas.
+          </p>
+        </section>
+        <section>
+          <h3>Color, tamaño y posición</h3>
+          <p>
+            <strong>Color:</strong> departamento o comunidad; sirve para
+            reconocer pertenencias. <strong>Tamaño:</strong> crece con la
+            métrica elegida, con un mínimo para conservar visibles los aislados.
+            <strong>Grosor:</strong> escala logarítmica para que un vínculo de
+            gran peso no oculte los demás.
+          </p>
+          <p>
+            La posición utiliza fuerzas de las conexiones observadas. La
+            distancia visual no es una medida de afinidad. Agregar sugerencias
+            no modifica el layout.
+          </p>
+        </section>
+        <section>
+          <h3>Tres señales, pesos exploratorios</h3>
+          <p>
+            <strong>Temática:</strong> embeddings multilingües de intereses y
+            hasta 20 conceptos de huella; la biografía se utiliza solo si faltan
+            ambas fuentes. No volvemos a sumar títulos y abstracts: podrían
+            duplicar la evidencia de las huellas.
+          </p>
+          <p>
+            <strong>Institución:</strong> mismo grupo = 1; centro/instituto =
+            0,7; departamento = 0,4. Solo se toma el nivel más específico. Son
+            reglas heurísticas, no pesos aprendidos.
+          </p>
+          <p>
+            <strong>Red:</strong> RWR, con 90 % de continuación y 10 % de
+            reinicio. Promediamos ambas direcciones y normalizamos. No atraviesa
+            componentes desconectados.
+          </p>
+        </section>
+        <section>
+          <h3>Cómo interpretar una sugerencia</h3>
+          <p>
+            La puntuación combina las tres señales con los pesos seleccionados.
+            Si una señal no está disponible se renormalizan las restantes y se
+            indica la cobertura. Los valores son simétricos y las conexiones
+            existentes se excluyen del ranking.
+          </p>
+          <p>
+            <strong>Top %</strong> es una fracción de las parejas sin conexión
+            dentro de los filtros actuales. No es un umbral de probabilidad.
+            Solo aparecen puntuaciones positivas. Una pareja seleccionada puede
+            destacarse aunque esté fuera del Top visible.
+          </p>
+          <p>
+            Los escenarios son exploratorios: no se ha demostrado que predigan
+            colaboraciones futuras. Las centralidades se calculan exclusivamente
+            sobre la red observada completa, nunca sobre sugerencias.
+          </p>
+        </section>
+        <section class="method-references">
+          <h3>Fundamentos y límites</h3>
+          <p>
+            El grado cuenta vecinos distintos; el grado ponderado suma trabajos
+            compartidos. La intermediación se calcula sin pesos: una
+            colaboración frecuente no se interpreta como una distancia más
+            larga. Las comunidades usan modularidad ponderada. Tener
+            intermediación alta no demuestra por sí solo colaboración entre
+            departamentos; el detalle muestra también los vecinos de otros
+            departamentos.
+          </p>
+          <p>
+            Las huellas y los intereses tienen cobertura desigual. Un término
+            genérico o una biografía breve pueden inducir afinidades débiles.
+            Consulta las fuentes de cada sugerencia.
+          </p>
+          <p>
+            <a
+              href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0111928"
+              target="_blank"
+              rel="noreferrer"
+              >CollaborationViz</a
+            >
+            ·
+            <a
+              href="https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+              target="_blank"
+              rel="noreferrer"
+              >Modelo multilingüe</a
+            >
+            ·
+            <a
+              href="https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.link_analysis.pagerank_alg.pagerank.html"
+              target="_blank"
+              rel="noreferrer"
+              >Personalized PageRank</a
+            >
+          </p>
+        </section>
+      </div>
+    </dialog>
+    <noscript
+      >La visualización necesita JavaScript. La API de datos está disponible en
+      /api/network.</noscript
+    >
+  </body>
 </html>
