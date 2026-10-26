@@ -1,6 +1,10 @@
 // D3 only: forces, circular boundary and quadtree collision correction.
 // This module changes presentation coordinates, never observed metrics or scores.
-export function createNetworkLayout(d3, nodeRadius) {
+export function createNetworkLayout(d3, nodeRadius, options = {}) {
+  const notify = options.onTick || (() => {});
+  const animated = Boolean(options.onTick) && !options.reducedMotion;
+  let dragged = null;
+  let ringOrder = [];
   const gap = 9;
   let items = [],
     links = [],
@@ -39,6 +43,10 @@ export function createNetworkLayout(d3, nodeRadius) {
 
   function anchorRing() {
     const isolated = items.filter(isIsolated);
+    const order = new Map(ringOrder.map((id, i) => [id, i]));
+    isolated.sort(
+      (a, b) => (order.get(a.id) ?? a.id) - (order.get(b.id) ?? b.id),
+    );
     isolated.forEach((n, i) => {
       const angle = -Math.PI / 2 + (2 * Math.PI * i) / isolated.length;
       n.fx = ringRadius * Math.cos(angle);
@@ -139,10 +147,12 @@ export function createNetworkLayout(d3, nodeRadius) {
     if (next === signature) return false;
     signature = next;
     simulation?.stop();
+    dragged = null;
     items = [...visible].sort((a, b) => a.id - b.id);
     links = observedLinks.map((e) => ({ source: e.source, target: e.target }));
     const connected = items.filter((n) => !isIsolated(n));
     const isolated = items.filter(isIsolated);
+    ringOrder = isolated.map((n) => n.id);
     const ringNodeRadius = d3.max(isolated, nodeRadius) || 0;
     const footprint = d3.sum(connected, (n) => (nodeRadius(n) + gap) ** 2);
     const requiredCore = Math.sqrt(footprint / 0.72);
@@ -186,14 +196,15 @@ export function createNetworkLayout(d3, nodeRadius) {
       .forceSimulation(items)
       .randomSource(d3.randomLcg(0.42))
       .alphaDecay(0.035)
-      .velocityDecay(0.42)
+      .velocityDecay(0.5)
       .force(
         "link",
         d3
           .forceLink(links)
           .id((n) => n.id)
           .distance((e) => nodeRadius(e.source) + nodeRadius(e.target) + 85)
-          .strength(0.23),
+          .strength(0.32)
+          .iterations(2),
       )
       .force(
         "charge",
@@ -206,9 +217,19 @@ export function createNetworkLayout(d3, nodeRadius) {
           .strength(1)
           .iterations(8),
       )
-      .force("x", d3.forceX(0).strength(0.018))
-      .force("y", d3.forceY(0).strength(0.018))
+      .force("x", d3.forceX(0).strength(0.008))
+      .force("y", d3.forceY(0).strength(0.008))
       .force("boundary", enforceBounds)
+      .on("tick", () => {
+        // forceCollide is a soft velocity constraint. Project positions after
+        // integration, before painting, so a pinned node cannot cover another.
+        project();
+        notify();
+      })
+      .on("end", () => {
+        project();
+        notify();
+      })
       .stop();
     settle();
     return true;
@@ -243,24 +264,105 @@ export function createNetworkLayout(d3, nodeRadius) {
     });
   }
 
+  function project() {
+    enforceBounds();
+    separate(80);
+    if (maxOverlap() > 0.05) separate(250);
+  }
+
+  // The same integration path is used by animation and deterministic tests.
+  function advance(iterations = 1) {
+    for (let i = 0; i < iterations; i++) {
+      simulation?.tick();
+      project();
+    }
+    notify();
+  }
+
+  function startDrag(n) {
+    if (!items.includes(n) || (dragged && dragged !== n)) return false;
+    dragged = n;
+    n.fx = n.x;
+    n.fy = n.y;
+    n.vx = n.vy = 0;
+    if (!isIsolated(n)) {
+      simulation.alpha(Math.max(simulation.alpha(), 0.32)).alphaTarget(0.2);
+      if (animated) simulation.restart();
+    }
+    return true;
+  }
+
+  function dragRing(n, x, y) {
+    // An isolated node can travel around the perimeter. Adjacent ring nodes
+    // make room along the circle; no fictional link to the core is introduced.
+    const angle = Math.atan2(y, x);
+    const tau = Math.PI * 2;
+    const others = items.filter((p) => isIsolated(p) && p !== n);
+    const relative = (p) => (Math.atan2(p.y, p.x) - angle + tau) % tau;
+    others.sort((a, b) => relative(a) - relative(b));
+    const ringSize = d3.max([n, ...others], nodeRadius) || 0;
+    const step =
+      2 * Math.asin(Math.min(1, (2 * ringSize + gap + 0.1) / (2 * ringRadius)));
+    const position = (p, phi) => {
+      p.x = p.fx = ringRadius * Math.cos(phi);
+      p.y = p.fy = ringRadius * Math.sin(phi);
+      p.vx = p.vy = 0;
+    };
+    position(n, angle);
+    let previous = 0;
+    others.forEach((p, i) => {
+      const phi = Math.max(
+        previous + step,
+        Math.min(relative(p), tau - (others.length - i) * step),
+      );
+      position(p, angle + phi);
+      previous = phi;
+    });
+  }
+
   function drag(n, x, y) {
-    if (isIsolated(n)) return;
-    n.x = x;
-    n.y = y;
-    n.fx = x;
-    n.fy = y;
+    if (dragged !== n && !startDrag(n)) return;
+    if (isIsolated(n)) {
+      dragRing(n, x, y);
+      notify();
+      return;
+    }
+    n.x = n.fx = x;
+    n.y = n.fy = y;
     confine(n);
-    separate(250);
+    project();
+    // Reduced motion follows the pointer immediately, without a cooling timer.
+    if (!animated) advance(options.reducedMotion ? 8 : 1);
+    else notify();
   }
 
   function release(n) {
-    if (isIsolated(n)) return;
-    n.fx = null;
-    n.fy = null;
-    settle();
+    if (dragged !== n) return;
+    dragged = null;
+    if (isIsolated(n)) {
+      const relative = (p) =>
+        (Math.atan2(p.y, p.x) + Math.PI / 2 + 2 * Math.PI) % (2 * Math.PI);
+      ringOrder = items
+        .filter(isIsolated)
+        .sort((a, b) => relative(a) - relative(b))
+        .map((p) => p.id);
+      anchorRing();
+      notify();
+      return;
+    }
+    n.fx = n.fy = null;
+    simulation.alphaTarget(0);
+    if (animated) simulation.restart();
+    else {
+      settle();
+      notify();
+    }
   }
 
   function reset(all = items) {
+    simulation?.stop();
+    dragged = null;
+    ringOrder = [];
     signature = "";
     all.forEach((n) => {
       n.x = NaN;
@@ -273,10 +375,15 @@ export function createNetworkLayout(d3, nodeRadius) {
 
   return {
     configure,
+    startDrag,
+    advance,
     drag,
     release,
     reset,
     isIsolated,
+    get dragging() {
+      return dragged !== null;
+    },
     get ringRadius() {
       return ringRadius;
     },

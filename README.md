@@ -92,7 +92,14 @@ Los nodos sin conexiones visibles forman un círculo equidistante en el perímet
 al recibir una sugerencia pasan al interior. D3 usa fuerzas de enlaces observados,
 repulsión y colisión, actualizando el radio de colisión en cada escenario. Un límite
 circular mantiene los nodos dentro y una corrección con `d3.quadtree` deja separación
-entre sus círculos. Los escenarios densos amplían el espacio de cálculo y se encuadran
+entre sus círculos, también en cada fotograma del arrastre. Al mover un nodo,
+D3 reactiva la simulación: los enlaces registrados actúan como resortes y sus
+vecinos acompañan el movimiento mientras mantienes pulsado. Al soltar, la fricción
+(`velocityDecay = 0,50`) y el enfriamiento estabilizan el grupo suavemente, sin fijar
+el nodo de forma permanente. Los aislados se pueden reordenar por el perímetro;
+los demás dejan espacio sobre el círculo. Con movimiento reducido la respuesta es
+inmediata, sin animación de asentamiento. Las sugerencias no ejercen fuerza.
+Los escenarios densos amplían el espacio de cálculo y se encuadran
 automáticamente. El ajuste usa toda la altura disponible; en pantallas amplias los
 controles de sugerencias ocupan el margen derecho. El grosor de las aristas va de
 2,2 a 13 px en escala logarítmica y permanece legible al ajustar el zoom.
@@ -101,7 +108,10 @@ Zoom, selección y etiquetas evitan superponer
 La interfaz prioriza el grafo, con navegación y controles flotantes compactos;
 las explicaciones extensas permanecen en el diálogo de método y en los detalles.
 Referencias de interacción: [D3 ForceGraph](https://old.observablehq.com/@d3/force-directed-graph-component)
-y [Gephi](https://gephi.org/quickstart/).
+y [Gephi](https://gephi.org/quickstart/). Fuerzas y arrastre según las API oficiales de
+[D3 Simulation](https://d3js.org/d3-force/simulation),
+[D3 Collide](https://d3js.org/d3-force/collide) y
+[D3 Link](https://d3js.org/d3-force/link).
 
 ## Fundamento de las sugerencias
 

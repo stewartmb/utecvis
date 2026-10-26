@@ -88,13 +88,43 @@ def run(url, channel):
             circle["x"] + circle["width"] / 2, circle["y"] + circle["height"] / 2
         )
         page.mouse.down()
+        drag_neighbors = page.evaluate(
+            """id => {
+            const peers=window.utecvis.observed.flatMap(e => e.source===Number(id)?[e.target]:e.target===Number(id)?[e.source]:[]);
+            return Object.fromEntries(window.utecvis.nodes.filter(n=>peers.includes(n.id)).map(n=>[n.id,[n.x,n.y]]));
+        }""",
+            dragged_id,
+        )
         page.mouse.move(
             viewport["x"] + viewport["width"] - 3,
             viewport["y"] + viewport["height"] - 3,
             steps=8,
         )
-        page.mouse.up()
+        # Keep holding: the spring forces must move linked neighbours now,
+        # rather than waiting for mouseup to recompute the entire layout.
+        live_drag = page.evaluate(
+            """async before => {
+            let worstOverlap=0, moved=0;
+            for(let frame=0;frame<24;frame++) {
+                await new Promise(requestAnimationFrame);
+                worstOverlap=Math.max(worstOverlap,window.utecvis.layout.maxOverlap);
+                for(const n of window.utecvis.nodes) {
+                    const p=before[n.id];
+                    if(p)moved=Math.max(moved,Math.hypot(n.x-p[0],n.y-p[1]));
+                }
+            }
+            return {worstOverlap,moved,holding:window.utecvis.layout.dragging};
+        }""",
+            drag_neighbors,
+        )
+        assert live_drag["holding"] and live_drag["moved"] > 5
+        assert live_drag["worstOverlap"] < 0.06
         verify_layout(page)
+        page.mouse.up()
+        page.wait_for_timeout(100)
+        verify_layout(page)
+        assert not page.evaluate("window.utecvis.layout.dragging")
+        assert page.locator("#inspector-panel").is_hidden()
         page.locator("g.node").first.hover()
         assert page.locator("#tooltip").is_visible()
 
@@ -317,6 +347,7 @@ def run(url, channel):
                     "candidate_pairs": 5283,
                     "top_1_percent": 53,
                     "dynamic_node_sizes": "PASS",
+                    "live_drag_and_neighbors": "PASS",
                     "viewports": [1920, 1440, 1280, 390],
                     "collision_and_boundary": "PASS",
                     "errors": errors,

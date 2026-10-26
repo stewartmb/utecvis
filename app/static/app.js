@@ -400,7 +400,7 @@ function setupGraph() {
   svg.on("click", (event) => {
     if (event.target === svg.node()) clearSelection();
   });
-  layout = createNetworkLayout(d3, radius);
+  layout = createNetworkLayout(d3, radius, { onTick: tick, reducedMotion });
   new ResizeObserver(() => {
     const w = container.clientWidth,
       h = container.clientHeight;
@@ -594,16 +594,24 @@ function renderGraph() {
     .call(
       d3
         .drag()
-        .filter((event, n) => !event.button && !layout.isIsolated(n))
-        .on("start", () => {
+        .filter((event) => !event.button && !layout.dragging)
+        .clickDistance(4)
+        .on("start", function (event, n) {
           $("tooltip").hidden = true;
+          state.hovered = n.id;
+          d3.select(this).classed("dragging", true).raise();
+          layout.startDrag(n);
+          focusStyles();
         })
         .on("drag", (event, n) => {
           layout.drag(n, event.x, event.y);
           tick();
         })
-        .on("end", (event, n) => {
+        .on("end", function (event, n) {
+          d3.select(this).classed("dragging", false);
+          state.hovered = null;
           layout.release(n);
+          focusStyles();
           tick();
           if (lastFitRadius !== layout.outerRadius) fitGraph(false);
         }),

@@ -121,3 +121,63 @@ test("filtros, nodo único y restablecimiento reproducible", () => {
     initial,
   );
 });
+
+test("al mantener un nodo arrastrado, sus vecinos siguen el enlace antes de soltar", () => {
+  const nodes = [1, 2, 3, 4].map((id) => ({ id, network_metrics: { degree: id < 3 ? 1 : 0 } }));
+  const radius = () => 15;
+  let frames = 0;
+  const layout = createNetworkLayout(d3, radius, { onTick: () => frames++, reducedMotion: true });
+  const counts = new Map(nodes.map((n) => [n.id, { total: n.network_metrics.degree }]));
+  layout.configure(nodes, [{ source: 1, target: 2 }], counts);
+  const a = nodes[0], b = nodes[1];
+  const before = { x: b.x, y: b.y };
+  const target = { x: a.x + 150, y: a.y - 100 };
+  layout.startDrag(a);
+  layout.drag(a, target.x, target.y);
+  for (let i = 0; i < 30; i++) {
+    layout.advance();
+    verify(layout, radius);
+  }
+  assert.ok(Math.hypot(b.x - before.x, b.y - before.y) > 20);
+  assert.ok((b.x - before.x) * 150 + (b.y - before.y) * -100 > 0);
+  assert.equal(a.x, a.fx);
+  assert.equal(a.y, a.fy);
+  assert.ok(frames > 0);
+  layout.release(a);
+  assert.equal(a.fx, null);
+  assert.equal(layout.dragging, false);
+  verify(layout, radius);
+});
+
+test("arrastrar sobre otro nodo no permite solaparlo en ningún paso de la simulación", () => {
+  const { layout, update, radius } = fixture();
+  update(10);
+  const connected = layout.nodes.filter((n) => !layout.isIsolated(n));
+  const a = connected[0], b = connected[1];
+  layout.startDrag(a);
+  for (let i = 0; i < 12; i++) {
+    layout.drag(a, b.x, b.y);
+    layout.advance(2);
+    verify(layout, radius);
+  }
+  layout.release(a);
+  verify(layout, radius);
+});
+
+test("los aislados se pueden reordenar por el perímetro sin cubrirse ni crear enlaces", () => {
+  const { layout, update, radius } = fixture();
+  update();
+  const n = layout.nodes.find((n) => layout.isIsolated(n));
+  const old = { x: n.x, y: n.y };
+  layout.startDrag(n);
+  for (let i = 0; i < 30; i++) {
+    const angle = i * 0.35;
+    layout.drag(n, 1e5 * Math.cos(angle), 1e5 * Math.sin(angle));
+    assert.ok(layout.maxOverlap < 0.06);
+    assert.ok(Math.abs(Math.hypot(n.x, n.y) - layout.ringRadius) < 0.001);
+  }
+  layout.release(n);
+  verify(layout, radius);
+  assert.ok(Math.hypot(n.x - old.x, n.y - old.y) > 50);
+  assert.equal(n.network_metrics.degree, 0);
+});

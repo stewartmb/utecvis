@@ -1503,3 +1503,16 @@ dialog::backdrop {
     display: none;
   }
 }
+
+/* Drag feedback stays on the mark; it adds no permanent controls. */
+g.node {
+  cursor: grab;
+}
+g.node.dragging,
+g.node.dragging .node-core {
+  cursor: grabbing;
+}
+g.node.dragging .node-halo {
+  stroke: var(--ink);
+  stroke-opacity: 0.3;
+}
