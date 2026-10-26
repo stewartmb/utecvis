@@ -1,4 +1,4 @@
-"""Adaptador inicial de CRIS; verificar selectores contra el piloto real antes del censo."""
+"""Extracción de identidad, afiliación básica y métricas de cada perfil CRIS."""
 
 import hashlib
 import re
@@ -6,8 +6,6 @@ import unicodedata
 from urllib.parse import parse_qs, urljoin, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup, NavigableString
-
-ADAPTER_VERSION = "0.3.0-cris-person-metrics"
 
 
 def clean_text(value):
@@ -59,14 +57,26 @@ def section_text(soup, title):
     )
     if heading is None:
         return []
-    scope = heading.find_parent(class_="keyword-group") or heading.find_parent("section") or soup
+    scope = (
+        heading.find_parent(class_="keyword-group")
+        or heading.find_parent("section")
+        or soup
+    )
     values = []
     for element in heading.next_elements:
         if element is heading or element in heading.descendants:
             continue
         if scope not in element.parents:
             break
-        if getattr(element, "name", None) in ("h1", "h2", "h3", "h4", "footer", "nav", "form"):
+        if getattr(element, "name", None) in (
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "footer",
+            "nav",
+            "form",
+        ):
             break
         if type(element) is NavigableString:
             value = clean_text(str(element))
@@ -101,7 +111,9 @@ def profile_metrics(soup, url, retrieved_at):
             result[field] = int(re.sub(r"[., ]", "", text))
     if result["citations"] is not None or result["h_index"] is not None:
         explanation = panel.parent.select_one("#search_index_metric_explanation")
-        basis = clean_text(explanation.get_text(" ", strip=True)) if explanation else None
+        basis = (
+            clean_text(explanation.get_text(" ", strip=True)) if explanation else None
+        )
         source = "CRIS UTEC"
         if basis:
             for provider in ("Scopus", "PlumX"):
@@ -118,13 +130,16 @@ def profile_metrics(soup, url, retrieved_at):
     return result
 
 
-def parse_profile(html, url, retrieved_at, snapshot):
+def parse_profile(html, url, retrieved_at):
     soup = BeautifulSoup(html, "html.parser")
     heading = soup.find("h1")
     if heading is None or not clean_text(heading.get_text(" ", strip=True)):
         raise ValueError(f"Perfil sin nombre reconocible: {url}")
     name = clean_text(heading.get_text(" ", strip=True))
-    if any(marker in name.casefold() for marker in ("access denied", "just a moment", "forbidden")):
+    if any(
+        marker in name.casefold()
+        for marker in ("access denied", "just a moment", "forbidden")
+    ):
         raise ValueError(f"La página parece ser un bloqueo: {url}")
     affiliation_scope = soup.select_one(".header.person-details") or soup
     organisations = list(
@@ -135,7 +150,9 @@ def parse_profile(html, url, retrieved_at, snapshot):
         )
     )
     departments = [x for x in organisations if x.casefold().startswith("departamento")]
-    groups = [x for x in organisations if x.casefold().startswith(("grupo de", "centro de"))]
+    groups = [
+        x for x in organisations if x.casefold().startswith(("grupo de", "centro de"))
+    ]
     email = None
     for mail in soup.select('a[href^="mailto:"], a.email'):
         candidate = (
@@ -184,5 +201,4 @@ def parse_profile(html, url, retrieved_at, snapshot):
         **profile_metrics(soup, url, retrieved_at),
         "source_url": canonical_profile_url(url),
         "retrieved_at": retrieved_at,
-        "raw_snapshot": snapshot,
     }

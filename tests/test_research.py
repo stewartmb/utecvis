@@ -1,8 +1,13 @@
 from bs4 import BeautifulSoup
 
-from extraccion_datos.collect_details import detail_plan
-from extraccion_datos.collect_network import following_page, listing_count
-from extraccion_datos.research import detail_enrichment, iso_date, parse_listing, person_lookup
+from extraccion_datos.pipeline import detail_plan, following_page, listing_count
+from extraccion_datos.research import (
+    detail_enrichment,
+    iso_date,
+    linked_people,
+    parse_listing,
+    person_lookup,
+)
 
 OWNER = "https://cris.utec.edu.pe/es/persons/persona-ejemplo/"
 OTHER = "https://cris.utec.edu.pe/es/persons/otra-persona/"
@@ -15,7 +20,6 @@ ENTRY = {
     "url": OWNER + "publications/",
     "owner_url": OWNER,
     "retrieved_at": "2026-10-25T12:00:00+00:00",
-    "snapshot": "test.html",
 }
 
 
@@ -63,8 +67,25 @@ def test_author_orcid_can_resolve_an_unlinked_author_without_name_guessing():
     <li><a rel="Person" href="{OWNER}">Persona, E.</a></li><li>Nombre completamente diferente</li>
     </ul></div></main><meta name="citation_author" content="Nombre completamente diferente">
     <meta name="citation_author_orcid" content="0000-0000-0000-0001">"""
-    record = detail_enrichment(html, {**ENTRY, "url": URL}, {"kind": "publications"}, NODES)
+    record = detail_enrichment(
+        html, {**ENTRY, "url": URL}, {"kind": "publications"}, NODES
+    )
     resolved = next(p for p in record["people"] if p["faculty_id"] == 2)
     assert resolved["identity_method"] == "orcid"
     assert iso_date("1/09/22") == "2022-09-01"
     assert iso_date("…") is None
+
+
+def test_people_resolve_only_explicit_profile_links_and_ignore_footer_people():
+    url = "https://cris.utec.edu.pe/es/persons/persona-ficticia/"
+    html = """<div class="introduction"><ul class="relations persons">
+    <li><a rel="Person" href="/es/persons/persona-ficticia/">Nombre abreviado</a>
+        <span class="dimmed">(Investigador principal)</span></li>
+    <li>Persona ficticia<span class="dimmed">(Coinvestigador)</span></li>
+    </ul></div><footer><a rel="Person" href="/es/persons/otra/">Otra</a></footer>"""
+    people = linked_people(BeautifulSoup(html, "html.parser"), {url: 123})
+    assert len(people) == 2
+    assert people[0]["faculty_id"] == 123
+    assert people[0]["role"] == "Investigador principal"
+    assert people[1]["faculty_id"] is None
+    assert people[1]["name"] == "Persona ficticia"

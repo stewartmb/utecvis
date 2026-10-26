@@ -20,10 +20,13 @@ class SafariClient(SourceClient):
 
     def _script(self, script, *arguments):
         if sys.platform != "darwin":
-            raise AcquisitionError("El transporte Safari requiere macOS y Safari abierto.")
+            raise AcquisitionError(
+                "El transporte Safari requiere macOS y Safari abierto."
+            )
         try:
             result = subprocess.run(
                 ["/usr/bin/osascript", "-e", script, *map(str, arguments)],
+                check=False,
                 capture_output=True,
                 text=True,
                 timeout=self.settings["timeout_seconds"] + 10,
@@ -129,8 +132,13 @@ class SafariClient(SourceClient):
                     raise AcquisitionError(
                         "Safari volvió a mostrar una verificación de Cloudflare."
                     )
-                if metadata["ready"] and metadata["state"] in ("interactive", "complete"):
-                    html = self._read("JSON.stringify(document.documentElement.outerHTML)")
+                if metadata["ready"] and metadata["state"] in (
+                    "interactive",
+                    "complete",
+                ):
+                    html = self._read(
+                        "JSON.stringify(document.documentElement.outerHTML)"
+                    )
                     return html.encode("utf-8"), {
                         # Apple Events entrega el DOM; no permite observar el status HTTP.
                         "status": None,

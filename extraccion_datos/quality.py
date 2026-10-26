@@ -22,8 +22,16 @@ NODE_SCHEMA = {
         "image_url": {"type": ["string", "null"]},
         "department": {"type": ["string", "null"]},
         "email": {"type": ["string", "null"]},
-        "research_groups": {"type": "array", "items": {"type": "string"}, "uniqueItems": True},
-        "research_areas": {"type": "array", "items": {"type": "string"}, "uniqueItems": True},
+        "research_groups": {
+            "type": "array",
+            "items": {"type": "string"},
+            "uniqueItems": True,
+        },
+        "research_areas": {
+            "type": "array",
+            "items": {"type": "string"},
+            "uniqueItems": True,
+        },
         "citations": {"type": ["integer", "null"], "minimum": 0},
         "h_index": {"type": ["integer", "null"], "minimum": 0},
         "citation_source": {"type": ["string", "null"]},
@@ -31,7 +39,10 @@ NODE_SCHEMA = {
         "citation_retrieved_at": {"type": ["string", "null"]},
         "citation_window": {"enum": ["all", None]},
         "citation_basis": {"type": ["string", "null"]},
-        "source_url": {"type": "string", "pattern": "^https://cris\\.utec\\.edu\\.pe/es/persons/"},
+        "source_url": {
+            "type": "string",
+            "pattern": "^https://cris\\.utec\\.edu\\.pe/es/persons/",
+        },
         "retrieved_at": {"type": "string", "minLength": 1},
     },
 }
@@ -78,25 +89,17 @@ def validate_network(network):
         seen.add(pair)
         if not edge.get("relation") or not edge.get("evidence"):
             raise ValueError("Toda arista requiere tipo y evidencia.")
+        if edge.get("weight") != len(edge["evidence"]):
+            raise ValueError("El peso debe corresponder a la cantidad de evidencias.")
+        if len({e["record_id"] for e in edge["evidence"]}) != len(edge["evidence"]):
+            raise ValueError("Evidencia duplicada en una conexión.")
+        counts = {}
+        for evidence in edge["evidence"]:
+            kind = evidence["relation"]
+            if kind not in {"coauthorship", "shared_project", "shared_publication"}:
+                raise ValueError("Tipo de conexión desconocido.")
+            counts[kind] = counts.get(kind, 0) + 1
+        if counts != edge.get("counts") or sorted(counts) != edge.get("relations"):
+            raise ValueError("Los tipos y contadores no coinciden con la evidencia.")
     report["edge_count"] = len(network["edges"])
     return report
-
-
-def example_compatible(nodes):
-    """Exporta exactamente los ocho campos del ejemplo; no inventa datos ausentes."""
-    validate_nodes(nodes)
-    return {
-        "nodes": [
-            {
-                "image_url": n["image_url"] or "",
-                "department": n["department"] or "Unknown Department",
-                "email": n["email"] or "",
-                "research_groups": "; ".join(n["research_groups"]),
-                "research_areas": "; ".join(n["research_areas"]),
-                "citations": n["citations"],
-                "id": n["id"],
-                "name": n["name"],
-            }
-            for n in nodes
-        ]
-    }

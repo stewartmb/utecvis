@@ -1,0 +1,616 @@
+{
+  "organisations": [
+    {
+      "id": "organisation:0f1ada7cbf8d5c52b163",
+      "name": "Departamento de Ciencias",
+      "type": "department",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/departamento-de-ciencias/",
+      "aliases": [
+        "Departamento de Ciencias"
+      ],
+      "faculty_ids": [
+        277855349929637,
+        690665364259461,
+        1283532130317697,
+        1949386253228600,
+        2119010179925877,
+        2311386652628542,
+        2978425736181103,
+        3071965310824629,
+        3227850239169198,
+        3855441276896904,
+        4303929339676381,
+        4434188556569255
+      ]
+    },
+    {
+      "id": "organisation:10bd18b5aa091a4aab7b",
+      "name": "Departamento de Ingeniería Industrial y Gestión de la Ingeniería",
+      "type": "department",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/departamento-de-ingenier%C3%ADa-industrial-y-gesti%C3%B3n-de-la-ingenier%C3%ADa/",
+      "aliases": [
+        "Departamento de Ingeniería Industrial y Gestión de la Ingeniería"
+      ],
+      "faculty_ids": [
+        204309335274068,
+        245323246303095,
+        250303643023365,
+        349372305644751,
+        609695949922092,
+        963242131490883,
+        1417230581705628,
+        3492190784847096
+      ]
+    },
+    {
+      "id": "organisation:16a37ec8799729885259",
+      "name": "Grupo de Investigación en Innovación Educativa y Competencia Docente (INECOD)",
+      "type": "research_group",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/grupo-de-investigaci%C3%B3n-en-innovaci%C3%B3n-educativa-y-competencia-doce/",
+      "aliases": [
+        "Grupo de Investigación en Innovación Educativa y Competencia Docente (INECOD)"
+      ],
+      "faculty_ids": [
+        316425594635431
+      ]
+    },
+    {
+      "id": "organisation:1820372347e4e4104a38",
+      "name": "Grupo de Investigación en Algoritmos, Combinatoria y Teoría de la Computación (ALGCOMB)",
+      "type": "research_group",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/grupo-de-investigaci%C3%B3n-en-algoritmos-combinatoria-y-teor%C3%ADa-de-la-/",
+      "aliases": [
+        "Grupo de Investigación en Algoritmos, Combinatoria y Teoría de la Computación (ALGCOMB)"
+      ],
+      "faculty_ids": [
+        3090279878482488,
+        3854034562027354,
+        4475956984191155
+      ]
+    },
+    {
+      "id": "organisation:1e993a123a040748c091",
+      "name": "Grupo de Investigación en Seguridad Hídrica y Cambio Climático (SeHClim)",
+      "type": "research_group",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/grupo-de-investigaci%C3%B3n-en-seguridad-h%C3%ADdrica-y-cambio-clim%C3%A1tico-se/",
+      "aliases": [
+        "Grupo de Investigación en Seguridad Hídrica y Cambio Climático (SeHClim)"
+      ],
+      "faculty_ids": [
+        446121694402761,
+        4109660176087602
+      ]
+    },
+    {
+      "id": "organisation:3d5671a5f0ae2b15c105",
+      "name": "Departamento de Sistemas y Seguridad de la Información",
+      "type": "department",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/departamento-de-sistemas-y-seguridad-de-la-informaci%C3%B3n/",
+      "aliases": [
+        "Departamento de Sistemas y Seguridad de la Información"
+      ],
+      "faculty_ids": [
+        1559257680830646,
+        2804113850447349,
+        3021191472963493,
+        3139615316520497
+      ]
+    },
+    {
+      "id": "organisation:4556dd2c611b891081fc",
+      "name": "Grupo de Investigación en Infraestructura de Concreto Resiliente y Sostenible (ReSusCon)",
+      "type": "research_group",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/grupo-de-investigaci%C3%B3n-en-infraestructura-de-concreto-resiliente-/",
+      "aliases": [
+        "Grupo de Investigación en Infraestructura de Concreto Resiliente y Sostenible (ReSusCon)"
+      ],
+      "faculty_ids": [
+        2463658868972335,
+        3532834431132362,
+        4265236739812299
+      ]
+    },
+    {
+      "id": "organisation:51aef3ba6f62c3ecd9aa",
+      "name": "Departamento de Ingeniería Civil y Ambiental",
+      "type": "department",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/departamento-de-ingenier%C3%ADa-civil-y-ambiental/",
+      "aliases": [
+        "Departamento de Ingeniería Civil y Ambiental"
+      ],
+      "faculty_ids": [
+        446121694402761,
+        659152200893066,
+        771808258751874,
+        1031770028373470,
+        1422349660463381,
+        1864111357248771,
+        2183069323154651,
+        3532834431132362,
+        4031539890537125,
+        4109660176087602,
+        4265236739812299
+      ]
+    },
+    {
+      "id": "organisation:52ed4b0722a23c16d82e",
+      "name": "Departamento de Ingeniería Mecánica y de la Energía",
+      "type": "department",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/departamento-de-ingenier%C3%ADa-mec%C3%A1nica-y-de-la-energ%C3%ADa-2/",
+      "aliases": [
+        "Departamento de Ingeniería Mecánica y de la Energía"
+      ],
+      "faculty_ids": [
+        316041051884661,
+        1220245925687364,
+        1386648417585079,
+        1542972058334442,
+        1824693174503214,
+        1973806351557672,
+        2204785088540337,
+        3736928991801576,
+        3856459461463882,
+        4286483532377500
+      ]
+    },
+    {
+      "id": "organisation:5729a467e7721fe7ab9b",
+      "name": "Departamento de Ingeniería Electrónica y Mecatrónica",
+      "type": "department",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/departamento-de-ingenier%C3%ADa-electr%C3%B3nica-y-mecatr%C3%B3nica-2/",
+      "aliases": [
+        "Departamento de Ingeniería Electrónica y Mecatrónica"
+      ],
+      "faculty_ids": [
+        316425594635431,
+        388434044454632,
+        791824107665769,
+        1026527229383070,
+        1065241592179207,
+        1174126301694450,
+        1820964964584464,
+        2254581108631979,
+        3048892834618103,
+        3357962321014127,
+        4452487459494950
+      ]
+    },
+    {
+      "id": "organisation:5fe90876a661ce16b896",
+      "name": "Centro de Investigación en Bioingeniería - BIO",
+      "type": "research_center",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/centro-de-investigaci%C3%B3n-en-bioingenier%C3%ADa-bio/",
+      "aliases": [
+        "Centro de Investigación en Bioingeniería - BIO"
+      ],
+      "faculty_ids": [
+        316425594635431,
+        655650791895479,
+        709339713360280,
+        791824107665769,
+        1132117699057647,
+        1676009493098778,
+        1745516346752422,
+        1824693174503214,
+        2725206789673519,
+        2874682937713097,
+        3600282768594836,
+        4286483532377500
+      ]
+    },
+    {
+      "id": "organisation:627df3249df7365b91ee",
+      "name": "Departamento de Humanidades, Artes y Ciencias Sociales",
+      "type": "department",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/departamento-de-humanidades-artes-y-ciencias-sociales/",
+      "aliases": [
+        "Departamento de Humanidades, Artes y Ciencias Sociales"
+      ],
+      "faculty_ids": [
+        215926543160165,
+        2009595859496732,
+        2108549836296427,
+        2461683266606602,
+        2820473901099462,
+        3430576202208002,
+        3620524039426970,
+        3888944376233629
+      ]
+    },
+    {
+      "id": "organisation:69309d56cbb302aa49ed",
+      "name": "Departamento de Bioingeniería e Ingeniería Química",
+      "type": "department",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/departamento-de-bioingenier%C3%ADa-e-ingenier%C3%ADa-qu%C3%ADmica/",
+      "aliases": [
+        "Departamento de Bioingeniería e Ingeniería Química"
+      ],
+      "faculty_ids": [
+        443599661589500,
+        655650791895479,
+        709339713360280,
+        1132117699057647,
+        1398347694743654,
+        1605966752387110,
+        1745516346752422,
+        2725206789673519,
+        2726159664409473,
+        2874682937713097,
+        2880901842254107,
+        3092518597234819,
+        3600282768594836
+      ]
+    },
+    {
+      "id": "organisation:7131ee73580850b5fbb1",
+      "name": "Facultad de Computación",
+      "type": "faculty",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/facultad-de-computaci%C3%B3n/",
+      "aliases": [
+        "Facultad de Computación"
+      ],
+      "faculty_ids": [
+        1426080350212822
+      ]
+    },
+    {
+      "id": "organisation:8073097fc6fef5ed82b6",
+      "name": "Departamento de Física",
+      "type": "department",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/departamento-de-f%C3%ADsica/",
+      "aliases": [
+        "Departamento de Física"
+      ],
+      "faculty_ids": [
+        2503740915078290,
+        2642458664668561
+      ]
+    },
+    {
+      "id": "organisation:85f1ff501896512daad1",
+      "name": "Grupo de investigación en energía y minas",
+      "type": "research_group",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/grupo-de-investigaci%C3%B3n-en-energ%C3%ADa-y-minas/",
+      "aliases": [
+        "Grupo de investigación en energía y minas"
+      ],
+      "faculty_ids": [
+        316041051884661,
+        1542972058334442,
+        2204785088540337,
+        2880901842254107,
+        3736928991801576,
+        3856459461463882,
+        4419384509442163
+      ]
+    },
+    {
+      "id": "organisation:8893c91578ced6a87582",
+      "name": "Departamento de Ciencia de Computación y de Datos",
+      "type": "department",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/departamento-de-ciencia-de-computaci%C3%B3n-y-de-datos/",
+      "aliases": [
+        "Departamento de Ciencia de Computación y de Datos"
+      ],
+      "faculty_ids": [
+        462305729710427,
+        1154622566764802,
+        2094216284125581,
+        2463658868972335,
+        2497184571018067,
+        3020371856951898,
+        3090279878482488,
+        3361377028766980,
+        3444168654859275,
+        3548797188700689,
+        3854034562027354,
+        4121537786545010,
+        4441378109365754,
+        4475956984191155
+      ]
+    },
+    {
+      "id": "organisation:89bb8908202b28f64398",
+      "name": "Facultad de Ingeniería",
+      "type": "faculty",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/facultad-de-ingenier%C3%ADa/",
+      "aliases": [
+        "Facultad de Ingeniería"
+      ],
+      "faculty_ids": [
+        4419384509442163
+      ]
+    },
+    {
+      "id": "organisation:a1c266e7ba6bff05b2fb",
+      "name": "Centro de Investigación del Cemento y Concreto - CIC",
+      "type": "research_center",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/centro-de-investigaci%C3%B3n-del-cemento-y-concreto-cic/",
+      "aliases": [
+        "Centro de Investigación del Cemento y Concreto - CIC"
+      ],
+      "faculty_ids": [
+        1031770028373470,
+        3532834431132362
+      ]
+    },
+    {
+      "id": "organisation:a22ed2d3566fb73ad2f8",
+      "name": "Departamento de Negocios Digitales",
+      "type": "department",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/departamento-de-negocios-digitales/",
+      "aliases": [
+        "Departamento de Negocios Digitales"
+      ],
+      "faculty_ids": [
+        1444740697138321,
+        3551860697516322
+      ]
+    },
+    {
+      "id": "organisation:a35941dfbc072134c57e",
+      "name": "Grupo de Investigación en Diseño de Productos con Simulación Computacional (MSP)",
+      "type": "research_group",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/grupo-de-investigaci%C3%B3n-en-dise%C3%B1o-de-productos-con-simulaci%C3%B3n-comp/",
+      "aliases": [
+        "Grupo de Investigación en Diseño de Productos con Simulación Computacional (MSP)"
+      ],
+      "faculty_ids": [
+        316041051884661,
+        2204785088540337,
+        3227850239169198
+      ]
+    },
+    {
+      "id": "organisation:ade386909bd22cd85d02",
+      "name": "Universidad de Ingeniería y Tecnología - UTEC",
+      "type": "university",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/universidad-de-ingenier%C3%ADa-y-tecnolog%C3%ADa-utec/",
+      "aliases": [
+        "Universidad de Ingeniería y Tecnología - UTEC"
+      ],
+      "faculty_ids": [
+        204309335274068,
+        215926543160165,
+        245323246303095,
+        250303643023365,
+        277855349929637,
+        316041051884661,
+        316425594635431,
+        349372305644751,
+        388434044454632,
+        443599661589500,
+        446121694402761,
+        462305729710427,
+        609695949922092,
+        655650791895479,
+        657329302095773,
+        659152200893066,
+        690665364259461,
+        709339713360280,
+        771808258751874,
+        791824107665769,
+        963242131490883,
+        1026527229383070,
+        1031770028373470,
+        1065241592179207,
+        1132117699057647,
+        1154622566764802,
+        1174126301694450,
+        1220245925687364,
+        1283532130317697,
+        1386648417585079,
+        1398347694743654,
+        1422349660463381,
+        1426080350212822,
+        1444740697138321,
+        1542972058334442,
+        1559257680830646,
+        1605966752387110,
+        1676009493098778,
+        1745516346752422,
+        1820964964584464,
+        1824693174503214,
+        1864111357248771,
+        1949386253228600,
+        1973806351557672,
+        2009595859496732,
+        2094216284125581,
+        2108549836296427,
+        2119010179925877,
+        2183069323154651,
+        2204785088540337,
+        2254581108631979,
+        2311386652628542,
+        2366919292886211,
+        2461683266606602,
+        2463658868972335,
+        2497184571018067,
+        2503740915078290,
+        2633340805978341,
+        2642458664668561,
+        2725206789673519,
+        2726159664409473,
+        2804113850447349,
+        2820473901099462,
+        2874682937713097,
+        2880901842254107,
+        2978425736181103,
+        3015470338425530,
+        3020371856951898,
+        3021191472963493,
+        3048892834618103,
+        3071965310824629,
+        3090279878482488,
+        3092518597234819,
+        3139615316520497,
+        3227850239169198,
+        3341337285637380,
+        3357962321014127,
+        3361377028766980,
+        3430576202208002,
+        3444168654859275,
+        3492190784847096,
+        3532834431132362,
+        3548797188700689,
+        3551860697516322,
+        3560126152017664,
+        3600282768594836,
+        3620524039426970,
+        3736928991801576,
+        3854034562027354,
+        3855441276896904,
+        3856459461463882,
+        3888944376233629,
+        4031539890537125,
+        4109660176087602,
+        4121537786545010,
+        4265236739812299,
+        4286483532377500,
+        4303929339676381,
+        4419384509442163,
+        4434188556569255,
+        4441378109365754,
+        4452487459494950,
+        4475956984191155
+      ]
+    },
+    {
+      "id": "organisation:bceca9ac212895e8a846",
+      "name": "Grupo de Investigación en Inteligencia Artificial (GINIA)",
+      "type": "research_group",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/grupo-de-investigaci%C3%B3n-en-inteligencia-artificial-ginia/",
+      "aliases": [
+        "Grupo de Investigación en Inteligencia Artificial (GINIA)"
+      ],
+      "faculty_ids": [
+        1426080350212822,
+        3139615316520497,
+        3548797188700689,
+        4121537786545010
+      ]
+    },
+    {
+      "id": "organisation:c2466ff4b9725bb9475a",
+      "name": "Centro de Investigación y Tecnología del Agua - CITA",
+      "type": "research_center",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/httpscitautecedupe/",
+      "aliases": [
+        "Centro de Investigación y Tecnología del Agua - CITA"
+      ],
+      "faculty_ids": [
+        446121694402761,
+        659152200893066,
+        1422349660463381,
+        4109660176087602
+      ]
+    },
+    {
+      "id": "organisation:c404ab7b30c1e1be7b20",
+      "name": "Centro de Investigación y Conservación del Patrimonio",
+      "type": "research_center",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/centro-de-investigaci%C3%B3n-y-conservaci%C3%B3n-del-patrimonio/",
+      "aliases": [
+        "Centro de Investigación y Conservación del Patrimonio"
+      ],
+      "faculty_ids": [
+        1973806351557672,
+        2880901842254107,
+        3532834431132362,
+        3620524039426970
+      ]
+    },
+    {
+      "id": "organisation:c803ce67dc809dbeb731",
+      "name": "Grupo de Investigación en Robótica, Inteligencia Artificial y Control Avanzado (RIC)",
+      "type": "research_group",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/grupo-de-investigaci%C3%B3n-en-rob%C3%B3tica-inteligencia-artificial-y-cont/",
+      "aliases": [
+        "Grupo de Investigación en Robótica, Inteligencia Artificial y Control Avanzado (RIC)"
+      ],
+      "faculty_ids": [
+        316425594635431,
+        791824107665769,
+        1026527229383070,
+        1065241592179207,
+        1174126301694450,
+        1676009493098778,
+        3048892834618103,
+        3357962321014127
+      ]
+    },
+    {
+      "id": "organisation:d9bf268e6ea31c91149c",
+      "name": "Dirección General de Innovación e Investigación",
+      "type": "unit",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/direcci%C3%B3n-general-de-innovaci%C3%B3n-e-investigaci%C3%B3n/",
+      "aliases": [
+        "Dirección General de Innovación e Investigación"
+      ],
+      "faculty_ids": [
+        3560126152017664
+      ]
+    },
+    {
+      "id": "organisation:ddb6b0e94177cd327b27",
+      "name": "Grupo de Investigación en Analítica de Datos y Ciencias de Decisión (DADS)",
+      "type": "research_group",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/grupo-de-investigaci%C3%B3n-en-anal%C3%ADtica-de-datos-y-ciencias-de-decisi/",
+      "aliases": [
+        "Grupo de Investigación en Analítica de Datos y Ciencias de Decisión (DADS)"
+      ],
+      "faculty_ids": [
+        204309335274068,
+        245323246303095,
+        250303643023365,
+        1417230581705628,
+        2497184571018067,
+        3139615316520497,
+        3492190784847096,
+        3551860697516322
+      ]
+    },
+    {
+      "id": "organisation:e7e8a00ba7fe8f4cd3d2",
+      "name": "Instituto de Investigación para la Sostenibilidad de la Amazonía - ASRI",
+      "type": "institute",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/instituto-de-investigaci%C3%B3n-para-la-sostenibilidad-de-la-amazon%C3%ADa-/",
+      "aliases": [
+        "Instituto de Investigación para la Sostenibilidad de la Amazonía - ASRI"
+      ],
+      "faculty_ids": [
+        2366919292886211,
+        2633340805978341,
+        3015470338425530,
+        3092518597234819,
+        3341337285637380
+      ]
+    },
+    {
+      "id": "organisation:f0c945f4bb37dda79530",
+      "name": "Grupo de Investigación en Física Fundamental (GIFF)",
+      "type": "research_group",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/grupo-de-investigaci%C3%B3n-en-f%C3%ADsica-fundamental-giff/",
+      "aliases": [
+        "Grupo de Investigación en Física Fundamental (GIFF)"
+      ],
+      "faculty_ids": [
+        2642458664668561,
+        4303929339676381
+      ]
+    },
+    {
+      "id": "organisation:f1fe54c298196a0c54dd",
+      "name": "Grupo de Investigación en Sistemas Embebidos, Reconfigurables, Monitoreo Inteligente, y Comunicaciones (SERMIC)",
+      "type": "research_group",
+      "source_url": "https://cris.utec.edu.pe/es/organisations/grupo-de-investigaci%C3%B3n-en-sistemas-embebidos-reconfigurables-moni/",
+      "aliases": [
+        "Grupo de Investigación en Sistemas Embebidos, Reconfigurables, Monitoreo Inteligente, y Comunicaciones (SERMIC)"
+      ],
+      "faculty_ids": [
+        388434044454632,
+        1820964964584464
+      ]
+    }
+  ]
+}

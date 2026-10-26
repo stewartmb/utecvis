@@ -8,14 +8,87 @@ from urllib.parse import parse_qs, unquote, urljoin, urlsplit
 
 from bs4 import BeautifulSoup
 
-from extraccion_datos.audit import detail_record, fingerprint_concepts
-from extraccion_datos.collect_network import canonical_record
-from extraccion_datos.cris import clean_text, section_text
+from extraccion_datos.cris import canonical_profile_url, clean_text, section_text
+
+
+def fingerprint_concepts(scope):
+    result = []
+    if scope is None:
+        return result
+    for button in scope.select("[data-concept-uuid][data-rank-value]"):
+        label = button.select_one(".concept")
+        if label:
+            group = button.find_parent("div", class_="person-fingerprint-thesauri")
+            subject = group.find(["h2", "h3", "h4"]) if group else None
+            result.append(
+                {
+                    "concept_id": button["data-concept-uuid"],
+                    "label": clean_text(label.get_text()),
+                    "weight": float(button["data-rank-value"]),
+                    "subject": clean_text(subject.get_text()) if subject else None,
+                }
+            )
+    return result
+
+
+def linked_people(soup, known):
+    people = []
+    for item in soup.select(".introduction .relations.persons > li"):
+        link, role = item.select_one('a[rel="Person"]'), item.select_one(".dimmed")
+        role_text = clean_text(role.get_text()).strip(" ()") if role else None
+        name = clean_text(link.get_text()) if link else clean_text(item.get_text())
+        if not link and role:
+            name = name.removesuffix(clean_text(role.get_text())).strip()
+        url = urljoin("https://cris.utec.edu.pe/", link["href"]) if link else None
+        try:
+            faculty_id = known.get(canonical_profile_url(url)) if url else None
+        except ValueError:
+            faculty_id = None
+        people.append(
+            {
+                "name": name.lstrip(", "),
+                "role": role_text,
+                "person_url": url,
+                "faculty_id": faculty_id,
+            }
+        )
+    return people
+
+
+def detail_record(item, soup, known):
+    metadata = {}
+    for tag in soup.select('meta[name^="citation_"][content]'):
+        metadata.setdefault(tag["name"], []).append(tag["content"])
+    facts = {}
+    for row in soup.select("main tr"):
+        cells = row.find_all(["th", "td"], recursive=False)
+        if len(cells) == 2:
+            facts[clean_text(cells[0].get_text())] = clean_text(cells[1].get_text(" "))
+    return {
+        "kind": item["kind"],
+        "title": clean_text(soup.find("h1").get_text(" ")),
+        "people": linked_people(soup, known),
+        "publication_metadata": metadata,
+        "facts": facts,
+        "source_url": item["url"],
+        "retrieved_at": item["retrieved_at"],
+    }
+
+
+def canonical_record(url, kind):
+    p = urlsplit(url)
+    if p.scheme != "https" or p.hostname != "cris.utec.edu.pe":
+        return None
+    if not re.fullmatch(rf"/es/{kind}/[^/]+/?", p.path):
+        return None
+    return "https://cris.utec.edu.pe" + p.path.rstrip("/") + "/"
 
 
 def url_key(url):
     p = urlsplit(url)
-    return p.hostname, unicodedata.normalize("NFC", unquote(p.path)).rstrip("/").casefold()
+    return p.hostname, unicodedata.normalize("NFC", unquote(p.path)).rstrip(
+        "/"
+    ).casefold()
 
 
 def person_lookup(nodes):
@@ -51,7 +124,7 @@ def doi_from_links(scope):
             if parts.hostname in ("doi.org", "dx.doi.org")
             else parse_qs(parts.query).get("doi", [None])[0]
         )
-        if value and re.fullmatch(r"10\.\d{4,9}/\S+", value.strip(), re.I):
+        if value and re.fullmatch(r"10\.\d{4,9}/\S+", value.strip(), re.IGNORECASE):
             return value.strip().lower()
     return None
 
@@ -116,7 +189,8 @@ def parse_listing(html, entry, kind, lookup):
                 "people_display": people_text,
                 "linked_people": people,
                 "author_collaborations": [
-                    content_text(a) for a in short.select('a[rel="AuthorCollaboration"]')
+                    content_text(a)
+                    for a in short.select('a[rel="AuthorCollaboration"]')
                 ],
                 "concepts_preview": fingerprint_concepts(card),
                 "start_date": iso_date(dates[0]) if dates else None,
@@ -127,7 +201,6 @@ def parse_listing(html, entry, kind, lookup):
                         "owner_url": entry["owner_url"],
                         "faculty_id": lookup[url_key(entry["owner_url"])],
                         "retrieved_at": entry["retrieved_at"],
-                        "raw_snapshot": entry["snapshot"],
                     }
                 ],
             }
@@ -140,16 +213,29 @@ def detail_enrichment(html, entry, record, nodes):
     known = {n["source_url"]: n["id"] for n in nodes}
     detail = detail_record({**entry, "kind": record["kind"]}, soup, known)
     lookup = person_lookup(nodes)
-    for p, li in zip(detail["people"], soup.select(".introduction .relations.persons > li")):
+    for p, li in zip(
+        detail["people"], soup.select(".introduction .relations.persons > li")
+    ):
         role_match = re.search(r"\(([^()]+)\)\s*$", content_text(li))
         if role_match and any(
             w in role_match[1].casefold()
-            for w in ("autor", "author", "editor", "traductor", "investigador", "compilador")
+            for w in (
+                "autor",
+                "author",
+                "editor",
+                "traductor",
+                "investigador",
+                "compilador",
+            )
         ):
             p["role"] = role_match[1]
     for p in detail["people"]:
-        p["faculty_id"] = lookup.get(url_key(p["person_url"])) if p["person_url"] else None
-        p["identity_method"] = "explicit_cris_url" if p["faculty_id"] is not None else None
+        p["faculty_id"] = (
+            lookup.get(url_key(p["person_url"])) if p["person_url"] else None
+        )
+        p["identity_method"] = (
+            "explicit_cris_url" if p["faculty_id"] is not None else None
+        )
     author_metadata, current = [], None
     for tag in soup.select('meta[name^="citation_author"][content]'):
         if tag["name"] == "citation_author":
@@ -160,7 +246,9 @@ def detail_enrichment(html, entry, record, nodes):
         elif current is not None and tag["name"] == "citation_author_institution":
             current["institutions"].append(tag["content"])
     orcids = {
-        n["external_ids"]["orcid"]: n["id"] for n in nodes if n.get("external_ids", {}).get("orcid")
+        n["external_ids"]["orcid"]: n["id"]
+        for n in nodes
+        if n.get("external_ids", {}).get("orcid")
     }
     if len(orcids) != sum(bool(n.get("external_ids", {}).get("orcid")) for n in nodes):
         raise ValueError(
@@ -193,13 +281,17 @@ def detail_enrichment(html, entry, record, nodes):
     record["people"] = detail["people"]
     record["authors_metadata"] = author_metadata
     for label in ("Resumen", "Descripción"):
-        h = soup.find(lambda t: t.name in ("h2", "h3") and content_text(t) == label)
+        h = soup.find(
+            lambda t, label=label: t.name in ("h2", "h3") and content_text(t) == label
+        )
         if h:
             block = h.parent.select_one(".textblock")
             if block:
                 record["description"] = content_text(block)
     record["keywords"] = [
-        clean_text(x) for x in meta.get("citation_keywords", [""])[0].split(";") if clean_text(x)
+        clean_text(x)
+        for x in meta.get("citation_keywords", [""])[0].split(";")
+        if clean_text(x)
     ]
     period = detail["facts"].get("Fecha de inicio/Fecha fin", "")
     dates = re.findall(r"\b\d{1,2}/\d{1,2}/(?:\d{4}|\d{2})\b", period)
@@ -235,6 +327,15 @@ def profile_extras(html):
             "unit",
         )
         affiliations.append(
-            {"name": name, "source_url": url, "type": kind, "role": role, "source_classes": classes}
+            {
+                "name": name,
+                "source_url": url,
+                "type": kind,
+                "role": role,
+                "source_classes": classes,
+            }
         )
-    return {"renacyt": section_text(soup, "Calificación Renacyt"), "affiliations": affiliations}
+    return {
+        "renacyt": section_text(soup, "Calificación Renacyt"),
+        "affiliations": affiliations,
+    }

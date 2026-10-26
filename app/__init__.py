@@ -1,4 +1,4 @@
-"""Base Flask. La visualización D3 se implementará tras validar el conjunto de datos."""
+"""Aplicación Flask que sirve el conjunto de datos incluido en data/."""
 
 import json
 import os
@@ -12,7 +12,10 @@ from extraccion_datos.quality import validate_network
 
 def create_app(config=None):
     app = Flask(__name__)
-    app.config.from_mapping(NETWORK_FILE=os.environ.get("UTECVIS_NETWORK_FILE"))
+    default_data = Path(__file__).resolve().parents[1] / "data/network.json"
+    app.config.from_mapping(
+        NETWORK_FILE=os.environ.get("UTECVIS_NETWORK_FILE", default_data)
+    )
     if config:
         app.config.update(config)
 
@@ -22,7 +25,7 @@ def create_app(config=None):
 
     @app.get("/health")
     def health():
-        return jsonify(status="ok", stage="project_foundation")
+        return jsonify(status="ok", stage="data_ready")
 
     @app.get("/api/network")
     def network():

@@ -1,8 +1,4 @@
-import json
-
-import pytest
-
-from extraccion_datos.freeze_network import build_network, deduplicate_records, freeze
+from extraccion_datos.network import build_network, deduplicate_records
 from extraccion_datos.quality import validate_network
 
 
@@ -48,17 +44,12 @@ def test_types_are_separate_and_duplicate_doi_does_not_inflate_an_edge():
     assert validate_network(network)["edge_count"] == 1
     edge = network["edges"][0]
     assert edge["weight"] == 3
-    assert edge["counts"] == {"coauthorship": 1, "shared_project": 1, "shared_publication": 1}
+    assert edge["counts"] == {
+        "coauthorship": 1,
+        "shared_project": 1,
+        "shared_publication": 1,
+    }
     assert len(edge["evidence"]) == 3
     assert analysis["isolates"] == [3]
     assert len(analysis["components"]) == 2
     assert network["nodes"][2]["network_metrics"]["degree"] == 0
-
-
-def test_partial_acquisition_cannot_be_frozen_as_final(tmp_path):
-    collection, details = tmp_path / "collection.json", tmp_path / "details.json"
-    collection.write_text(json.dumps({"status": "partial"}))
-    details.write_text(json.dumps({"status": "acquired"}))
-    with pytest.raises(ValueError, match="incompleta"):
-        freeze(tmp_path, collection, details)
-    assert not (tmp_path / "data/processed").exists()

@@ -32,7 +32,9 @@ class SourceClient:
             )
             try:
                 self.last_request = time.monotonic()
-                with urlopen(request, timeout=self.settings["timeout_seconds"]) as response:
+                with urlopen(
+                    request, timeout=self.settings["timeout_seconds"]
+                ) as response:
                     body = response.read()
                     metadata = {
                         "status": response.status,
@@ -75,5 +77,7 @@ class SourceClient:
             raise AcquisitionError(f"robots.txt no permite la ruta: {url}")
         crawl_delay = rules.crawl_delay(self.settings["user_agent"])
         if crawl_delay:
-            self.settings["delay_seconds"] = max(self.settings["delay_seconds"], crawl_delay)
+            self.settings["delay_seconds"] = max(
+                self.settings["delay_seconds"], crawl_delay
+            )
         return self._request(url)
