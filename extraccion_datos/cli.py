@@ -32,7 +32,7 @@ def new_run(root, mode):
         "status": "running",
         "coverage": "pilot",
         "directory_complete": False,
-        "adapter_version": "0.1.0-pilot",
+        "adapter_version": "0.2.0-browser-pilot",
         "pages": [],
         "profiles": [],
         "errors": [],
@@ -51,8 +51,20 @@ def snapshot(root, run_id, url, body):
 def acquire(args):
     root = args.root.resolve()
     settings = tomllib.loads((root / "config/sources.toml").read_text())["cris"]
-    client = SourceClient(settings)
+    if args.transport == "browser":
+        from extraccion_datos.browser import BrowserClient
+
+        client = BrowserClient(
+            settings,
+            channel=args.browser_channel,
+            headed=args.headed,
+            profile_dir=root / "local_state/cris_browser" / args.browser_channel,
+        )
+    else:
+        client = SourceClient(settings)
     manifest, manifest_path = new_run(root, args.command)
+    args.acquisition_manifest = manifest_path
+    manifest["transport"] = args.transport
     manifest["settings"] = settings
     write_json(manifest_path, manifest)
     try:
@@ -129,6 +141,8 @@ def acquire(args):
         manifest["errors"].append({"error": str(exc)})
         return 1
     finally:
+        if hasattr(client, "close"):
+            client.close()
         manifest["finished_at"] = utc_now()
         write_json(manifest_path, manifest)
         print(
@@ -220,16 +234,63 @@ def positive_int(value):
     return number
 
 
+def pipeline(args):
+    """Ejecuta adquisición, transformación y exportación sin intervención de un agente."""
+    result = acquire(args)
+    if result:
+        return result
+    args.manifest = args.acquisition_manifest
+    result = transform(args)
+    if result:
+        return result
+    args.allow_pilot = not args.all
+    return export(args)
+
+
+def prepare_access(args):
+    from extraccion_datos.browser import BrowserClient
+
+    root = args.root.resolve()
+    settings = tomllib.loads((root / "config/sources.toml").read_text())["cris"]
+    client = BrowserClient(
+        settings,
+        channel=args.browser_channel,
+        headed=True,
+        profile_dir=root / "local_state/cris_browser" / args.browser_channel,
+    )
+    try:
+        result = client.prepare_access(settings["directory_url"])
+        print(json.dumps({"access_confirmed": True, **result}, ensure_ascii=False))
+        return 0
+    except (AcquisitionError, EOFError) as exc:
+        print(f"Acceso no confirmado: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        client.close()
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT, help="Raíz del checkout del proyecto")
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("probe", "extract"):
+    access = commands.add_parser("access", help="Preparar manualmente el acceso del perfil CRIS")
+    access.add_argument(
+        "--browser-channel", choices=("chromium", "chrome", "msedge", "webkit"), default="chrome"
+    )
+    access.set_defaults(handler=prepare_access)
+    for name in ("probe", "extract", "run"):
         sub = commands.add_parser(name)
         sub.add_argument("--max-pages", type=positive_int, default=20)
         sub.add_argument("--limit", type=positive_int, default=5)
         sub.add_argument("--all", action="store_true", help="Solicitar censo completo")
-        sub.set_defaults(handler=acquire)
+        sub.add_argument("--transport", choices=("http", "browser"), default="http")
+        sub.add_argument(
+            "--browser-channel",
+            choices=("chromium", "chrome", "msedge", "webkit"),
+            default="chromium",
+        )
+        sub.add_argument("--headed", action="store_true", help="Mostrar el navegador automatizado")
+        sub.set_defaults(handler=pipeline if name == "run" else acquire)
     for name, handler in (("transform", transform), ("export", export)):
         sub = commands.add_parser(name)
         sub.add_argument("--manifest", type=Path, required=True)

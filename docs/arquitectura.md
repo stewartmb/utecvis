@@ -14,7 +14,7 @@ La estructura distingue tres responsabilidades:
 
 ## Capas de datos
 
-- **Raw:** HTML original y, en futuras fuentes, respuestas JSON originales. No se
+- **Raw:** HTML HTTP o DOM renderizado, con su origen registrado, y en futuras fuentes JSON. No se
   corrigen a mano. Cada archivo conserva hash y URL en el manifiesto.
 - **Interim:** datos normalizados, diagnósticos y exportaciones de pilotos. Aquí se
   revisan vacíos, conflictos y posibles errores del parser.
@@ -60,7 +60,8 @@ de datos. Falta de información no significa ausencia demostrada de colaboració
 
 ## Evolución prevista
 
-Primero se valida el piloto real; después se completa el censo y se añaden
+Ya se comprobó un piloto real asistido de cinco perfiles. Falta validar el acceso
+autónomo Python; después se completa el censo y se añaden
 adaptadores de publicaciones/proyectos. Solo entonces se cierra la regla de aristas.
 La interfaz mantendrá una red principal con vista general, zoom/filtros y detalles
 bajo demanda. La animación acompañará cambios de foco y selección.

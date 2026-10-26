@@ -1,24 +1,64 @@
 {
-  "run_id": "20261025T233038Z-12fb2398",
-  "mode": "probe",
-  "started_at": "2026-10-25T23:30:38.360884+00:00",
-  "status": "failed",
-  "coverage": "pilot",
-  "directory_complete": false,
-  "adapter_version": "0.1.0-pilot",
-  "pages": [],
-  "profiles": [],
-  "errors": [
+  "date": "2026-10-25",
+  "direct_http": {
+    "status": 403,
+    "server": "cloudflare",
+    "cf_mitigated": "challenge",
+    "title": "Just a moment..."
+  },
+  "assisted_browser": {
+    "directory_pages": 3,
+    "distinct_profiles": 104,
+    "downloaded_profiles": 5,
+    "normalized_profiles": 5,
+    "coverage": "pilot",
+    "run_id": "20261025T234454926Z-browser-276c9a78"
+  },
+  "python_browser_attempts": [
     {
-      "error": "HTTP 403: https://cris.utec.edu.pe/es/persons/"
+      "run_id": "20261025T235118Z-fff9a990",
+      "started_at": "2026-10-25T23:51:18.270542+00:00",
+      "status": "failed",
+      "transport": "browser",
+      "errors": [
+        {
+          "error": "HTTP 403 en navegador: https://cris.utec.edu.pe/es/persons/"
+        }
+      ]
+    },
+    {
+      "run_id": "20261025T235150Z-3e9fc15b",
+      "started_at": "2026-10-25T23:51:50.375843+00:00",
+      "status": "failed",
+      "transport": "browser",
+      "errors": [
+        {
+          "error": "HTTP 403 en navegador: https://cris.utec.edu.pe/es/persons/"
+        }
+      ]
+    },
+    {
+      "run_id": "20261025T235424Z-53b6da0a",
+      "started_at": "2026-10-25T23:54:24.543238+00:00",
+      "status": "failed",
+      "transport": "browser",
+      "errors": [
+        {
+          "error": "Error de navegación en https://cris.utec.edu.pe/es/persons/: Locator.wait_for: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator(\"main h1\") to be visible\n"
+        }
+      ]
+    },
+    {
+      "run_id": "20261025T235555Z-abf9ea91",
+      "started_at": "2026-10-25T23:55:55.784817+00:00",
+      "status": "failed",
+      "transport": "browser",
+      "errors": [
+        {
+          "error": "Error de navegación en https://cris.utec.edu.pe/es/persons/: Locator.wait_for: Timeout 20000ms exceeded.\nCall log:\n  - waiting for locator(\"main h1\") to be visible\n"
+        }
+      ]
     }
   ],
-  "settings": {
-    "directory_url": "https://cris.utec.edu.pe/es/persons/",
-    "user_agent": "UtecVis/0.1 (academic faculty network project)",
-    "timeout_seconds": 30,
-    "delay_seconds": 5,
-    "max_attempts": 3
-  },
-  "finished_at": "2026-10-25T23:30:43.431264+00:00"
+  "autonomous_access_confirmed": false
 }

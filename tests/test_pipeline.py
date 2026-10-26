@@ -46,6 +46,27 @@ def test_discovery_ignores_external_links_and_paginates():
     )
 
 
+def test_visible_email_and_regional_scholar_link_do_not_lose_identity():
+    html = """<h1>Persona ficticia</h1>
+    <a href="mailto:">Ventana de contacto vacía</a>
+    <a class="email" href="#">persona<span>@</span><script>nada();</script>example.org</a>
+    <a href="https://scholar.google.com.pe/citations?user=ficticio">Scholar</a>
+    <a href="https://www.scopus.com/authid/detail.uri?authorId=123">Perfil</a>
+    <footer><a href="http://www.scopus.com/">Scopus</a></footer>"""
+    node = parse_profile(html, URL, DATE, "test.html")
+    assert node["email"] == "persona@example.org"
+    assert node["external_ids"]["google_scholar_url"].endswith("user=ficticio")
+    assert node["external_ids"]["scopus_url"].endswith("authorId=123")
+
+
+def test_last_research_section_does_not_absorb_scripts_or_footer():
+    html = """<h1>Persona ficticia</h1><section>
+    <div class="keyword-group"><h3>Temas de Interés de Investigación</h3>
+    <ul><li>Redes</li><li>Datos</li></ul></div></section>
+    <script>tracking();</script><footer>Copyright y navegación</footer>"""
+    assert parse_profile(html, URL, DATE, "test.html")["research_areas"] == ["Redes", "Datos"]
+
+
 def test_duplicate_nodes_are_rejected(node):
     with pytest.raises(ValueError, match="duplicado"):
         validate_nodes([node, deepcopy(node)])
@@ -147,6 +168,25 @@ def test_http_forbidden_produces_failed_manifest(tmp_path, monkeypatch):
     assert report["status"] == "failed"
     assert report["profiles"] == []
     assert "403" in report["errors"][0]["error"]
+
+
+def test_single_command_runs_all_stages_without_agent(tmp_path, monkeypatch):
+    config = tmp_path / "config/sources.toml"
+    config.parent.mkdir()
+    config.write_text('[cris]\ndirectory_url = "https://cris.utec.edu.pe/es/persons/"\n')
+    listing = f'<h1>Encontrar perfiles</h1><p>1 - 1 de 1 resultados</p><a href="{URL}">Ana</a>'
+
+    def get(self, url):
+        html = HTML if url == URL else listing
+        return html.encode(), {"status": 200, "final_url": url, "content_type": "text/html"}
+
+    monkeypatch.setattr(SourceClient, "get", get)
+    assert main(["--root", str(tmp_path), "run", "--all"]) == 0
+    outputs = list((tmp_path / "data/processed").glob("*/faculty_network.json"))
+    assert len(outputs) == 1
+    exported = json.loads(outputs[0].read_text())
+    assert exported["nodes"][0]["name"] == "Ana Ejemplo"
+    assert exported["nodes"][0]["citations"] is None
 
 
 def test_app_does_not_fabricate_a_network_before_data_exists(tmp_path):

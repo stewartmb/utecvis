@@ -53,7 +53,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.lock
 python -m pip install --no-deps -e .
-utecvis-etl --help
+python -m extraccion_datos.cli --help
 ```
 
 `pyproject.toml` declara las dependencias y los grupos opcionales; el lock conserva
@@ -64,21 +64,21 @@ modificar las dependencias globales del equipo.
 
 ```bash
 # 1. Probar el acceso y registrar su resultado.
-utecvis-etl probe
+python -m extraccion_datos.cli probe
 
 # 2. Piloto de hasta cinco perfiles; no equivale al censo.
-utecvis-etl extract --limit 5
+python -m extraccion_datos.cli extract --limit 5
 
 # 3. Usar el manifiesto generado por esa extracción.
-utecvis-etl transform --manifest data/manifests/ID_DE_EJECUCION.json
+python -m extraccion_datos.cli transform --manifest data/manifests/ID_DE_EJECUCION.json
 
 # 4. Exportar un piloto únicamente dentro de interim.
-utecvis-etl export --manifest data/manifests/ID_DE_EJECUCION.json --allow-pilot
+python -m extraccion_datos.cli export --manifest data/manifests/ID_DE_EJECUCION.json --allow-pilot
 
 # 5. Solo después de revisar el piloto y los selectores: censo completo.
-utecvis-etl extract --all
-utecvis-etl transform --manifest data/manifests/ID_DEL_CENSO.json
-utecvis-etl export --manifest data/manifests/ID_DEL_CENSO.json
+python -m extraccion_datos.cli extract --all
+python -m extraccion_datos.cli transform --manifest data/manifests/ID_DEL_CENSO.json
+python -m extraccion_datos.cli export --manifest data/manifests/ID_DEL_CENSO.json
 ```
 
 `ID_DE_EJECUCION` es un marcador: reemplazarlo por el nombre impreso por el comando.
@@ -86,10 +86,23 @@ Una descarga 403 queda como ejecución fallida y devuelve código de salida 1.
 El pipeline no publica silenciosamente una muestra como si fuera el directorio
 completo. La transformación puede repetirse sobre los snapshots sin acceder a la web.
 
-**Límite actual:** la prueba HTTP inicial del 25/10/2026 recibió `403` en el
-directorio. El parser está comprobado con un fixture sintético y **todavía debe
-validarse contra HTML real**. La adquisición completa y los adaptadores de
-publicaciones, proyectos y Scholar siguen pendientes. Ver `docs/plan_extraccion.md`.
+**Estado de acceso:** HTTP devuelve un desafío de Cloudflare. El navegador de la
+aplicación permitió inventariar 104 perfiles y capturar cinco perfiles reales;
+el parser ya se comprobó con ese piloto. La adquisición autónoma en Python sigue
+pendiente de validar el acceso: Chrome nuevo y la prueba con WebKit no recibieron
+el directorio. Ver `docs/acceso_y_reproduccion.md`.
+
+Existe un transporte Python con Playwright y perfil persistente dedicado. Tras
+preparar y verificar su acceso, un solo comando ejecuta el ETL completo:
+
+```bash
+python -m extraccion_datos.cli access --browser-channel chrome
+python -m extraccion_datos.cli run --transport browser --browser-channel chrome --headed --limit 5
+```
+
+La primera orden requiere una terminal interactiva y comprobación humana del
+acceso. No se ha demostrado que el censo pueda ejecutarse sin esa preparación.
+Los adaptadores de publicaciones, proyectos y Scholar siguen pendientes.
 
 ## Formato del profesor
 
@@ -121,6 +134,7 @@ sitio externo esté disponible.
 
 ## Documentación
 
+- [Acceso y reproducción con Python](docs/acceso_y_reproduccion.md)
 - [Arquitectura y buenas prácticas](docs/arquitectura.md)
 - [Plan de extracción por hitos](docs/plan_extraccion.md)
 - [Diccionario y contratos](docs/diccionario_datos.md)

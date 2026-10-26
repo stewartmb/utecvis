@@ -5,7 +5,10 @@
 **Listo:** repositorio, arquitectura, CLI ETL, contratos iniciales, entorno aislado,
 pruebas sintéticas, base Flask y comprobaciones automáticas.
 
-La estructura está preparada. No hay un censo extraído ni una visualización final.
+La estructura está preparada. Hay un inventario de 104 perfiles y un piloto
+asistido de cinco perfiles normalizados. No hay un censo de perfiles completos
+ni una visualización final. La adquisición autónoma Python aún no tiene acceso
+confirmado; ver `acceso_y_reproduccion.md`.
 
 ## Hito 1. Resolver acceso y validar un piloto real
 
@@ -19,7 +22,9 @@ La estructura está preparada. No hay un censo extraído ni una visualización f
 5. Comparar los campos extraídos con lo visible y guardar fixtures saneados.
 
 **Criterio de cierre:** los campos del piloto coinciden con los perfiles y se
-puede explicar cada ausencia. Los selectores actuales son provisionales.
+puede explicar cada ausencia. Los selectores se corrigieron y comprobaron contra los cinco perfiles reales:
+correo visible, enlaces de Scholar regionales, Scopus específico y límites de las
+secciones. Hace falta ampliar la muestra durante la adquisición autónoma.
 
 ## Hito 2. Completar el directorio
 

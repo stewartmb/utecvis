@@ -16,7 +16,7 @@ Objeto raíz `{"nodes": [...]}`. Este formato se usa para análisis y trazabilid
 | `research_areas` | lista de textos | Campos reconocidos en la sección de intereses. |
 | `biography` | texto o null | Perfil profesional. |
 | `education` | lista de textos | Formación; estructura adicional pendiente del piloto. |
-| `external_ids` | objeto | ORCID y enlaces explícitos de Scopus/Scholar si existen. |
+| `external_ids` | objeto | ORCID y enlaces explícitos de Scopus, Scholar y CTI Vitae si existen. |
 | `citations` | entero >= 0 o null | No inferir a partir de un bloque ambiguo de la página. |
 | `citation_source` | texto o null | Proveedor del valor de citas. |
 | `citation_retrieved_at` | fecha o null | Consulta de ese valor; necesaria si hay citas. |
