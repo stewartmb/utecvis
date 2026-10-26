@@ -3,9 +3,10 @@
 Extracción reproducible de perfiles públicos de UTEC, análisis de relaciones
 académicas y una futura visualización de red con **Flask + D3**.
 
-**Estado: base del proyecto, no entrega final.** El JSON del profesor es una
-referencia de estructura: no es nuestra fuente de datos y no se incluye en el
-repositorio. La población se obtendrá del directorio, sin asumir 92 personas.
+**Estado: datos finales preparados; interfaz D3 pendiente.** La cohorte extraída
+del directorio contiene 104 investigadores, 2.474 publicaciones, 129 proyectos y
+74 conexiones con evidencia. [Resultado, cobertura y uso](docs/resultado_datos_finales.md).
+El JSON del profesor es solo una referencia de estructura y no es nuestra fuente.
 
 ## Arquitectura
 
@@ -20,7 +21,7 @@ CRIS UTEC + fuentes de enriquecimiento verificadas
               |
  data/processed/<run_id>/     Archivos validados para consumo
               |
-       analisis_red/         Aristas con evidencia y métricas (siguiente etapa)
+ extraccion_datos/           Congelación, aristas con evidencia y métricas
               |
             app/             Flask + una red interactiva D3 (siguiente etapa)
 ```
@@ -37,7 +38,7 @@ No se necesitan una base de datos, Docker ni un orquestador para empezar.
 | `data/processed/` | Datos validados; aquí solo se publican ejecuciones completas. |
 | `data/external/` | Enriquecimiento externo y correspondencias revisadas, cuando se implemente. |
 | `data/manifests/` | URL, fecha UTC, hash del HTML, estado, parámetros y errores por ejecución. |
-| `analisis_red/` | Construcción de vínculos y cálculo de métricas. |
+| `analisis_red/` | Espacio para análisis posteriores; el pipeline actual calcula la red y sus métricas en `extraccion_datos/freeze_network.py`. |
 | `app/` | Base Flask. La interfaz D3 se implementará después del piloto. |
 | `config/` | Parámetros públicos de las fuentes. |
 | `schemas/` | Contratos de datos legibles fuera de Python. |
@@ -107,7 +108,9 @@ La sesión puede caducar. Si reaparece una verificación, se registra y se detie
 HTTP directo y los navegadores automatizados nuevos no obtuvieron acceso en las
 pruebas. Los requisitos, límites y variantes están en
 [Acceso y reproducción](docs/acceso_y_reproduccion.md).
-Los adaptadores de publicaciones, proyectos y Scholar siguen pendientes.
+Las listas de publicaciones, proyectos y huellas, las fichas de evidencia y la
+congelación de la red están completas; ver [pipeline de red](docs/pipeline_red.md).
+Las consultas externas a Scholar quedan como enriquecimiento opcional.
 El parser ya recoge las métricas generales publicadas por CRIS: 78 perfiles con
 citas e índice h, 76 de Scopus y dos de PlumX, conservando proveedor y fecha.
 Los 26 perfiles sin ese panel mantienen `null`.
@@ -121,8 +124,8 @@ Los 26 perfiles sin ese panel mantienen `null`.
 Los ID son enteros estables derivados de la URL canónica, no posiciones cambiantes
 en el directorio. Las citas desconocidas se exportan como `null`, no como cero.
 `faculty_nodes.json` conserva además listas estructuradas, identificadores externos
-y procedencia. Las aristas se agregarán en un archivo de red separado después de
-elegir una regla sustentada por los datos; no se fabrican en la extracción.
+y procedencia. `network.json` contiene además 74 aristas con evidencia y tipos de
+relación explícitos; ver [sus reglas](docs/pipeline_red.md).
 
 ## Verificación y aplicación
 
@@ -136,11 +139,18 @@ flask --app app run
 `/health` comprueba Flask. `/api/network` responde 503 mientras no se configure un
 archivo con nodos y aristas válidos. No hay una red de demostración con personas
 inventadas. Para configurar datos desde Python: `create_app({"NETWORK_FILE": ruta})`.
+Con el snapshot final:
+
+```bash
+UTECVIS_NETWORK_FILE=data/processed/20261026T012402Z-a32612e7/network.json flask --app app run
+```
 
 GitHub Actions ejecuta las comprobaciones sin visitar CRIS ni depender de que un
 sitio externo esté disponible.
 
 ## Documentación
+
+- [Resultado de los datos finales y cobertura](docs/resultado_datos_finales.md)
 
 - [Pipeline de listas, evidencia y congelación de la red](docs/pipeline_red.md)
 
@@ -153,7 +163,6 @@ sitio externo esté disponible.
 - [Diccionario y contratos](docs/diccionario_datos.md)
 - [Decisiones y requisitos](docs/decisiones.md)
 
-Los datos generados se excluyen de Git por defecto. Al cerrar la entrega se
-seleccionará un snapshot validado para incluirlo en el ZIP de Flask junto con los
-archivos de nodos y aristas. El profesor debe poder ejecutar la aplicación sin
-volver a hacer scraping.
+Los datos generados se excluyen de Git por defecto. El snapshot validado se entrega
+en `utecvis_datos_finales.zip`, junto con esquema, calidad y documentación.
+La futura entrega de la aplicación debe incluirlo para ejecutarse sin repetir el scraping.

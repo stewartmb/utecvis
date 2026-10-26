@@ -1,5 +1,19 @@
 # Plan para conseguir los datos
 
+## Cierre de datos — 25/10/2026
+
+**Hitos 0 a 5 completados.** La cohorte de 104 perfiles tiene listas completas de
+publicaciones/proyectos, huellas, afiliaciones, RENACYT, evidencia de vínculos y
+métricas. El snapshot validado contiene 2.474 publicaciones, 129 proyectos y 74
+aristas. Ver [resultado y límites](resultado_datos_finales.md) y
+[pipeline reproducible](pipeline_red.md).
+
+El hito 6 tiene los datos congelados y la API Flask validada; siguen pendientes la
+interfaz D3, las pruebas de las tareas visuales y la exposición. El plan original
+siguiente se conserva como historial de los hitos; los estados de adaptación
+pendiente y las 13 relaciones de muestra corresponden a la auditoría previa y
+quedan superados por el resultado final enlazado arriba.
+
 ## Hito 0. Base del proyecto
 
 **Listo:** repositorio, arquitectura, CLI ETL, contratos iniciales, entorno aislado,
