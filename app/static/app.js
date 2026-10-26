@@ -526,6 +526,7 @@ function renderGraph() {
     nodes.filter((n) => visibleIds.has(n.id)),
     visibleEdges,
     connectionCounts,
+    predictionEdges,
   );
   layer
     .select(".isolate-ring")

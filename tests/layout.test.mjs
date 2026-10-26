@@ -42,6 +42,7 @@ function fixture() {
       nodes.filter((n) => ids.has(n.id)),
       observed,
       counts,
+      predicted,
     );
     return counts;
   };
@@ -180,4 +181,33 @@ test("los aislados se pueden reordenar por el perímetro sin cubrirse ni crear e
   verify(layout, radius);
   assert.ok(Math.hypot(n.x - old.x, n.y - old.y) > 50);
   assert.equal(n.network_metrics.degree, 0);
+});
+
+
+test("la tracción acompaña el desplazamiento y se transmite por la cadena de vecinos", () => {
+  const nodes = [1, 2, 3, 4, 5].map((id) => ({ id, network_metrics: { degree: id > 3 ? 0 : id === 2 ? 2 : 1 } }));
+  const counts = new Map(nodes.map((n) => [n.id, { total: n.network_metrics.degree }]));
+  const layout = createNetworkLayout(d3, () => 10);
+  layout.configure(nodes, [{ source: 1, target: 2 }, { source: 2, target: 3 }], counts);
+  const before = nodes.map((n) => ({ x: n.x, y: n.y }));
+  layout.drag(nodes[0], nodes[0].x + 100, nodes[0].y);
+  layout.advance(35);
+  assert.ok(nodes[1].x - before[1].x > 65);
+  assert.ok(nodes[2].x - before[2].x > 35);
+  verify(layout, () => 10);
+  layout.release(nodes[0]);
+});
+
+test("una sugerencia visible transmite el arrastre sin convertirse en enlace observado", () => {
+  const nodes = [1, 2, 3, 4, 5].map((id) => ({ id, network_metrics: { degree: 0 } }));
+  const counts = new Map(nodes.map((n) => [n.id, { total: n.id < 3 ? 1 : 0 }]));
+  const layout = createNetworkLayout(d3, () => 10);
+  layout.configure(nodes, [], counts, [{ source: 1, target: 2 }]);
+  const before = nodes[1].x;
+  layout.drag(nodes[0], nodes[0].x + 100, nodes[0].y);
+  layout.advance(35);
+  assert.ok(nodes[1].x - before > 65);
+  assert.ok(nodes.every((n) => n.network_metrics.degree === 0));
+  verify(layout, () => 10);
+  layout.release(nodes[0]);
 });

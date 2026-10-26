@@ -94,11 +94,17 @@ repulsión y colisión, actualizando el radio de colisión en cada escenario. Un
 circular mantiene los nodos dentro y una corrección con `d3.quadtree` deja separación
 entre sus círculos, también en cada fotograma del arrastre. Al mover un nodo,
 D3 reactiva la simulación: los enlaces registrados actúan como resortes y sus
-vecinos acompañan el movimiento mientras mantienes pulsado. Al soltar, la fricción
+vecinos acompañan el movimiento mientras mantienes pulsado. Una fuerza de
+posición transmite el desplazamiento a su grupo visible: los vecinos directos
+siguen el movimiento completo y la tracción disminuye por cada salto adicional
+(factor 0,78). Durante el arrastre también se recorren las sugerencias visibles;
+esto solo afecta a las coordenadas, no a la red observada ni a sus métricas. Al soltar, la fricción
 (`velocityDecay = 0,50`) y el enfriamiento estabilizan el grupo suavemente, sin fijar
 el nodo de forma permanente. Los aislados se pueden reordenar por el perímetro;
 los demás dejan espacio sobre el círculo. Con movimiento reducido la respuesta es
-inmediata, sin animación de asentamiento. Las sugerencias no ejercen fuerza.
+inmediata, sin animación de asentamiento. Las sugerencias no ejercen fuerza
+en la disposición inicial ni durante el enfriamiento; solo transmiten el arrastre
+manual mientras están visibles.
 Los escenarios densos amplían el espacio de cálculo y se encuadran
 automáticamente. El ajuste usa toda la altura disponible; en pantallas amplias los
 controles de sugerencias ocupan el margen derecho. El grosor de las aristas va de

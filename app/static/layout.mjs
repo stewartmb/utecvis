@@ -5,6 +5,9 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
   const animated = Boolean(options.onTick) && !options.reducedMotion;
   let dragged = null;
   let ringOrder = [];
+  let adjacency = new Map(),
+    dragGroup = new Map(),
+    dragOrigin = null;
   const gap = 9;
   let items = [],
     links = [],
@@ -134,7 +137,7 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
     return result;
   }
 
-  function configure(visible, observedLinks, currentCounts) {
+  function configure(visible, observedLinks, currentCounts, suggestedLinks = []) {
     const next =
       visible
         .map(
@@ -142,14 +145,22 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
             `${n.id}:${nodeRadius(n).toFixed(5)}:${currentCounts.get(n.id)?.total ?? 0}`,
         )
         .join("|") +
-      observedLinks.map((e) => `${e.source}:${e.target}`).join("|");
+      observedLinks.map((e) => `${e.source}:${e.target}`).join("|") +
+      suggestedLinks.map((e) => `suggested:${e.source}:${e.target}`).join("|");
     counts = currentCounts;
     if (next === signature) return false;
     signature = next;
     simulation?.stop();
     dragged = null;
+    dragGroup = new Map();
+    dragOrigin = null;
     items = [...visible].sort((a, b) => a.id - b.id);
     links = observedLinks.map((e) => ({ source: e.source, target: e.target }));
+    adjacency = new Map(items.map((n) => [n.id, new Set()]));
+    for (const e of [...observedLinks, ...suggestedLinks]) {
+      adjacency.get(e.source)?.add(e.target);
+      adjacency.get(e.target)?.add(e.source);
+    }
     const connected = items.filter((n) => !isIsolated(n));
     const isolated = items.filter(isIsolated);
     ringOrder = isolated.map((n) => n.id);
@@ -217,6 +228,8 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
           .strength(1)
           .iterations(8),
       )
+      .force("drag-x", d3.forceX().strength(0))
+      .force("drag-y", d3.forceY().strength(0))
       .force("x", d3.forceX(0).strength(0.008))
       .force("y", d3.forceY(0).strength(0.008))
       .force("boundary", enforceBounds)
@@ -267,7 +280,7 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
   function project() {
     enforceBounds();
     separate(80);
-    if (maxOverlap() > 0.05) separate(250);
+    if (maxOverlap() > 0.05) separate(800);
   }
 
   // The same integration path is used by animation and deterministic tests.
@@ -286,10 +299,47 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
     n.fy = n.y;
     n.vx = n.vy = 0;
     if (!isIsolated(n)) {
-      simulation.alpha(Math.max(simulation.alpha(), 0.32)).alphaTarget(0.2);
+      // Snapshot this visible connected group. Direct neighbours follow the
+      // full pointer displacement; transmission decreases at each graph hop.
+      dragOrigin = { x: n.x, y: n.y };
+      const depths = new Map([[n.id, 0]]),
+        queue = [n.id];
+      for (let i = 0; i < queue.length; i++) {
+        const id = queue[i];
+        for (const peer of adjacency.get(id) || []) {
+          if (!depths.has(peer)) {
+            depths.set(peer, depths.get(id) + 1);
+            queue.push(peer);
+          }
+        }
+      }
+      dragGroup = new Map(
+        items.filter((p) => depths.has(p.id) && p !== n).map((p) => [
+          p.id,
+          { x: p.x, y: p.y, influence: 0.78 ** (depths.get(p.id) - 1) },
+        ]),
+      );
+      simulation.force("drag-x").strength((p) => (dragGroup.has(p.id) ? 0.85 : 0));
+      simulation.force("drag-y").strength((p) => (dragGroup.has(p.id) ? 0.85 : 0));
+      updatePull();
+      simulation.alpha(Math.max(simulation.alpha(), 0.45)).alphaTarget(0.35);
       if (animated) simulation.restart();
     }
     return true;
+  }
+
+  function updatePull() {
+    if (!dragOrigin || !dragged) return;
+    const dx = dragged.x - dragOrigin.x,
+      dy = dragged.y - dragOrigin.y;
+    simulation.force("drag-x").x((p) => {
+      const origin = dragGroup.get(p.id);
+      return origin ? origin.x + dx * origin.influence : p.x;
+    });
+    simulation.force("drag-y").y((p) => {
+      const origin = dragGroup.get(p.id);
+      return origin ? origin.y + dy * origin.influence : p.y;
+    });
   }
 
   function dragRing(n, x, y) {
@@ -330,6 +380,7 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
     n.x = n.fx = x;
     n.y = n.fy = y;
     confine(n);
+    updatePull();
     project();
     // Reduced motion follows the pointer immediately, without a cooling timer.
     if (!animated) advance(options.reducedMotion ? 8 : 1);
@@ -339,6 +390,10 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
   function release(n) {
     if (dragged !== n) return;
     dragged = null;
+    dragGroup = new Map();
+    dragOrigin = null;
+    simulation.force("drag-x").strength(0);
+    simulation.force("drag-y").strength(0);
     if (isIsolated(n)) {
       const relative = (p) =>
         (Math.atan2(p.y, p.x) + Math.PI / 2 + 2 * Math.PI) % (2 * Math.PI);
@@ -363,6 +418,8 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
     simulation?.stop();
     dragged = null;
     ringOrder = [];
+    dragGroup = new Map();
+    dragOrigin = null;
     signature = "";
     all.forEach((n) => {
       n.x = NaN;
