@@ -515,10 +515,6 @@ input[type="range"] {
   border-top: 1.4px solid #8b9b9f;
   display: inline-block;
 }
-.key-line.association {
-  border-top-style: dotted;
-  border-top-width: 2px;
-}
 .key-line.predicted {
   border-top-style: dashed;
   border-top-color: var(--prediction);
@@ -1041,11 +1037,6 @@ input[type="range"] {
   fill: none;
   vector-effect: non-scaling-stroke;
   stroke-linecap: round;
-}
-.observed-edge.association {
-  stroke: #7c8793;
-  stroke-opacity: 0.72;
-  stroke-dasharray: 1 12;
 }
 .predicted-edge {
   stroke: var(--prediction);

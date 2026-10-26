@@ -54,10 +54,10 @@ def run(url, channel):
             ),
         )
         page.goto(url, wait_until="networkidle")
-        page.wait_for_function("window.utecvis && window.utecvis.top.eligible === 5282")
+        page.wait_for_function("window.utecvis && window.utecvis.top.eligible === 5283")
         page.wait_for_timeout(400)
         assert page.locator("g.node").count() == 104
-        assert page.locator(".observed-edge").count() == 74
+        assert page.locator(".observed-edge").count() == 73
         assert page.locator(".predicted-edge").count() == 0
         assert page.locator("#filters-panel").is_hidden()
         assert page.locator("#inspector-panel").is_hidden()
@@ -65,7 +65,7 @@ def run(url, channel):
         assert page.evaluate("document.documentElement.scrollWidth") == 1440
         baseline = snapshot(page)
         baseline_screen = screen_radii(page)
-        assert sum(n["degree"] for n in baseline.values()) == 148
+        assert sum(n["degree"] for n in baseline.values()) == 146
         assert all(
             math.isclose(n["radius"], 7 + 12 * math.sqrt(n["degree"]))
             for n in baseline.values()
@@ -110,7 +110,7 @@ def run(url, channel):
             for id, n in first.items()
             if n["degree"] > baseline[id]["degree"]
         )
-        assert sum(n["degree"] for n in first.values()) == 2 * (74 + 53)
+        assert sum(n["degree"] for n in first.values()) == 2 * (73 + 53)
         assert all(n["radius"] >= baseline[id]["radius"] for id, n in first.items())
         assert any(n["radius"] > baseline[id]["radius"] for id, n in first.items())
         page.locator("#top-percent").evaluate(
@@ -125,7 +125,7 @@ def run(url, channel):
             if n["degree"] > first[id]["degree"]
         )
         assert page.locator(".predicted-edge").count() == 106
-        assert sum(n["degree"] for n in second.values()) == 2 * (74 + 106)
+        assert sum(n["degree"] for n in second.values()) == 2 * (73 + 106)
         assert all(n["radius"] >= first[id]["radius"] for id, n in second.items())
         page.locator("#prediction-toggle").click()
         page.wait_for_timeout(400)
@@ -247,17 +247,16 @@ def run(url, channel):
         assert "conexiones visibles" in page.locator("#method-dialog").inner_text()
         page.locator("#method-close").click()
         page.evaluate("""() => {
-            const edge=window.utecvis.observed.find(e=>e.counts.shared_publication===432);
+            const edge=window.utecvis.observed.find(e=>e.weight===8);
             const hit=[...document.querySelectorAll('.observed-hit')].find(el=>el.__data__.source===edge.source && el.__data__.target===edge.target);
             hit.dispatchEvent(new MouseEvent('click',{bubbles:true}));
         }""")
         page.wait_for_selector("#pair-work-list .work")
-        assert "autoría individual" in page.locator("#inspector").inner_text()
-        assert page.locator("#pair-work-list .work").count() == 20
-        page.locator("#load-pair-works").click()
-        page.wait_for_function(
-            "document.querySelectorAll('#pair-work-list .work').length===40"
-        )
+        assert "CONEXIÓN REGISTRADA" in page.locator("#inspector").inner_text()
+        assert page.locator("#pair-work-list .work").count() == 8
+        assert page.locator("#load-pair-works").count() == 0
+        assert "Asociada" not in page.locator(".graph-key").inner_text()
+        assert page.locator(".observed-edge.association").count() == 0
         page.locator("#reset").click()
         page.locator('[data-task="affinities"]').click()
         for viewport in [
@@ -294,7 +293,7 @@ def run(url, channel):
         reduced = browser.new_page(reduced_motion="reduce")
         reduced.goto(url, wait_until="networkidle")
         reduced.wait_for_function(
-            "window.utecvis && window.utecvis.top.eligible === 5282"
+            "window.utecvis && window.utecvis.top.eligible === 5283"
         )
         assert (
             reduced.locator(".switch span").evaluate(
@@ -314,8 +313,8 @@ def run(url, channel):
                     "browser": "PASS",
                     "tasks": 4,
                     "nodes": 104,
-                    "observed_edges": 74,
-                    "candidate_pairs": 5282,
+                    "observed_edges": 73,
+                    "candidate_pairs": 5283,
                     "top_1_percent": 53,
                     "dynamic_node_sizes": "PASS",
                     "viewports": [1920, 1440, 1280, 390],

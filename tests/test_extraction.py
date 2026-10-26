@@ -53,7 +53,7 @@ def source():
     return pages
 
 
-def test_complete_extraction_keeps_all_layers_and_writes_only_five_files(tmp_path):
+def test_complete_extraction_excludes_associations_and_writes_only_five_files(tmp_path):
     pages, visited = source(), []
 
     def fetch(url):
@@ -69,9 +69,8 @@ def test_complete_extraction_keeps_all_layers_and_writes_only_five_files(tmp_pat
     assert edge["counts"] == {
         "coauthorship": 1,
         "shared_project": 1,
-        "shared_publication": 1,
     }
-    assert edge["weight"] == 3
+    assert edge["weight"] == 2
     assert COLLECTIVE not in visited
     assert visited.count(PUB) == visited.count(PROJECT) == 1
     assert all(n["fingerprint"][0]["weight"] == 0.8 for n in network["nodes"])

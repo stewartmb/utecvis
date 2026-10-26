@@ -151,8 +151,8 @@ def test_observed_metrics_match_networkx_and_stay_independent_of_predictions(bun
     network, analysis = bundle
     graph = graph_from(network)
     between = nx.betweenness_centrality(graph, weight=None)
-    assert graph.number_of_nodes() == 104 and graph.number_of_edges() == 74
-    assert len(list(nx.isolates(graph))) == 55
+    assert graph.number_of_nodes() == 104 and graph.number_of_edges() == 73
+    assert len(list(nx.isolates(graph))) == 57
     for node in network["nodes"]:
         metrics, id = node["network_metrics"], node["id"]
         assert metrics["degree"] == graph.degree(id)
@@ -171,7 +171,7 @@ def test_api_excludes_observed_pairs_and_provides_evidence(bundle):
     response = client.get("/api/recommendations")
     assert response.status_code == 200
     observed = {tuple(sorted((e["source"], e["target"]))) for e in network["edges"]}
-    assert len(response.json["pairs"]) == 5282
+    assert len(response.json["pairs"]) == 5283
     assert not any(
         (p["source"], p["target"]) in observed for p in response.json["pairs"]
     )
@@ -183,17 +183,26 @@ def test_api_excludes_observed_pairs_and_provides_evidence(bundle):
     assert profile.json["total"] == 5
     assert profile.json["neighbors"] == []
     assert profile.json["preparation"]["sources"] == ["research_areas", "fingerprint"]
-    association = next(
-        e for e in network["edges"] if e["counts"].get("shared_publication") == 432
-    )
-    a, b = association["source"], association["target"]
-    first = client.get(f"/api/pairs/{a}/{b}").json
-    second = client.get(f"/api/pairs/{b}/{a}?offset=20").json
-    assert first["observed"]["weight"] == first["total"] == 432
-    assert len(first["works"]) == 20 and first["has_more"]
+    strongest = max(network["edges"], key=lambda edge: edge["weight"])
+    a, b = strongest["source"], strongest["target"]
+    first = client.get(f"/api/pairs/{a}/{b}?limit=4").json
+    second = client.get(f"/api/pairs/{b}/{a}?offset=4&limit=4").json
+    assert first["observed"]["weight"] == first["total"] == 8
+    assert len(first["works"]) == 4 and first["has_more"]
     assert first["signals"] == second["signals"]
     assert not {w["id"] for w in first["works"]} & {w["id"] for w in second["works"]}
-    assert all(w["relation"] == "shared_publication" for w in first["works"])
+    assert {w["relation"] for w in first["works"] + second["works"]} == {
+        "coauthorship",
+        "shared_project",
+    }
+    removed = client.get("/api/pairs/2503740915078290/2642458664668561").json
+    assert removed["observed"] is None and removed["total"] == 0
+    assert removed["signals"]["structural"] == 0
+    assert removed["path"] == []
+    assert any(
+        (p["source"], p["target"]) == (2503740915078290, 2642458664668561)
+        for p in response.json["pairs"]
+    )
     assert client.get(f"/api/pairs/{a}/{a}").status_code == 400
     assert client.get("/api/professors/0").status_code == 404
     assert client.get(f"/api/professors/{a}?offset=-1").status_code == 400

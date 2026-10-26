@@ -96,7 +96,7 @@ def validate_network(network):
         counts = {}
         for evidence in edge["evidence"]:
             kind = evidence["relation"]
-            if kind not in {"coauthorship", "shared_project", "shared_publication"}:
+            if kind not in {"coauthorship", "shared_project"}:
                 raise ValueError("Tipo de conexión desconocido.")
             counts[kind] = counts.get(kind, 0) + 1
         if counts != edge.get("counts") or sorted(counts) != edge.get("relations"):

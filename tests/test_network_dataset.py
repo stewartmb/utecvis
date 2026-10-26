@@ -43,13 +43,24 @@ def test_types_are_separate_and_duplicate_doi_does_not_inflate_an_edge():
     network, analysis = build_network([node(1), node(2), node(3)], records)
     assert validate_network(network)["edge_count"] == 1
     edge = network["edges"][0]
-    assert edge["weight"] == 3
+    assert edge["weight"] == 2
     assert edge["counts"] == {
         "coauthorship": 1,
         "shared_project": 1,
-        "shared_publication": 1,
     }
-    assert len(edge["evidence"]) == 3
+    assert len(edge["evidence"]) == 2
     assert analysis["isolates"] == [3]
     assert len(analysis["components"]) == 2
     assert network["nodes"][2]["network_metrics"]["degree"] == 0
+
+
+def test_collective_or_unconfirmed_authorship_does_not_create_edges():
+    collective = record("collective", collective=True)
+    unconfirmed = record("unconfirmed")
+    unconfirmed["people"] = []
+    records = deduplicate_records([collective, unconfirmed])
+    network, analysis = build_network([node(1), node(2)], records)
+    assert validate_network(network)["edge_count"] == 0
+    assert analysis["isolates"] == [1, 2]
+    assert all(n["publication_count"] == 2 for n in network["nodes"])
+    assert all(n["network_metrics"]["weighted_degree"] == 0 for n in network["nodes"])

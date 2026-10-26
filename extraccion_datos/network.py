@@ -98,7 +98,9 @@ def build_network(nodes, records):
             elif {a, b} <= authors and not record.get("author_collaborations"):
                 relation = "coauthorship"
             else:
-                relation = "shared_publication"
+                # Una asociación de perfiles sin autores individuales confirmados
+                # se conserva en publicaciones, pero no crea una arista.
+                continue
             edge = edges.setdefault(
                 (a, b), {"source": a, "target": b, "counts": Counter(), "evidence": []}
             )
@@ -114,9 +116,7 @@ def build_network(nodes, records):
                     "end_date": record.get("end_date"),
                     "basis": "explicit_authors"
                     if relation == "coauthorship"
-                    else "project_participation"
-                    if relation == "shared_project"
-                    else "profile_publication_association",
+                    else "project_participation",
                     "listing_sources": unique(
                         [o for o in record["observations"] if o["faculty_id"] in (a, b)]
                     ),
@@ -187,7 +187,7 @@ def build_network(nodes, records):
         ),
     }
     analysis["layers"] = {}
-    for relation in ("coauthorship", "shared_project", "shared_publication"):
+    for relation in ("coauthorship", "shared_project"):
         layer = nx.Graph()
         layer.add_nodes_from(sorted(ids))
         layer.add_edges_from(
@@ -252,7 +252,8 @@ def dataset(nodes, records):
         "publication_count": sum(r["kind"] == "publications" for r in records),
         "project_count": sum(r["kind"] == "projects" for r in records),
         "detail_scope": "All projects; selected publications to verify authors and shared works",
-        "edge_weight": "Number of distinct shared records; relation counts remain separate",
+        "edge_weight": "Number of distinct coauthored publications and shared projects; relation counts remain separate",
+        "edge_policy": "Only individually identified coauthors or shared project participants; profile publication associations are excluded",
     }
     return {
         "network": network,

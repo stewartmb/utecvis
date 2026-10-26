@@ -1,7 +1,7 @@
 # UTECVis
 
 Aplicación **Flask + D3** para explorar colaboración académica y afinidades entre
-**104 investigadores de UTEC**. Incluye 74 conexiones registradas, sus evidencias
+**104 investigadores de UTEC**. Incluye 73 conexiones registradas, sus evidencias
 y sugerencias explicadas mediante temática, institución y estructura de la red.
 
 ## Abrir la aplicación
@@ -60,14 +60,15 @@ botón Restablecer recupera la vista y los parámetros iniciales.
 
 - **Coautoría:** autores individuales identificados mediante URL CRIS u ORCID.
 - **Proyecto compartido:** participación en el mismo proyecto.
-- **Publicación asociada:** el trabajo aparece en ambos perfiles; no afirma
-  autoría individual cuando CRIS no la desglosa.
+- **Sugerencia:** pareja sin conexión registrada, ordenada por afinidad.
+
+Las publicaciones vinculadas a dos perfiles sin coautoría individual confirmada
+se conservan en los registros de producción, pero no generan aristas ni aportan
+peso a las métricas o al cálculo de proximidad estructural.
 
 Cada pareja aparece una vez; el peso cuenta registros distintos por DOI/URL y
-conserva los tipos por separado. La red tiene 49 investigadores con conexiones,
-55 aislados y 61 componentes. Un aislado puede colaborar con personas externas.
-La pareja de Física con peso 432 representa publicaciones asociadas, no 432
-coautorías individuales comprobadas.
+conserva los tipos por separado. La red tiene 47 investigadores con conexiones,
+57 aislados y 62 componentes. Un aislado puede colaborar con personas externas.
 
 **Métricas:** grado = vecinos distintos; grado ponderado = suma de trabajos
 compartidos; intermediación = caminos mínimos sin usar frecuencia como distancia;
@@ -84,9 +85,9 @@ Los selectores alternativos conservan grado ponderado e intermediación observad
 
 **Diseño:** color por departamento principal o comunidad; tamaño de nodo en escala
 de raíz cuadrada, con un mínimo para conservar visibles los aislados; grosor de
-arista logarítmico para manejar pesos entre 1 y 432. Líneas continuas para vínculos
-registrados, punteadas para la asociación de publicaciones y discontinuas violetas
-para sugerencias. La posición facilita explorar la topología, no mide similitud.
+arista logarítmico para manejar pesos entre 1 y 8. Líneas continuas para vínculos
+registrados y discontinuas violetas para sugerencias. La posición facilita explorar
+la topología, no mide similitud.
 Los nodos sin conexiones visibles forman un círculo equidistante en el perímetro;
 al recibir una sugerencia pasan al interior. D3 usa fuerzas de enlaces observados,
 repulsión y colisión, actualizando el radio de colisión en cada escenario. Un límite
@@ -126,7 +127,7 @@ Si una señal falta se renormalizan los pesos disponibles y se indica cobertura.
 No se rellenan recomendaciones con puntuaciones cero ni parejas existentes.
 
 **Top %:** porcentaje de las parejas sin vínculo dentro de los filtros actuales.
-Con toda la cohorte hay 5.282 parejas candidatas; Top 1 % muestra hasta 53. El rango
+Con toda la cohorte hay 5.283 parejas candidatas; Top 1 % muestra hasta 53. El rango
 0–10 % permite ampliar gradualmente sin saturar inicialmente la red. Seleccionar
 una pareja puede destacarla aunque esté fuera del Top dibujado.
 

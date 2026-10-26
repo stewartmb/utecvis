@@ -74,7 +74,7 @@ function verify(layout, radius) {
 test("104 nodos: los aislados forman un círculo y los conectados quedan dentro sin solaparse", () => {
   const { layout, update, radius } = fixture();
   update();
-  assert.equal(layout.isolatedCount, 55);
+  assert.equal(layout.isolatedCount, 57);
   verify(layout, radius);
 });
 
