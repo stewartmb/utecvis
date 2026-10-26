@@ -142,6 +142,7 @@ sitio externo esté disponible.
 
 ## Documentación
 
+- [Auditoría de información adicional para la red](docs/auditoria_cris.md)
 - [Resultado de la extracción y calidad](docs/resultado_extraccion.md)
 - [Investigación de métodos y prueba de la API](docs/investigacion_acceso.md)
 - [Acceso y reproducción con Python](docs/acceso_y_reproduccion.md)

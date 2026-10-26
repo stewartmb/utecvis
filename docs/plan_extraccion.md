@@ -54,6 +54,10 @@ campos faltantes y los conflictos están cuantificados.
 
 ## Hito 4. Enriquecimiento y evidencia de relaciones
 
+La auditoría real confirmó fichas con autores/DOI, proyectos con roles y fechas,
+huellas ponderadas y RENACYT. Hay un inventario y 13 relaciones de muestra; no un
+censo de aristas. Ver `auditoria_cris.md` para cobertura y orden de extracción.
+
 Prioridad sugerida:
 
 | Prioridad | Datos | Utilidad | Estado |
