@@ -54,7 +54,7 @@
     </header>
     <main class="workspace">
       <section
-        class="network-panel"
+        class="network-panel treemap-mode"
         aria-label="Red interactiva de investigadores"
       >
         <div id="graph-container">
@@ -66,30 +66,6 @@
           <div id="graph-message" class="graph-message">Preparando la red…</div>
           <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
           <div id="criterion-tooltip" class="criterion-tooltip" role="tooltip" hidden></div>
-        </div>
-        <nav class="task-nav" aria-label="Tareas analíticas">
-          <button
-            data-task="collaborators"
-            class="task active"
-            title="Ranking de colaboradores"
-          >
-            Colaboradores
-          </button>
-          <button
-            data-task="bridges"
-            class="task"
-            title="Intermediación y puentes"
-          >
-            Puentes
-          </button>
-          <button id="layout-toggle" class="task layout-toggle" type="button" aria-pressed="false" title="Probar treemap y fuerzas por departamento">Treemap</button>
-        </nav>
-        <div class="task-options" aria-label="Opciones de la tarea">
-          <div id="collaborator-options" class="metric-choice" role="group" aria-label="Comparar colaboradores por">
-            <button data-rank="degree" class="active" aria-pressed="true">Personas</button>
-            <button data-rank="weighted_degree" aria-pressed="false">Trabajos</button>
-          </div>
-          <button id="rankings-toggle" class="text-button" aria-expanded="false" aria-controls="inspector-panel">Ver ranking</button>
         </div>
         <div id="active-filters" class="active-filters" aria-label="Selección activa" hidden></div>
         <div class="network-stats" id="network-stats" aria-live="polite"></div>
@@ -209,10 +185,34 @@
             <summary id="legend-title">Departamento</summary>
             <div id="color-legend"></div>
           </details>
-          <div class="size-key">
-            <span class="size-circles" aria-hidden="true"
-              ><i></i><i></i><i></i></span
-            ><span id="metric-key">Conexiones visibles</span>
+          <div class="size-controls">
+            <div class="size-mode">
+              <span class="size-circles" aria-hidden="true"><i></i><i></i><i></i></span>
+              <nav class="task-nav" aria-label="Tareas analíticas">
+                <button
+                  data-task="collaborators"
+                  class="task active"
+                  title="Ranking de colaboradores"
+                >
+                  Colaboradores
+                </button>
+                <button
+                  data-task="bridges"
+                  class="task"
+                  title="Intermediación y puentes"
+                >
+                  Puentes
+                </button>
+              </nav>
+            </div>
+            <span id="metric-key">Conexiones visibles</span>
+            <div class="task-options" aria-label="Opciones de la tarea">
+              <div id="collaborator-options" class="metric-choice" role="group" aria-label="Comparar colaboradores por">
+                <button data-rank="degree" class="active" aria-pressed="true">Personas</button>
+                <button data-rank="weighted_degree" aria-pressed="false">Trabajos</button>
+              </div>
+              <button id="rankings-toggle" class="text-button" aria-expanded="false" aria-controls="inspector-panel">Ver ranking</button>
+            </div>
           </div>
           <div
             class="width-key"
@@ -284,7 +284,7 @@
             ver ese departamento, o busca una persona. Las selecciones activas se quitan con ×. Selecciona una persona o una línea para consultar la
             evidencia. Arrastra un nodo para moverlo: sus enlaces registrados
             tiran de sus vecinos y los círculos se separan durante el movimiento.
-            Los aislados se pueden reordenar por el perímetro.
+            Los aislados también se pueden mover dentro de su departamento.
           </p>
           <p>
             Las sugerencias se activan en la esquina inferior izquierda. Top %
@@ -312,14 +312,13 @@
           </p>
         </section>
         <section>
-          <h3>Prueba de treemap + fuerzas</h3>
-          <p>El botón Treemap agrupa por departamento principal. El área de cada
+          <h3>Treemap + fuerzas</h3>
+          <p>La vista agrupa por departamento principal. El área de cada
             bloque es proporcional a su número de investigadores visibles; los
             nodos conservan sus tamaños y las aristas sus significados. Las fuerzas
             y colisiones actúan dentro del bloque, incluidos los aislados. Los
             vínculos entre departamentos atraviesan los bloques. Compartir un
-            bloque no prueba colaboración. Vista circular permite volver al diseño
-            anterior. Esta agrupación es institucional, no una comunidad calculada.</p>
+            bloque no prueba colaboración. Esta agrupación es institucional, no una comunidad calculada.</p>
         </section>
         <section>
           <h3>Color, tamaño y posición</h3>
@@ -339,10 +338,9 @@
           </p>
           <p>
             La posición utiliza fuerzas de las conexiones observadas. La
-            distancia visual no es una medida de afinidad. Los nodos sin
-            conexiones visibles forman un círculo en el contorno. Al cambiar los
-            tamaños, D3 reacomoda los nodos con colisiones y un límite circular
-            para que queden separados y dentro de la red. Las sugerencias no se
+            distancia visual no es una medida de afinidad. Los nodos, incluidos los aislados, permanecen dentro de su departamento.
+            Al cambiar los tamaños, D3 aplica colisiones y límites rectangulares
+            para conservar la separación. Las sugerencias no se
             usan como fuerzas de enlace ni modifican las métricas observadas.
           </p>
         </section>

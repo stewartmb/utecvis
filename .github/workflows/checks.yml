@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/scoring.test.mjs
-      - run: node --test tests/layout.test.mjs
+      - run: node --test tests/treemap-layout.test.mjs
       - run: ruff check .
       - run: ruff format --check .
       - run: python -m pytest -q

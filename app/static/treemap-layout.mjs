@@ -1,4 +1,4 @@
-// Experimental force-in-a-box layout. D3 treemap partitions departments;
+// Force-in-a-box layout. D3 treemap partitions departments;
 // D3 forces arrange researchers inside their department's rectangle.
 // Rectangle area represents researcher count, not collaboration or importance.
 export function createTreemapLayout(d3, nodeRadius, options = {}) {
@@ -71,6 +71,36 @@ export function createTreemapLayout(d3, nodeRadius, options = {}) {
       }
       if (worst < 0.03) break;
     }
+    resolveBlockedPairs();
+  }
+
+  // A wall can trap a collinear pair even after repeated collision projection.
+  // Find the closest free angular position, preserving the dragged anchor.
+  function resolveBlockedPairs() {
+    for (let pass = 0; pass < 12; pass++) {
+      let moved = false;
+      for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
+        const a = items[i], b = items[j];
+        if (groupKey(a) !== groupKey(b)) continue;
+        const required = nodeRadius(a) + nodeRadius(b) + gap;
+        if (Math.hypot(a.x-b.x, a.y-b.y) >= required-0.03) continue;
+        const free = fixed(b) ? a : b, anchor = free === a ? b : a;
+        if (fixed(free)) continue;
+        const box = boxFor(free), r = nodeRadius(free);
+        let best = null, distance = Infinity;
+        for (let k = 0; k < 64; k++) {
+          const angle = k * Math.PI / 32;
+          const x = anchor.x + (required+0.1)*Math.cos(angle);
+          const y = anchor.y + (required+0.1)*Math.sin(angle);
+          if (x-r < box.x0+padding || x+r > box.x1-padding || y-r < box.y0+header || y+r > box.y1-padding) continue;
+          if (items.some(p => p !== free && Math.hypot(x-p.x,y-p.y) < r+nodeRadius(p)+gap-0.03)) continue;
+          const delta = Math.hypot(x-free.x,y-free.y);
+          if (delta < distance) { best = {x,y}; distance = delta; }
+        }
+        if (best) { free.x=best.x; free.y=best.y; free.vx=free.vy=0; moved=true; }
+      }
+      if (!moved) break;
+    }
   }
 
   // A conservative shelf packing verifies that the area can accommodate every
@@ -133,7 +163,7 @@ export function createTreemapLayout(d3, nodeRadius, options = {}) {
     }
     for (const n of items) {
       const b = boxFor(n), p = packed.get(n.id);
-      n.fx = n.fy = null; n.onRing = false; n.vx = n.vy = 0;
+      n.fx = n.fy = null; n.vx = n.vy = 0;
       if (!Number.isFinite(n.x) || !Number.isFinite(n.y) || n.x < b.x0 || n.x > b.x1 || n.y < b.y0 + header || n.y > b.y1) {
         n.x = p.x; n.y = p.y;
       }
@@ -206,7 +236,7 @@ export function createTreemapLayout(d3, nodeRadius, options = {}) {
 
   function reset(all = items) {
     simulation?.stop(); signature = ""; dragged = null; cells = []; boxes.clear();
-    all.forEach((n) => { n.x = n.y = NaN; n.fx = n.fy = null; n.onRing = false; });
+    all.forEach((n) => { n.x = n.y = NaN; n.fx = n.fy = null; });
   }
 
   return {
@@ -216,7 +246,6 @@ export function createTreemapLayout(d3, nodeRadius, options = {}) {
     get nodes() { return items; }, get cells() { return cells; },
     get bounds() { return {x0:-worldWidth/2,y0:-worldHeight/2,x1:worldWidth/2,y1:worldHeight/2}; },
     get outerRadius() { return Math.max(worldWidth, worldHeight) / 2; },
-    get ringRadius() { return 0; }, get isolatedCount() { return 0; },
     get maxOverlap() { return overlaps(); },
     boxFor,
   };

@@ -14,35 +14,15 @@ def snapshot(page):
     }]))""")
 
 
-def screen_radii(page):
-    return page.locator("g.node").evaluate_all(
-        "els=>Object.fromEntries(els.map(el=>[el.dataset.id,el.querySelector('.node-core').getBoundingClientRect().width/2]))"
-    )
-
-
 def verify_layout(page):
     assert page.evaluate("""() => {
       const layout=window.utecvis.layout;
       if(layout.maxOverlap>0.06) return false;
-      if(window.utecvis.state.layout === 'treemap') {
-        return layout.nodes.every(n => {
-          const b=layout.boxFor(n), el=document.querySelector(`g.node[data-id="${n.id}"] .node-core`);
-          const r=el.r.baseVal.value;
-          return n.x-r>=b.x0+15.99 && n.x+r<=b.x1-15.99 && n.y-r>=b.y0+43.99 && n.y+r<=b.y1-15.99;
-        });
-      }
-      const dots=[...document.querySelectorAll('g.node .node-core')].map(el=>el.getBoundingClientRect());
-      for(let i=0;i<dots.length;i++)for(let j=i+1;j<dots.length;j++){
-        const a=dots[i],b=dots[j];
-        if(Math.hypot(a.x+a.width/2-b.x-b.width/2,a.y+a.height/2-b.y-b.height/2)<(a.width+b.width)/2-0.2)return false;
-      }
-      for(const n of layout.nodes){
-        const r=document.querySelector(`g.node[data-id="${n.id}"] .node-core`).r.baseVal.value;
-        if(layout.isIsolated(n)){
-          if(Math.abs(Math.hypot(n.x,n.y)-layout.ringRadius)>0.001)return false;
-        }else if(Math.hypot(n.x,n.y)+r>layout.coreRadius+0.01)return false;
-      }
-      return true;
+      return layout.nodes.every(n => {
+        const b=layout.boxFor(n), el=document.querySelector(`g.node[data-id="${n.id}"] .node-core`);
+        const r=el.r.baseVal.value;
+        return n.x-r>=b.x0+15.99 && n.x+r<=b.x1-15.99 && n.y-r>=b.y0+43.99 && n.y+r<=b.y1-15.99;
+      });
     }""")
 
 
@@ -96,7 +76,6 @@ def run(url, channel):
         assert page.locator("#graph-container").bounding_box()["height"] > 800
         assert page.evaluate("document.documentElement.scrollWidth") == 1440
         baseline = snapshot(page)
-        baseline_screen = screen_radii(page)
         assert sum(n["degree"] for n in baseline.values()) == 146
         reference_degree = page.evaluate(
             "Math.max(...window.utecvis.nodes.map(n=>n.network_metrics.degree))"
@@ -184,7 +163,7 @@ def run(url, channel):
             drag_neighbors,
         )
         assert live_drag["holding"] and live_drag["moved"] > 5
-        assert live_drag["worstOverlap"] < 0.06
+        assert live_drag["worstOverlap"] < 0.06, live_drag
         verify_layout(page)
         page.mouse.up()
         page.wait_for_timeout(100)
@@ -200,12 +179,6 @@ def run(url, channel):
         assert page.locator("#inspector-panel").is_hidden()
         verify_layout(page)
         first = snapshot(page)
-        first_screen = screen_radii(page)
-        assert all(
-            first_screen[id] > baseline_screen[id]
-            for id, n in first.items()
-            if n["degree"] > baseline[id]["degree"]
-        )
         assert sum(n["degree"] for n in first.values()) == 2 * (73 + 53)
         assert all(n["radius"] >= baseline[id]["radius"] for id, n in first.items())
         assert any(n["radius"] > baseline[id]["radius"] for id, n in first.items())
@@ -214,12 +187,6 @@ def run(url, channel):
         )
         page.wait_for_timeout(400)
         second = snapshot(page)
-        second_screen = screen_radii(page)
-        assert all(
-            second_screen[id] > first_screen[id]
-            for id, n in second.items()
-            if n["degree"] > first[id]["degree"]
-        )
         assert page.locator(".predicted-edge").count() == 106
         assert sum(n["degree"] for n in second.values()) == 2 * (73 + 106)
         assert all(n["radius"] >= first[id]["radius"] for id, n in second.items())
@@ -428,21 +395,21 @@ def run(url, channel):
             }""")
             verify_layout(page)
             page.screenshot(path=f"/tmp/utecvis-{viewport['width']}.png")
-        # The experimental treemap is an alternate physical layout, not a new
-        # analytic network. Its data, metrics and recommendations stay identical.
+        # The single department layout preserves the observed network and metrics.
         page.set_viewport_size({"width": 1440, "height": 900})
         page.locator("#reset").click()
         observed_before = page.evaluate("JSON.stringify(window.utecvis.observed)")
         metrics_before = page.evaluate(
             "JSON.stringify(window.utecvis.nodes.map(n=>n.network_metrics))"
         )
-        page.locator("#layout-toggle").click()
         assert page.evaluate("window.utecvis.state.layout") == "treemap"
-        assert page.locator("#layout-toggle").inner_text() == "Vista circular"
+        assert page.locator("#layout-toggle").count() == 0
+        assert page.locator(".size-mode [data-task]").count() == 2
+        assert page.locator(".size-controls #rankings-toggle").is_visible()
         assert page.locator("g.node").count() == 104
         assert page.locator(".observed-edge").count() == 73
         assert page.locator(".department-box").count() > 1
-        assert page.locator(".isolate-ring").is_hidden()
+        assert page.locator(".isolate-ring").count() == 0
         verify_layout(page)
         page.locator("#prediction-toggle").click()
         assert page.locator(".predicted-edge").count() == 53
@@ -460,6 +427,12 @@ def run(url, channel):
             page.set_viewport_size(viewport)
             page.wait_for_timeout(350)
             verify_layout(page)
+            assert page.locator(".size-mode").evaluate(
+                "el => el.getBoundingClientRect().top > window.innerHeight/2"
+            )
+            assert page.locator(".prediction-controls").evaluate(
+                "el => {const a=el.getBoundingClientRect(),b=document.querySelector('.map-legend').getBoundingClientRect();return a.bottom<=b.top || a.top>=b.bottom || a.right<=b.left || a.left>=b.right;}"
+            )
             assert (
                 page.evaluate("document.documentElement.scrollWidth")
                 <= viewport["width"]
@@ -481,10 +454,9 @@ def run(url, channel):
             )
             == metrics_before
         )
-        page.locator("#layout-toggle").click()
         page.wait_for_timeout(350)
-        assert page.evaluate("window.utecvis.state.layout") == "circular"
-        assert page.locator(".department-box").count() == 0
+        assert page.evaluate("window.utecvis.state.layout") == "treemap"
+        assert page.locator(".department-box").count() > 1
         verify_layout(page)
         page.set_viewport_size({"width": 1440, "height": 900})
         page.locator("#reset").click()
@@ -509,7 +481,6 @@ def run(url, channel):
             assert page.locator("#criterion-tooltip").is_visible()
             assert text in page.locator("#criterion-tooltip").inner_text()
         page.mouse.move(10, 10)
-        page.locator("#layout-toggle").click()
         page.locator("#prediction-toggle").click()
         timing = page.evaluate("""async () => {
           const layout=window.utecvis.layout, original=layout.configure;
@@ -578,7 +549,7 @@ def run(url, channel):
                     "viewports": [1920, 1440, 1280, 740, 390],
                     "collision_and_boundary": "PASS",
                     "persistent_suggestion_controls_and_legend": "PASS",
-                    "treemap_and_return_to_circular": "PASS",
+                    "treemap_only_and_size_modes": "PASS",
                     "slider_coalescing": timing,
                     "portraits_offline": "PASS",
                     "pair_coincidences_and_help": "PASS",

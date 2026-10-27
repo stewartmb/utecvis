@@ -1398,13 +1398,8 @@ dialog::backdrop {
   }
 }
 
-/* D3 layout: strong quantitative contrast, a circular perimeter and real space. */
-.isolate-ring {
-  stroke: #dce5e1;
-  stroke-width: 1;
-  stroke-dasharray: 2 9;
-  vector-effect: non-scaling-stroke;
-}
+/* D3 marks: quantitative contrast and space between nodes. */
+
 .observed-edge,
 .width-key {
   display: flex;
@@ -1466,9 +1461,7 @@ g.node.dragging .node-halo {
   .inspector-panel { bottom: 270px; }
 }
 
-/* Reversible D3 treemap + force experiment. Group backgrounds stay behind edges. */
-.layout-toggle { border-left: 1px solid var(--line); margin-left: 5px; border-radius: 0 7px 7px 0; }
-.layout-toggle[aria-pressed="true"] { background: #e9f2ed; color: var(--accent); }
+/* D3 treemap + forces. Group backgrounds stay behind edges. */
 .department-box rect { fill-opacity: 0.055; stroke: #c7d3ce; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .department-box-label { font-size: 14px; font-weight: 650; fill: var(--ink); }
 .department-box-count { font-size: 11px; fill: var(--muted); }
@@ -1502,3 +1495,25 @@ g.node.dragging .node-halo {
 .score-coverage { font-size: 10px; margin-bottom: 15px; }
 .pair-extra { margin-top: 18px; }
 .pair-extra > summary { cursor: pointer; font-size: 11px; color: var(--muted); }
+
+/* Size modes belong to the size legend; the graph has one department layout. */
+.map-legend .size-controls { margin: 12px 0; }
+.map-legend .size-mode { display: flex; align-items: center; gap: 9px; }
+.map-legend .task-nav { position: static; padding: 2px; gap: 2px; }
+.map-legend .task { padding: 6px 8px; font-size: 11px; }
+.map-legend .size-circles { display: flex; flex-shrink: 0; }
+.map-legend #metric-key { display: block; margin: 5px 0 7px 46px; font-size: 10px; color: var(--muted); }
+.map-legend .task-options { position: static; gap: 12px; }
+.active-filters { top: 25px; }
+@media (max-width: 1099px) {
+  .network-stats { top: 22px; }
+  .active-filters { top: 52px; }
+  .prediction-controls { bottom: 205px; }
+}
+@media (max-width: 720px) {
+  .map-legend { gap: 7px 12px; }
+  .map-legend .size-controls { order: -1; flex-basis: 100%; margin: 0; }
+  .map-legend #metric-key { margin: 3px 0 5px 46px; }
+  .map-legend .task-options { justify-content: flex-start; gap: 12px; }
+  .prediction-controls { bottom: 190px; }
+}

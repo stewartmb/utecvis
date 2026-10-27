@@ -94,23 +94,21 @@ cambios del grafo por fotograma. Los radios y el ranking se reutilizan cuando su
 entradas no cambian; durante el ajuste se evita ejecutar cientos de pasos físicos
 antes de devolver el control. La simulación D3 continúa con límites y colisiones.
 
-## Prueba reversible: treemap + fuerzas
+## Vista: treemap + fuerzas
 
-El botón **Treemap** agrupa la misma red por departamento principal. D3 treemap
+La vista agrupa la misma red por departamento principal. D3 treemap
 asigna áreas proporcionales al número de investigadores visibles. D3 force mantiene
 los círculos separados dentro del bloque; los vínculos entre departamentos siguen
 visibles. Incluye a los aislados en su departamento, sin crear aristas nuevas.
 Los tamaños y las métricas mantienen su significado. Los bloques no representan
 comunidades calculadas ni prueban colaboración. Los departamentos son el primer
-nivel de esta prueba; los grupos superpuestos requerirían otra regla de pertenencia.
+nivel de esta vista; los grupos superpuestos requerirían otra regla de pertenencia.
 
-**Vista circular** vuelve al diseño anterior, conservando pesos, sugerencias,
-selección y filtros. El diseño circular sigue siendo el inicial; la prueba se
-activa explícitamente. El lienzo crece de manera uniforme si los radios necesitan
+El lienzo crece de manera uniforme si los radios necesitan
 más espacio, manteniendo la proporción de áreas. En escenarios densos puede
 reducirse el tamaño aparente al ajustar toda la vista: se puede ampliar con zoom.
 La agrupación institucional facilita localizar departamentos, pero puede alargar
-y acumular los enlaces entre ellos. Esta vista está pendiente de evaluación visual.
+y acumular los enlaces entre ellos. Los modos **Colaboradores** y **Puentes** están abajo, junto a los círculos de tamaño. Sus opciones y el ranking se consultan en el mismo lugar.
 
 ## Cómo interpretar la red
 
@@ -152,26 +150,14 @@ con un mínimo para conservar visibles los aislados; grosor de
 arista logarítmico para manejar pesos entre 1 y 8. Líneas continuas para vínculos
 registrados y discontinuas violetas para sugerencias. La posición facilita explorar
 la topología, no mide similitud.
-Los nodos sin conexiones visibles forman un círculo equidistante en el perímetro;
-al recibir una sugerencia pasan al interior. D3 usa fuerzas de enlaces observados,
-repulsión y colisión, actualizando el radio de colisión en cada escenario. Un límite
-circular mantiene los nodos dentro y una corrección con `d3.quadtree` deja separación
-entre sus círculos, también en cada fotograma del arrastre. Al mover un nodo,
-D3 reactiva la simulación: los enlaces registrados actúan como resortes y sus
-vecinos acompañan el movimiento mientras mantienes pulsado. Una fuerza de
-posición transmite el desplazamiento a su grupo visible: los vecinos directos
-siguen el movimiento completo y la tracción disminuye por cada salto adicional
-(factor 0,78). Durante el arrastre también se recorren las sugerencias visibles;
-esto solo afecta a las coordenadas, no a la red observada ni a sus métricas. Al soltar, la fricción
-(`velocityDecay = 0,50`) y el enfriamiento estabilizan el grupo suavemente, sin fijar
-el nodo de forma permanente. Los aislados se pueden reordenar por el perímetro;
-los demás dejan espacio sobre el círculo. Con movimiento reducido la respuesta es
-inmediata, sin animación de asentamiento. Las sugerencias no ejercen fuerza
-en la disposición inicial ni durante el enfriamiento; solo transmiten el arrastre
-manual mientras están visibles.
+Todos los nodos, incluidos los aislados, permanecen dentro del bloque de su departamento.
+D3 combina fuerzas de enlaces observados, repulsión y colisión. Los límites
+rectangulares y la corrección geométrica evitan solapamientos y salidas del bloque.
+Al arrastrar un nodo, sus vecinos directos del mismo bloque acompañan parte del
+movimiento. Las sugerencias no modifican las fuerzas de enlace ni las métricas.
 Los escenarios densos amplían el espacio de cálculo y se encuadran
 automáticamente. El ajuste usa toda la altura disponible; en pantallas amplias los
-controles de sugerencias ocupan el margen derecho. El grosor de las aristas va de
+controles de sugerencias ocupan el margen izquierdo. El grosor de las aristas va de
 1,5 a 6 px en escala logarítmica y permanece legible al ajustar el zoom.
 La vista general usa transparencia para reducir la acumulación visual en los
 cruces; al pasar el cursor o seleccionar, se resaltan solo las conexiones de esa
@@ -248,8 +234,7 @@ La extracción conserva listas completas de la cohorte y fichas detalladas de lo
 
 ```bash
 python -m pytest -q
-node --test tests/scoring.test.mjs
-node --test tests/layout.test.mjs
+node --test tests/scoring.test.mjs tests/treemap-layout.test.mjs
 ```
 
 Las pruebas no visitan CRIS ni descargan el modelo. La prueba del preparador RWR

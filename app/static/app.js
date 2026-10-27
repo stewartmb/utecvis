@@ -7,7 +7,6 @@ import {
   visibleConnections,
 } from "./scoring.mjs";
 
-import { createNetworkLayout } from "./layout.mjs";
 import { createTreemapLayout } from "./treemap-layout.mjs";
 
 const $ = (id) => document.getElementById(id);
@@ -82,7 +81,7 @@ const palette = [
 ];
 const state = {
   task: "collaborators",
-  layout: "circular",
+  layout: "treemap",
   metric: "degree",
   department: "",
   predictions: false,
@@ -327,7 +326,6 @@ function predictedPath(edge) {
 }
 
 function tick() {
-  layer?.select(".isolate-ring").attr("r", layout?.ringRadius || 0);
   nodeSelection?.attr("transform", (n) => `translate(${n.x},${n.y})`);
   edgeSelection?.attr("d", edgePath);
   layer?.selectAll(".observed-hit").attr("d", edgePath);
@@ -380,11 +378,6 @@ function setupGraph() {
   width = container.clientWidth;
   height = container.clientHeight;
   layer = svg.append("g");
-  layer
-    .append("circle")
-    .attr("class", "isolate-ring")
-    .attr("fill", "none")
-    .attr("pointer-events", "none");
   layer.append("g").attr("class", "treemap-layer");
   layer.append("g").attr("class", "observed-layer");
   layer.append("g").attr("class", "observed-hit-layer");
@@ -405,7 +398,7 @@ function setupGraph() {
   svg.on("click", (event) => {
     if (event.target === svg.node() || event.target.closest(".department-box")) clearSelection();
   });
-  layout = createNetworkLayout(d3, radius, { onTick: tick, reducedMotion });
+  layout = createTreemapLayout(d3, radius, { onTick: tick, reducedMotion });
   new ResizeObserver(() => {
     const w = container.clientWidth,
       h = container.clientHeight;
@@ -548,10 +541,6 @@ function renderGraph({ live = false } = {}) {
     { live },
   );
   renderTreemap();
-  layer
-    .select(".isolate-ring")
-    .attr("r", layout.ringRadius)
-    .style("display", layout.isolatedCount > 2 ? null : "none");
   nodeSelection = layer
     .select(".node-layer")
     .selectAll("g.node")
@@ -703,20 +692,15 @@ function updateNodePhotos() {
 function fitGraph(animated = true) {
   const visible = nodes.filter((n) => visibleIds?.has(n.id));
   if (!visible.length) return;
-  const small = visible.length <= 3 && state.layout !== "treemap";
-  const extent = layout.outerRadius;
-  const x0 = layout.bounds?.x0 ?? (small ? d3.min(visible, (n) => n.x - radius(n)) - 20 : -extent);
-  const x1 = layout.bounds?.x1 ?? (small ? d3.max(visible, (n) => n.x + radius(n)) + 20 : extent);
-  const y0 = layout.bounds?.y0 ?? (small ? d3.min(visible, (n) => n.y - radius(n)) - 20 : -extent);
-  const y1 = layout.bounds?.y1 ?? (small ? d3.max(visible, (n) => n.y + radius(n)) + 20 : extent);
+  const { x0, x1, y0, y1 } = layout.bounds;
   // Keep the persistent suggestion controls in the left margin on wide screens.
   const wide = width >= 1100;
   const leftSpace = wide ? 310 : 24;
   const rightSpace = 24;
   const selectionSpace = $("active-filters").hidden ? 0 : $("active-filters").offsetHeight + 15;
-  const topSpace = (width <= 720 ? 135 : 110) + selectionSpace;
+  const topSpace = (width <= 720 ? 65 : 55) + selectionSpace;
   // Keep the camera reserve unchanged when suggestions are toggled.
-  const bottomSpace = wide ? 28 : width <= 720 ? 270 : 300;
+  const bottomSpace = wide ? 28 : width <= 720 ? 335 : 340;
   const availableHeight = Math.max(120, height - topSpace - bottomSpace);
   const availableWidth = Math.max(150, width - rightSpace - leftSpace);
   const scale =
@@ -1115,19 +1099,6 @@ function wireCriterionHelp() {
 
 function wireControls() {
   wireCriterionHelp();
-  $("layout-toggle").addEventListener("click", () => {
-    layout.reset(nodes);
-    state.layout = state.layout === "circular" ? "treemap" : "circular";
-    const factory = state.layout === "treemap" ? createTreemapLayout : createNetworkLayout;
-    layout = factory(d3, radius, { onTick: tick, reducedMotion });
-    $("layout-toggle").textContent = state.layout === "treemap" ? "Vista circular" : "Treemap";
-    $("layout-toggle").setAttribute("aria-pressed", String(state.layout === "treemap"));
-    $("layout-toggle").title = state.layout === "treemap" ? "Volver a la disposición circular" : "Probar treemap y fuerzas por departamento";
-    document.querySelector(".network-panel").classList.toggle("treemap-mode", state.layout === "treemap");
-    lastFitRadius = null;
-    renderGraph();
-    fitGraph(false);
-  });
   $("rankings-toggle").addEventListener("click", () => {
     const open = $("inspector-panel").hidden;
     if (open) clearSelection();

@@ -183,29 +183,29 @@ Importante: el grado visible usado en el dibujo puede incluir sugerencias; el gr
 
 Variables físicas: `x,y` son posiciones; `vx,vy`, velocidades; `fx,fy`, posiciones fijadas temporalmente al arrastrar. No son atributos de investigación.
 
-La disposición inicial usa aristas observadas como resortes, repulsión y colisiones. Los aislados visibles van a un anillo exterior. Si un aislado recibe una sugerencia visible, entra al interior; si se desactiva, vuelve al anillo.
+La disposición agrupa por departamento con D3 treemap. Dentro de cada bloque combina enlaces observados, repulsión y colisiones; los aislados permanecen en su departamento.
 
 Parámetros visuales actuales:
 
 | Parámetro | Valor y finalidad |
 |---|---|
-| Distancia deseada de enlace | Radio A + radio B + 115; deja espacio entre círculos conectados. |
-| Intensidad del enlace | 0,32, con dos iteraciones; controla el resorte. |
-| Repulsión | −340 para nodos con conexiones visibles; 0 para aislados anclados. |
+| Distancia deseada de enlace | Radio A + radio B + 80; deja espacio entre círculos conectados. |
+| Intensidad del enlace | 0,12; controla el resorte. |
+| Repulsión | −130 para todos los nodos. |
 | Colisiones | Radio del nodo + 4,5 por extremo: separación objetivo de 9; intensidad 1 y ocho iteraciones. |
-| Atracción al centro | 0,006 en cada eje; mantiene el conjunto centrado. |
+| Atracción al centro | 0,08 en cada eje hacia el centro del bloque. |
 | Fricción | `velocityDecay = 0,50`; amortigua el movimiento. |
 | Enfriamiento | `alphaDecay = 0,035`; reduce gradualmente la actividad de la simulación. |
-| Arrastre | Reactivación con alpha mínimo 0,45 y objetivo 0,35; al soltar el objetivo vuelve a 0. |
-| Tracción de grupo durante arrastre | Fuerzas de posición de intensidad 0,85. Los vecinos directos reciben desplazamiento completo y cada salto adicional reduce la influencia por un factor 0,78. Incluye las sugerencias visibles solo para esta interacción. |
-| Posición inicial reproducible | Generador aleatorio de D3 con semilla 0,42 y relajación inicial de 220 pasos. |
-| Espacio de cálculo | Anillo base 470; se amplía según los radios y la ocupación. En vistas de hasta tres nodos se usa una base menor. No son píxeles fijos en pantalla. |
+| Arrastre | Reactivación con alpha mínimo 0,45 y objetivo 0,25; al soltar el objetivo vuelve a 0. |
+| Tracción de grupo durante arrastre | Fuerzas de posición de intensidad 0,50 sobre vecinos directos del mismo departamento. Incluye las sugerencias visibles solo para esta interacción. |
+| Posición inicial reproducible | Generador aleatorio de D3 con semilla 0,42 y relajación inicial de 200 pasos. |
+| Espacio de cálculo | Base de 1500 × 1000 unidades, ajustada por la fracción visible de la cohorte y ampliada uniformemente si hace falta espacio. No son píxeles fijos en pantalla. |
 
-Además de `forceCollide` hay corrección geométrica con `d3.quadtree` después de integrar el movimiento. El límite circular evita que salgan los círculos; si una colisión queda atrapada en el borde, el nodo libre puede deslizarse por el contorno. Estos cálculos solo modifican coordenadas.
+Además de `forceCollide` hay corrección geométrica después de integrar el movimiento. Los límites rectangulares del departamento mantienen los nodos dentro del bloque y separados. Estos cálculos solo modifican coordenadas.
 
 Las sugerencias no crean resortes en la disposición inicial. Sí transmiten tracción mientras arrastras un nodo conectado visualmente por ellas. Las métricas observadas siguen intactas.
 
-Cambiar de tarea puede cambiar la métrica de tamaño y activar/desactivar sugerencias; D3 reacomoda los nodos para dejar espacio. La posición y la longitud de una arista en pantalla no equivalen a afinidad, kilómetros o importancia. Los cruces de aristas pueden reducirse, no se garantiza eliminarlos.
+Cambiar de tarea cambia la métrica de tamaño y conserva el estado de las sugerencias; D3 reacomoda los nodos para dejar espacio. La posición y la longitud de una arista en pantalla no equivalen a afinidad, kilómetros o importancia. Los cruces de aristas pueden reducirse, no se garantiza eliminarlos.
 
 ## 13. Herramientas y cinco archivos
 
@@ -225,7 +225,7 @@ Calculado a partir de los datos: aristas bajo las reglas de evidencia, pesos, gr
 
 Elegido como heurística o diseño: nivel institucional 1/0,7/0,4; pesos 60/30/10; hasta 20 conceptos y términos excluidos; reinicio RWR de 10 %; escalas de radio y grosor; colores, transparencia, fricción y fuerzas. Que una fórmula esté implementada correctamente no valida sus supuestos como predictor del futuro.
 
-Prueba reversible incorporada: treemap + fuerzas por departamento principal. D3 treemap reparte áreas proporcionales al número de investigadores; fuerzas y límites rectangulares mantienen los nodos dentro del bloque. Se conserva la red, métricas y significado de los radios. Los aislados aparecen dentro de su departamento en esta prueba. Vista circular recupera la disposición anterior. Compartir bloque no es una colaboración ni una comunidad calculada. La superficie total puede crecer para evitar solapamientos, manteniendo las proporciones de los departamentos. La colocación institucional puede acumular enlaces entre bloques; está pendiente de evaluación visual. No se incorporó empaquetado de comunidades en regiones circulares. Se retiró la vista de Comunidades y su selector institucional. Las comunidades calculadas se conservan en los datos, pero no se usan para colorear ni filtrar la interfaz. La cuarta tarea se reformuló como exploración de departamentos y pertenencias desde la leyenda y los detalles.
+La única disposición es treemap + fuerzas por departamento principal. D3 treemap reparte áreas proporcionales al número de investigadores; fuerzas y límites rectangulares mantienen los nodos dentro del bloque, incluidos los aislados. Compartir bloque no prueba colaboración ni representa una comunidad calculada. La superficie total puede crecer para evitar solapamientos conservando las proporciones. Los enlaces entre bloques pueden cruzarse. Los modos Colaboradores y Puentes aparecen abajo junto a los círculos de tamaño; sus opciones y el ranking se encuentran allí mismo. La cuarta tarea explora departamentos y pertenencias desde la leyenda y los detalles.
 
 No se ha entrenado ni validado un modelo de predicción con colaboraciones futuras. No hay precisión predictiva medida, ni un umbral de S que garantice éxito. El control español/inglés comprueba un ejemplo de comportamiento semántico; no valida todas las afinidades.
 
