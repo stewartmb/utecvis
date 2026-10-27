@@ -17,7 +17,7 @@ visualizaciones recuerda el usuario.
 
 - [Artículo: CollaborationViz: Interactive Visual Exploration of Biomedical Research Collaboration Networks](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0111928)
 - [Código original](https://github.com/bianjiang/rcna)
-- [Demo indicada por los autores](https://bianjiang.github.io/rcna/) — puede depender de recursos antiguos; la existencia del enlace no garantiza que toda la demo funcione hoy.
+- [Demo interactiva](https://bianjiang.github.io/rcna/) — abierta y comprobada en navegador: el grafo, los datos y los controles de predicciones cargan. Esto no verifica exhaustivamente todas sus funciones.
 - [Figura 1: interfaz de la red](https://doi.org/10.1371/journal.pone.0111928.g001)
 - [Figura 5: recomendaciones de colaboración](https://doi.org/10.1371/journal.pone.0111928.g005)
 
@@ -33,13 +33,15 @@ Los resultados de evaluación del artículo no son resultados de UTECVis.
 
 **Antecedente documentado en la sección 16 del Markdown original del usuario.**
 
-- [Enlace exacto incluido en ese documento](https://bigdata.duke.edu/projects/understanding-duke-research-based-on-large-scale-faculty-publication-records/)
+- [Enlace histórico incluido en el documento](https://bigdata.duke.edu/projects/understanding-duke-research-based-on-large-scale-faculty-publication-records/) — **no disponible:** redirige a `iid.duke.edu` y muestra «Page not found» en navegador. No es una demo operativa.
+- [Contexto adicional oficial accesible: Webs of Minds and Ideas Bind Duke’s Campus](https://today.duke.edu/2017/03/webs-minds-and-ideas-bind-duke%E2%80%99s-campus) — artículo sobre varias iniciativas de Scholars@Duke. No es un sustituto idéntico del proyecto anterior ni una demo en sí mismo.
 
 El documento original y la presentación oficial del proyecto describen una red
 de similitud entre investigadores, con aristas ponderadas derivadas del análisis
 textual de títulos de publicaciones. También explora coautores y co-investigadores.
-Es la referencia del plan para similitud académica. El enlace antiguo redirige; se
-pudo consultar su contenido indexado, pero no se verificó una demo en funcionamiento.
+Es la referencia del plan para similitud académica. El contenido indexado conserva
+la descripción histórica, pero la inspección en navegador confirma que la página
+actual no está disponible. No debe presentarse como visualización accesible.
 
 **Diferencia:** en UTECVis la semejanza temática alimenta las sugerencias y se
 mantiene separada de las conexiones registradas. No implementamos una copia del
@@ -50,7 +52,8 @@ modelo de Duke ni atribuimos a ese proyecto nuestros pesos o embeddings.
 **Antecedente documentado en la sección 16 del Markdown original del usuario.**
 
 - [Descripción de perfiles, redes y explicación de conexiones](https://connects.catalyst.harvard.edu/profiles/about/default.aspx?type=About)
-- [Galería de visualizaciones de redes académicas](https://profiles.catalyst.harvard.edu/?pg=visualizations)
+- [Galería de visualizaciones de redes académicas](https://profiles.catalyst.harvard.edu/?pg=visualizations) — funciona, pero es una galería, no el grafo directo.
+- [Red de coautores de Griffin M. Weber: vista Cluster](https://connects.catalyst.harvard.edu/Profiles/display/person/32213/Network/CoAuthors/cluster) — enlace directo seguido desde la galería y comprobado en navegador: dibuja la red.
 
 **Qué respalda:** redes de coautores, conceptos de investigación, visualizaciones
 complementarias y páginas que explican por qué dos personas están relacionadas.
