@@ -124,6 +124,7 @@ let metricMaxima = {};
 let rankingSignature = "";
 let suggestionFrame = null;
 let displayedPredictions = [];
+let tooltipHTML = "";
 const pairCache = new Map();
 const personCache = new Map();
 
@@ -175,13 +176,17 @@ function nodeConnectionText(node) {
 function nodeTooltip(node) {
   const counts = connectionCounts.get(node.id) || { recorded: 0, suggested: 0 };
   const works = visibleWorkCounts.get(node.id) || 0;
-  return `<strong>${escape(node.name)}</strong><small>${escape(shortDepartment(node.department))}</small>
+  const photo = node.photo_url && !node.photoFailed
+    ? `<img src="${escape(node.photo_url)}" alt="" width="44" height="44">` : "";
+  return `<div class="node-tooltip">
+    <div class="node-tooltip-info"><strong>${escape(node.name)}</strong><small>${escape(shortDepartment(node.department))}</small></div>
+    <div class="tooltip-photo" style="--person-color:${nodeColor(node)}"><span>${escape(initials(node.name))}</span>${photo}</div>
     <div class="tooltip-metrics">
       <div><b>${nf.format(counts.recorded)}</b><span>Colaboradores</span></div>
       <div><b>${nf.format(works)}</b><span>Trabajos compartidos</span></div>
     </div>
     ${state.predictions ? `<div class="tooltip-suggestions">${nf.format(counts.suggested)} conexiones sugeridas</div>` : ""}
-    <small>Red registrada visible. Trabajos sumados por colaborador.</small>`;
+  </div>`;
 }
 
 function tags(values, klass = "") {
@@ -267,11 +272,20 @@ function renderLegend() {
 
 function showTooltip(event, html) {
   const tip = $("tooltip");
-  tip.innerHTML = html;
+  if (tooltipHTML !== html) {
+    tip.innerHTML = html;
+    tooltipHTML = html;
+    tip.querySelector(".tooltip-photo img")?.addEventListener("error", (event) => event.currentTarget.remove(), { once: true });
+  }
+  const isPerson = Boolean(tip.querySelector(".node-tooltip"));
+  tip.classList.toggle("person-tooltip", isPerson);
   tip.hidden = false;
   const rect = $("graph-container").getBoundingClientRect();
-  tip.style.left = `${Math.max(8, Math.min(rect.width - tip.offsetWidth - 8, event.clientX - rect.left + 16))}px`;
-  tip.style.top = `${Math.max(8, Math.min(rect.height - tip.offsetHeight - 8, event.clientY - rect.top - 15))}px`;
+  const x = event.clientX - rect.left, y = event.clientY - rect.top;
+  const left = x + 14 + tip.offsetWidth <= rect.width - 8 ? x + 14 : x - tip.offsetWidth - 14;
+  const top = isPerson && y >= tip.offsetHeight + 20 ? y - tip.offsetHeight - 12 : y + (isPerson ? 16 : -15);
+  tip.style.left = `${Math.max(8, Math.min(rect.width - tip.offsetWidth - 8, left))}px`;
+  tip.style.top = `${Math.max(8, Math.min(rect.height - tip.offsetHeight - 8, top))}px`;
 }
 
 function hoverEdge(event, edge, html) {

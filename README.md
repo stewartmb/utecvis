@@ -273,3 +273,10 @@ nombre completo y el número de investigadores visibles. Se sustituyó el títul
 nativo del bloque por una tarjeta compacta de fondo claro, texto oscuro y un
 acento del color del departamento. Los tooltips de nodos, aristas y criterios
 comparten ese estilo.
+
+El tooltip de investigador es compacto: retrato de 44 px a la derecha y cifras
+en una fila. La foto aparece aunque el nodo sea demasiado pequeño para mostrarla.
+Si CRIS no proporciona una foto o falla la carga, se muestran iniciales. Se retiró
+la nota de alcance del tooltip; el significado de los conteos permanece documentado
+aquí. Cuando hay espacio, la tarjeta se coloca por encima del cursor para reducir
+la oclusión de la red.

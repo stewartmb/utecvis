@@ -1587,3 +1587,18 @@ g.node.dragging .node-halo {
   .active-filters { top: calc(var(--legend-height, 120px) + var(--prediction-height, 45px) + 42px); left: 14px; right: 14px; }
   .inspector-panel { top: calc(var(--legend-height, 120px) + var(--prediction-height, 45px) + 52px); bottom: 65px; }
 }
+
+/* Researcher hover card: photo on the right, two counts in one short row. */
+.tooltip.person-tooltip { width: 246px; max-width: calc(100vw - 24px); padding: 8px 10px; }
+.node-tooltip { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 6px 8px; }
+.node-tooltip-info { align-self: center; min-width: 0; }
+.node-tooltip-info strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 11px; line-height: 1.3; font-weight: 650; }
+.node-tooltip-info small { margin-top: 3px; font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tooltip-photo { position: relative; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: #edf2ef; border: 2px solid var(--person-color); display: grid; place-items: center; }
+.tooltip-photo span { font-size: 12px; font-weight: 650; color: #3c585b; }
+.tooltip-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.node-tooltip .tooltip-metrics { grid-column: 1 / -1; margin: 0; gap: 12px; }
+.node-tooltip .tooltip-metrics > div { flex-direction: row; align-items: baseline; gap: 4px; }
+.node-tooltip .tooltip-metrics b { font-size: 14px; }
+.node-tooltip .tooltip-metrics span { font-size: 9px; }
+.node-tooltip .tooltip-suggestions { grid-column: 1 / -1; margin: 0; font-size: 9px; }
