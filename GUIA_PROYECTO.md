@@ -4,7 +4,7 @@ Esta guía describe la implementación actual. Distingue datos publicados, resul
 
 ## 1. Objetivo y tareas
 
-La aplicación explora colaboraciones registradas y afinidades entre 104 investigadores de la cohorte extraída de CRIS UTEC. Las tareas son identificar colaboradores destacados, encontrar posibles puentes entre departamentos, explorar nuevas colaboraciones y explorar grupos/comunidades. El profesor propone las primeras tres como ejemplos y exige formular al menos cuatro; la cuarta la añadimos nosotros.
+La aplicación explora colaboraciones registradas y afinidades entre 104 investigadores de la cohorte extraída de CRIS UTEC. Las tareas son identificar colaboradores destacados, encontrar posibles puentes entre departamentos, explorar nuevas colaboraciones y explorar departamentos y pertenencias institucionales. El profesor propone las primeras tres como ejemplos y exige formular al menos cuatro; la cuarta la añadimos nosotros. La interfaz tiene dos vistas (Colaboradores y Puentes); las sugerencias son una capa y los departamentos se exploran desde la leyenda. La cantidad de tareas no depende de la cantidad de pestañas.
 
 El idiom principal es un diagrama nodo-enlace interactivo de una red no dirigida y ponderada, dispuesto mediante fuerzas. Los rankings y detalles apoyan comparaciones que el grafo por sí solo no permite realizar con precisión.
 
@@ -142,13 +142,13 @@ Hay `104 × 103 / 2 = 5.356` parejas posibles. Al excluir las 73 registradas que
 
 Top % selecciona una fracción del ranking de candidatas con ambos extremos visibles en los filtros: `cantidad = techo(candidatas × porcentaje / 100)`. El rango es 0–10 %, con pasos de 0,1; inicio 1 %. Sin filtros: Top 1 % pide 53 parejas y Top 10 % pide 529. Solo se dibujan parejas con puntuación positiva; puede haber menos que las pedidas.
 
-El orden es puntuación descendente y, ante empate, identificadores estables. Un porcentaje del ranking no es probabilidad de colaboración. Seleccionar una pareja puede mostrar esa pareja aunque quede fuera del Top actual.
+El orden es puntuación descendente y, ante empate, identificadores estables. Un porcentaje del ranking no es probabilidad de colaboración. Con Sugerencias activadas, seleccionar una candidata desde el perfil puede mostrarla aunque quede fuera del Top actual. Al desactivar la capa desaparecen todas las aristas sugeridas, incluida esa selección.
 
-El ranking de Colaboradores ordena por grado o grado ponderado observado; Puentes, por B observado; Afinidades, por puntuación de pareja con los pesos actuales. Los filtros afectan a los candidatos y a qué investigadores aparecen, pero no recalculan las métricas globales sobre una subred filtrada.
+El ranking de Colaboradores ordena por grado o grado ponderado observado; Puentes, por B observado. Las parejas candidatas se ordenan por puntuación con los pesos actuales y se exploran al activar Sugerencias, sin cambiar de vista. Los filtros afectan a los candidatos y a qué investigadores aparecen, pero no recalculan las métricas globales sobre una subred filtrada.
 
 ## 10. Tamaño de los nodos
 
-En Colaboradores por defecto, Afinidades y Comunidades:
+En Colaboradores con Personas seleccionado, tanto con sugerencias activadas como desactivadas:
 
 `radio = 7 + 44 × k_visible / k_ref`.
 
@@ -164,13 +164,13 @@ Importante: el grado visible usado en el dibujo puede incluir sugerencias; el gr
 
 ## 11. Otros canales visuales e interacción
 
-- Color de nodo por defecto: primer departamento listado. En Comunidades: comunidad calculada. Gris: departamento no disponible o aislado en la vista de comunidades. Color categórico, sin jerarquía de importancia.
+- Color de nodo: primer departamento listado. Gris: departamento no disponible. Color categórico, sin jerarquía de importancia.
 - Arista registrada: continua, gris azulada. Grosor `1,5 + 4,5 × ln(peso)/ln(8)` en la red actual (pesos 1–8), con opacidad base 0,38.
 - Arista sugerida: violeta discontinua, 1,4 px, opacidad base 0,30. Su grosor no representa la puntuación.
 - Selección o hover: conexiones relacionadas con opacidad 0,95, otras atenuadas; para una pareja se destaca la conexión correspondiente. No cambia el peso ni el dato de origen.
 - Iniciales en nodos; nombres al buscar, seleccionar, pasar el cursor o ampliar suficientemente la vista. Evita mostrar 104 etiquetas largas simultáneas.
-- Zoom 0,25–5, desplazamiento, arrastre y búsqueda sin depender de tildes. La leyenda anticipa los miembros de una categoría al pasar el cursor y es el único control para seleccionar departamentos o comunidades al hacer clic; el selector institucional aparece solo en Comunidades y la opción de ver solo conexiones aparece en el perfil. Las selecciones activas se quitan con ×. No hay panel global de filtros ni selectores repetidos de tamaño o color.
-- Cada tarea determina su codificación. Solo Colaboradores ofrece Personas/Trabajos. Las sugerencias aparecen automáticamente al entrar en Afinidades; Top 0 % permite ocultarlas sin un interruptor adicional. Las tres importancias se abren en Ajustar criterios. Los rankings y detalles comparten un solo panel, cerrado hasta que el usuario lo solicita.
+- Zoom 0,25–5, desplazamiento, arrastre y búsqueda sin depender de tildes. La leyenda anticipa los miembros de una categoría al pasar el cursor y es el único control para seleccionar departamentos al hacer clic; la opción de ver solo conexiones aparece en el perfil. Las pertenencias institucionales se consultan en los detalles. Las selecciones activas se quitan con ×. No hay panel global de filtros ni selectores repetidos de tamaño o color.
+- Colaboradores ofrece Personas/Trabajos y Puentes usa intermediación. Las sugerencias se activan con un interruptor persistente abajo a la izquierda y se mantienen al cambiar de vista. Top % y las tres importancias están siempre visibles, atenuados y bloqueados cuando Sugerencias está desactivado. Los rankings y detalles comparten un solo panel, cerrado hasta que el usuario lo solicita.
 - Rankings seleccionables, detalle de perfil, evidencia de parejas y enlaces de fuente; registros paginados de 20 en 20.
 - Transiciones habituales de 300 ms; con movimiento reducido, se suprimen esas animaciones y el asentamiento temporal.
 - Mantra: panorama inicial sin sugerencias → zoom/filtros → detalles al solicitarlos.
@@ -221,7 +221,7 @@ Calculado a partir de los datos: aristas bajo las reglas de evidencia, pesos, gr
 
 Elegido como heurística o diseño: nivel institucional 1/0,7/0,4; pesos 60/30/10; hasta 20 conceptos y términos excluidos; reinicio RWR de 10 %; escalas de radio y grosor; colores, transparencia, fricción y fuerzas. Que una fórmula esté implementada correctamente no valida sus supuestos como predictor del futuro.
 
-No incorporado actualmente: Force-in-a-Box, treemap o empaquetado de comunidades en regiones circulares. Lo conversamos como alternativa, pero Comunidades actualmente cambia color, métrica y filtros; no impone una región circular por comunidad.
+No incorporado actualmente: Force-in-a-Box, treemap o empaquetado de comunidades en regiones circulares. Se retiró la vista de Comunidades y su selector institucional. Las comunidades calculadas se conservan en los datos, pero no se usan para colorear ni filtrar la interfaz. La cuarta tarea se reformuló como exploración de departamentos y pertenencias desde la leyenda y los detalles.
 
 No se ha entrenado ni validado un modelo de predicción con colaboraciones futuras. No hay precisión predictiva medida, ni un umbral de S que garantice éxito. El control español/inglés comprueba un ejemplo de comportamiento semántico; no valida todas las afinidades.
 

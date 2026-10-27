@@ -56,22 +56,22 @@ requirements.txt     Dependencias para ejecutar la aplicación
 2. **Encontrar puentes.** En “Puentes”, abrir “Ver ranking” y seleccionar el primer
    investigador por intermediación. Revisar vecinos, departamentos y sus conexiones.
    La intermediación alta por sí sola no prueba una conexión entre departamentos.
-3. **Descubrir afinidades.** Entrar en “Afinidades”, ampliar Top % y desplegar
-   “Ajustar criterios” para modificar las tres importancias. Seleccionar una pareja para revisar las señales y la
-   evidencia. Buscar a Luz Adanaque para observar que un perfil sin conexiones
-   internas puede tener publicaciones y candidatos por afinidad temática.
-4. **Explorar grupos y comunidades.** Entrar en “Comunidades” y seleccionar un
-   color de la leyenda. Comparar agrupaciones calculadas con pertenencias
-   institucionales mediante el único selector “Todos los grupos y centros”. Una persona puede pertenecer a varios grupos.
+3. **Descubrir afinidades.** Activar “Sugerencias” abajo a la izquierda, ampliar
+   Top % y modificar las tres importancias visibles. Seleccionar una línea sugerida
+   para revisar las señales. Buscar a Luz Adanaque para observar que un perfil sin
+   conexiones internas puede tener publicaciones y candidatos por afinidad temática.
+4. **Explorar departamentos y pertenencias.** Pasar el cursor por la leyenda para
+   reconocer miembros y seleccionar un departamento. Consultar las conexiones y
+   pertenencias de sus investigadores en el detalle. Esta cuarta tarea es una
+   reformulación de la exploración de grupos; se retiró la vista de comunidades.
 
 **Mantra:** el grafo ocupa toda la pantalla al abrir y los rankings aparecen
-solo al solicitarlos. No hay un panel global de filtros: la leyenda selecciona
-el departamento o comunidad del color mostrado y anticipa sus miembros al pasar
-el cursor; el grupo/centro se elige solo en
-Comunidades; el vecindario se limita desde el detalle de la persona. Las selecciones
-activas aparecen sobre la red y se quitan con ×. Cada tarea fija automáticamente
-la métrica y el color. Las sugerencias se muestran solo en Afinidades, con Top %
-visible y las importancias desplegables en “Ajustar criterios”. Panorama de los 104 perfiles → zoom, búsqueda y filtros →
+solo al solicitarlos. Hay dos vistas: Colaboradores y Puentes. La leyenda es el
+único selector de departamentos; el vecindario se limita desde el perfil. Las
+selecciones activas se quitan con ×. Las sugerencias son una capa independiente
+que se conserva al cambiar de vista. Su interruptor, Top % y tres importancias
+están siempre abajo a la izquierda; al desactivarlas, los cuatro deslizadores
+quedan atenuados y bloqueados. Panorama de los 104 perfiles → zoom, búsqueda y filtros →
 detalles al seleccionar personas o conexiones. D3 reacomoda los nodos cuando cambian
 sus radios o las conexiones visibles, para mantener la separación. El
 botón Restablecer recupera la vista y los parámetros iniciales.
@@ -110,7 +110,7 @@ vista es independiente del grado observado que muestran los rankings y detalles.
 “Trabajos” utiliza el grado ponderado observado; “Puentes” utiliza la
 intermediación observada. No hay selectores globales de tamaño o color.
 
-**Diseño:** color por departamento principal o comunidad; tamaño de nodo en escala
+**Diseño:** color por departamento principal; tamaño de nodo en escala
 lineal para el grado y de raíz cuadrada para intermediación y grado ponderado,
 con un mínimo para conservar visibles los aislados; grosor de
 arista logarítmico para manejar pesos entre 1 y 8. Líneas continuas para vínculos

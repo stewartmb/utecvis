@@ -73,10 +73,7 @@ const palette = [
 const state = {
   task: "collaborators",
   metric: "degree",
-  color: "department",
   department: "",
-  organisation: "",
-  community: "",
   predictions: false,
   percent: 1,
   weights: { ...DEFAULT_WEIGHTS },
@@ -93,12 +90,9 @@ let network,
   observed,
   recommendations = [],
   preparation = {},
-  institutions = [],
   visibleIds;
 let departments,
   colors,
-  communityColors,
-  nontrivialCommunities,
   layout,
   svg,
   layer,
@@ -125,11 +119,6 @@ async function getJSON(url) {
 }
 
 function nodeColor(node) {
-  if (state.color === "community") {
-    return node.network_metrics.degree
-      ? communityColors(node.network_metrics.community)
-      : "#a3afa6";
-  }
   return node.department ? colors(node.department) : "#a3afa6";
 }
 
@@ -173,39 +162,6 @@ function fillControls() {
     ...new Set(nodes.map((n) => n.department).filter(Boolean)),
   ].sort((a, b) => a.localeCompare(b, "es"));
   colors = d3.scaleOrdinal(departments, palette);
-  const memberships = new Map();
-  for (const node of nodes) {
-    for (const org of node.affiliations) {
-      if (
-        !["research_group", "research_center", "institute"].includes(org.type)
-      )
-        continue;
-      if (!memberships.has(org.organisation_id))
-        memberships.set(org.organisation_id, { ...org, members: new Set() });
-      memberships.get(org.organisation_id).members.add(node.id);
-    }
-  }
-  institutions = [...memberships.values()].sort(
-    (a, b) =>
-      b.members.size - a.members.size || a.name.localeCompare(b.name, "es"),
-  );
-  $("organisation").insertAdjacentHTML(
-    "beforeend",
-    institutions
-      .map(
-        (o) =>
-          `<option value="${escape(o.organisation_id)}">${escape(o.name)} (${o.members.size})</option>`,
-      )
-      .join(""),
-  );
-  nontrivialCommunities = [
-    ...new Set(
-      nodes
-        .filter((n) => n.network_metrics.degree > 0)
-        .map((n) => n.network_metrics.community),
-    ),
-  ].sort((a, b) => a - b);
-  communityColors = d3.scaleOrdinal(nontrivialCommunities, palette);
 }
 
 function computeVisible() {
@@ -214,13 +170,7 @@ function computeVisible() {
       (!state.department ||
         (state.department === "unknown"
           ? !n.department
-          : n.department === state.department)) &&
-      (!state.community ||
-        (state.community === "isolated"
-          ? n.network_metrics.degree === 0
-          : n.network_metrics.community === Number(state.community))) &&
-      (!state.organisation ||
-        n.affiliations.some((o) => o.organisation_id === state.organisation)),
+          : n.department === state.department)),
   );
   if (state.neighborsOnly && state.selected) {
     const neighbors = new Set([state.selected]);
@@ -240,7 +190,7 @@ function updateStats() {
   $("network-stats").innerHTML =
     `<div class="stat"><strong>${visibleIds.size}</strong><span>personas</span></div><div class="stat"><strong>${edges.length}</strong><span>registradas</span></div>${displayedPredictions.length ? `<div class="stat predicted-stat"><strong>+${displayedPredictions.length}</strong><span>sugeridas</span></div>` : ""}`;
   $("candidate-count").textContent =
-    `${top.display.length} / ${nf.format(top.eligible)} parejas`;
+    state.predictions ? `${top.display.length} / ${nf.format(top.eligible)} parejas` : "Desactivadas";
   $("candidate-count").title =
     "Fracción de parejas candidatas. No es una probabilidad de colaboración.";
   renderActiveFilters();
@@ -250,17 +200,13 @@ function updateStats() {
   );
   $("graph-message").textContent = visibleIds.size
     ? ""
-    : "No hay investigadores con esta combinación de filtros. Prueba otro grupo o departamento.";
+    : "No hay investigadores con esta combinación de filtros. Prueba otro departamento.";
 }
 
 function renderActiveFilters() {
   const filters = [];
   if (state.department)
     filters.push(["department", state.department === "unknown" ? "Sin departamento" : shortDepartment(state.department)]);
-  if (state.community)
-    filters.push(["community", state.community === "isolated" ? "Sin conexiones observadas" : `Comunidad ${Number(state.community) + 1}`]);
-  if (state.organisation)
-    filters.push(["organisation", institutions.find((o) => o.organisation_id === state.organisation)?.name || "Grupo institucional"]);
   if (state.neighborsOnly && state.selected)
     filters.push(["neighborsOnly", `Conexiones de ${shortName(nodeById.get(state.selected).name)}`]);
   $("active-filters").hidden = !filters.length;
@@ -270,9 +216,7 @@ function renderActiveFilters() {
 }
 
 function previewCategory(value = null) {
-  const matches = (n) => value === null || (state.color === "department"
-    ? value === "unknown" ? !n.department : n.department === value
-    : value === "isolated" ? !n.network_metrics.degree : n.network_metrics.community === Number(value));
+  const matches = (n) => value === null || (value === "unknown" ? !n.department : n.department === value);
   nodeSelection?.classed("category-dimmed", (n) => !matches(n));
   const unrelated = (e) => !matches(nodeById.get(e.source)) && !matches(nodeById.get(e.target));
   edgeSelection?.classed("category-edge-dimmed", unrelated);
@@ -280,18 +224,11 @@ function previewCategory(value = null) {
 }
 
 function renderLegend() {
-  const byDepartment = state.color === "department";
-  $("legend-title").textContent = byDepartment ? "Departamentos" : "Comunidades";
-  const selected = byDepartment ? state.department : state.community;
-  const entries = byDepartment
-    ? [
-        ...departments.map((d) => [shortDepartment(d), colors(d), d, nodes.filter((n) => n.department === d).length]),
-        ["Sin departamento", "#a3afa6", "unknown", nodes.filter((n) => !n.department).length],
-      ]
-    : [
-        ...nontrivialCommunities.map((c) => [`Comunidad ${c + 1}`, communityColors(c), String(c), nodes.filter((n) => n.network_metrics.community === c).length]),
-        ["Sin conexiones observadas", "#a3afa6", "isolated", nodes.filter((n) => !n.network_metrics.degree).length],
-      ];
+  const selected = state.department;
+  const entries = [
+    ...departments.map((d) => [shortDepartment(d), colors(d), d, nodes.filter((n) => n.department === d).length]),
+    ["Sin departamento", "#a3afa6", "unknown", nodes.filter((n) => !n.department).length],
+  ];
   $("color-legend").innerHTML = entries.map(([name, color, value, count]) =>
     `<button class="legend-item${selected === value ? " active" : ""}" data-category="${escape(value)}" aria-pressed="${selected === value}" title="Ver ${escape(name)}"><i class="legend-dot" style="background:${color}"></i><span>${escape(name)}</span><strong>${count}</strong></button>`
   ).join("");
@@ -469,6 +406,7 @@ function renderGraph() {
     });
   let predictionEdges = state.predictions ? [...top.display] : [];
   if (
+    state.predictions &&
     state.selectedPair &&
     !observed.some(
       (e) => pairKey(e.source, e.target) === pairKey(...state.selectedPair),
@@ -671,17 +609,16 @@ function fitGraph(animated = true) {
   const x1 = small ? d3.max(visible, (n) => n.x + radius(n)) + 20 : extent;
   const y0 = small ? d3.min(visible, (n) => n.y - radius(n)) - 20 : -extent;
   const y1 = small ? d3.max(visible, (n) => n.y + radius(n)) + 20 : extent;
-  // A circular graph uses the full height; the wide-screen controls occupy
-  // the otherwise empty right margin rather than covering the network.
+  // Keep the persistent suggestion controls in the left margin on wide screens.
   const wide = width >= 1100;
-  const rightSpace = wide ? 320 : 24;
+  const leftSpace = wide ? 310 : 24;
+  const rightSpace = 24;
   const selectionSpace = $("active-filters").hidden ? 0 : $("active-filters").offsetHeight + 15;
   const topSpace = (width <= 720 ? 135 : 110) + selectionSpace;
-  // Reserve the same camera space across tasks so switching to affinities
-  // does not visually shrink nodes just as new connections make them grow.
-  const bottomSpace = width <= 720 ? 225 : wide ? 28 : 165;
+  // Keep the camera reserve unchanged when suggestions are toggled.
+  const bottomSpace = wide ? 28 : width <= 720 ? 270 : 300;
   const availableHeight = Math.max(120, height - topSpace - bottomSpace);
-  const availableWidth = Math.max(150, width - rightSpace - 24);
+  const availableWidth = Math.max(150, width - rightSpace - leftSpace);
   const scale =
     Math.min(
       availableWidth / Math.max(100, x1 - x0),
@@ -690,7 +627,7 @@ function fitGraph(animated = true) {
     ) * 0.98;
   const transform = d3.zoomIdentity
     .translate(
-      24 + availableWidth / 2 - ((x0 + x1) / 2) * scale,
+      leftSpace + availableWidth / 2 - ((x0 + x1) / 2) * scale,
       topSpace + availableHeight / 2 - ((y0 + y1) / 2) * scale,
     )
     .scale(scale);
@@ -718,24 +655,9 @@ function rankingHTML(metric) {
 
 function renderOverview() {
   const panel = $("inspector");
-  if (state.task === "affinities") {
-    panel.innerHTML = `<div class="eyebrow">AFINIDADES</div><h2>Parejas sugeridas</h2><p class="scope-note">Prioridad exploratoria · no es probabilidad.</p><div class="ranking-list">${
-      top.ranked
-        .slice(0, 8)
-        .map(
-          (p, i) =>
-            `<button class="rank-row" data-pair="${p.source},${p.target}"><span class="rank-number">${i + 1}</span><span class="rank-person">${escape(shortName(nodeById.get(p.source).name))}<small>↔ ${escape(shortName(nodeById.get(p.target).name))}</small></span><span class="rank-value">${decimal(p.score * 100)}<small>/ 100</small></span></button>`,
-        )
-        .join("") ||
-      '<p class="empty-state">Sin candidatos con estos pesos y filtros.</p>'
-    }</div>`;
-  } else if (state.task === "communities") {
-    panel.innerHTML = '<div class="eyebrow">COMUNIDADES</div><h2>Comunidades de colaboración</h2><p class="scope-note">Selecciona un color de la leyenda para ver sus investigadores. El selector superior muestra pertenencias institucionales.</p>';
-  } else {
-    const bridges = state.task === "bridges";
-    const metric = bridges ? "betweenness" : state.rankMetric;
-    panel.innerHTML = `<div class="eyebrow">RED OBSERVADA</div><h2>${bridges ? "Puentes" : "Colaboradores"}</h2><p class="scope-note">${bridges ? "Intermediación" : metric === "degree" ? "Colaboradores distintos" : "Trabajos compartidos"} · red observada completa.</p><div class="ranking-list">${rankingHTML(metric)}</div><p class="scope-note">Solo conexiones registradas. Selecciona para consultar evidencia.</p>`;
-  }
+  const bridges = state.task === "bridges";
+  const metric = bridges ? "betweenness" : state.rankMetric;
+  panel.innerHTML = `<div class="eyebrow">RED OBSERVADA</div><h2>${bridges ? "Puentes" : "Colaboradores"}</h2><p class="scope-note">${bridges ? "Intermediación" : metric === "degree" ? "Colaboradores distintos" : "Trabajos compartidos"} · red observada completa.</p><div class="ranking-list">${rankingHTML(metric)}</div><p class="scope-note">Solo conexiones registradas. Selecciona para consultar evidencia.</p>`;
   bindInspector();
 }
 
@@ -780,7 +702,7 @@ async function selectPerson(id, options = {}) {
 function renderPerson(data) {
   const n = data.node,
     m = n.network_metrics;
-  const candidates = top.ranked
+  const candidates = (state.predictions ? top.ranked : [])
     .filter((p) => p.source === n.id || p.target === n.id)
     .slice(0, 5);
   const sourceNames = {
@@ -995,22 +917,13 @@ function setTask(task) {
   state.selectedPair = null;
   state.hovered = null;
   state.neighborsOnly = false;
-  state.metric = task === "bridges" ? "betweenness" : task === "collaborators" ? state.rankMetric : "degree";
-  state.color = task === "communities" ? "community" : "department";
-  state.predictions = task === "affinities" && recommendations.length > 0;
+  state.metric = task === "bridges" ? "betweenness" : state.rankMetric;
   document.querySelectorAll("[data-task]").forEach((b) => {
     const active = b.dataset.task === task;
     b.classList.toggle("active", active);
     b.setAttribute("aria-pressed", String(active));
   });
   $("collaborator-options").hidden = task !== "collaborators";
-  $("institution-options").hidden = task !== "communities";
-  $("rankings-toggle").hidden = task === "communities";
-  $("rankings-toggle").textContent = task === "affinities" ? "Ver parejas" : "Ver ranking";
-  const predictionPanel = document.querySelector(".prediction-controls");
-  predictionPanel.hidden = task !== "affinities";
-  predictionPanel.classList.toggle("showing-predictions", task === "affinities");
-  $("weights-options").open = false;
   document.querySelectorAll("[data-rank]").forEach((b) => {
     const active = b.dataset.rank === state.rankMetric;
     b.classList.toggle("active", active);
@@ -1021,6 +934,13 @@ function setTask(task) {
   renderOverview();
   updateMetricKey();
   fitGraph(false);
+}
+
+function syncSuggestionControls() {
+  $("prediction-toggle").disabled = !recommendations.length;
+  $("prediction-toggle").setAttribute("aria-checked", String(state.predictions));
+  $("prediction-options").disabled = !state.predictions;
+  document.querySelector(".prediction-controls").classList.toggle("showing-predictions", state.predictions);
 }
 
 function updateMetricKey() {
@@ -1046,9 +966,8 @@ function wireControls() {
     const key = event.target.closest("[data-clear-filter]")?.dataset.clearFilter;
     if (!key) return;
     if (key === "all") {
-      Object.assign(state, { department: "", organisation: "", community: "", neighborsOnly: false });
+      Object.assign(state, { department: "", neighborsOnly: false });
     } else state[key] = key === "neighborsOnly" ? false : "";
-    $("organisation").value = state.organisation;
     applyFilters();
   });
   for (const type of ["mouseover", "focusin"])
@@ -1063,8 +982,7 @@ function wireControls() {
   $("color-legend").addEventListener("click", (event) => {
     const button = event.target.closest("[data-category]");
     if (!button) return;
-    const key = state.color === "department" ? "department" : "community";
-    state[key] = state[key] === button.dataset.category ? "" : button.dataset.category;
+    state.department = state.department === button.dataset.category ? "" : button.dataset.category;
     applyFilters();
   });
   document.querySelectorAll("[data-rank]").forEach((b) => b.addEventListener("click", () => {
@@ -1081,9 +999,15 @@ function wireControls() {
   document
     .querySelectorAll("[data-task]")
     .forEach((b) => b.addEventListener("click", () => setTask(b.dataset.task)));
-  $("organisation").addEventListener("change", (event) => {
-    state.organisation = event.target.value;
-    applyFilters();
+  $("prediction-toggle").addEventListener("click", () => {
+    state.predictions = !state.predictions;
+    // Closing the layer also clears a suggested pair inspected outside the Top.
+    if (!state.predictions && state.selectedPair && !observed.some(
+      (e) => pairKey(e.source, e.target) === pairKey(...state.selectedPair),
+    )) clearSelection();
+    syncSuggestionControls();
+    renderGraph();
+    refreshInspector();
   });
   $("top-percent").addEventListener("input", (event) => {
     state.percent = Number(event.target.value);
@@ -1119,8 +1043,7 @@ function wireControls() {
   $("reset").addEventListener("click", () => {
     Object.assign(state, {
       department: "",
-      organisation: "",
-      community: "",
+      predictions: false,
       percent: 1,
       weights: { ...DEFAULT_WEIGHTS },
       rankMetric: "degree",
@@ -1129,7 +1052,6 @@ function wireControls() {
       hovered: null,
       neighborsOnly: false,
     });
-    $("organisation").value = "";
     $("search").value = "";
     $("search-results").hidden = true;
     document.querySelector(".color-legend").open = false;
@@ -1139,6 +1061,7 @@ function wireControls() {
       $(`weight-${key}`).value = value;
       $(`value-${key}`).textContent = `${value} %`;
     }
+    syncSuggestionControls();
     layout.reset(nodes);
     setTask("collaborators");
     setInspector(false);
@@ -1213,8 +1136,7 @@ function wireControls() {
 
 function findPerson(id) {
   if (!visibleIds.has(id)) {
-    Object.assign(state, { department: "", organisation: "", community: "", neighborsOnly: false });
-    $("organisation").value = "";
+    Object.assign(state, { department: "", neighborsOnly: false });
   }
   $("search").value = nodeById.get(id).name;
   selectPerson(id);
@@ -1237,7 +1159,7 @@ async function start() {
       const data = await getJSON("/api/recommendations");
       recommendations = data.pairs;
       preparation = data.profiles;
-      state.predictions = state.task === "affinities";
+      syncSuggestionControls();
       renderGraph();
       refreshInspector();
       $("prediction-error").hidden = true;
