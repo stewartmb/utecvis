@@ -26,6 +26,17 @@ def verify_layout(page):
     }""")
 
 
+def toggle_suggestions(page):
+    page.locator("#prediction-toggle").click()
+    enabled = page.locator("#prediction-toggle").get_attribute("aria-checked") == "true"
+    if enabled:
+        assert page.locator("#prediction-options").is_visible()
+        assert page.locator("#weight-thematic").is_hidden()
+        page.locator("#criteria-options > summary").click()
+    else:
+        assert page.locator("#prediction-options").is_hidden()
+
+
 def run(url, channel):
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(channel=channel, headless=True)
@@ -60,19 +71,17 @@ def run(url, channel):
             page.locator("#prediction-toggle").get_attribute("aria-checked") == "false"
         )
         assert page.locator("#prediction-options input:disabled").count() == 4
-        assert page.locator("#prediction-options").evaluate(
-            "el => Number(getComputedStyle(el).opacity) < 0.5"
-        )
+        assert page.locator("#prediction-options").is_hidden()
         assert page.locator("[data-weight]").count() == 3
         assert all(
-            page.locator(f"#weight-{key}").is_visible()
+            page.locator(f"#weight-{key}").is_hidden()
             for key in ["thematic", "institutional", "structural"]
         )
         assert page.locator(".prediction-controls").evaluate(
-            "el => {const r=el.getBoundingClientRect();return r.left<40 && r.bottom>window.innerHeight-40}"
+            "el => {const r=el.getBoundingClientRect();return r.left<40 && r.bottom<window.innerHeight}"
         )
         assert page.locator("#metric, #color, #department").count() == 0
-        assert page.locator("[data-rank]").count() == 2
+        assert page.locator("[data-rank], #collaborator-options").count() == 0
         assert page.locator("#graph-container").bounding_box()["height"] > 800
         assert page.evaluate("document.documentElement.scrollWidth") == 1440
         baseline = snapshot(page)
@@ -87,15 +96,6 @@ def run(url, channel):
         connected_radii = [n["radius"] for n in baseline.values() if n["degree"] > 0]
         assert max(connected_radii) / min(connected_radii) > 4
         assert math.isclose(max(connected_radii), 51)
-        page.locator('[data-rank="weighted_degree"]').click()
-        page.wait_for_timeout(350)
-        assert page.evaluate("window.utecvis.state.metric") == "weighted_degree"
-        assert page.locator('[data-rank][aria-pressed="true"]').count() == 1
-        assert page.locator("#inspector-panel").is_hidden()
-        verify_layout(page)
-        page.locator('[data-rank="degree"]').click()
-        page.wait_for_timeout(350)
-        assert snapshot(page) == baseline
         metrics = page.evaluate("window.utecvis.nodes.map(n => n.network_metrics)")
         verify_layout(page)
         widths = page.locator(".observed-edge").evaluate_all(
@@ -173,7 +173,7 @@ def run(url, channel):
         page.locator("g.node").first.hover()
         assert page.locator("#tooltip").is_visible()
 
-        page.locator("#prediction-toggle").click()
+        toggle_suggestions(page)
         page.wait_for_timeout(400)
         assert page.locator(".predicted-edge").count() == 53
         assert page.locator("#inspector-panel").is_hidden()
@@ -190,14 +190,14 @@ def run(url, channel):
         assert page.locator(".predicted-edge").count() == 106
         assert sum(n["degree"] for n in second.values()) == 2 * (73 + 106)
         assert all(n["radius"] >= first[id]["radius"] for id, n in second.items())
-        page.locator("#prediction-toggle").click()
+        toggle_suggestions(page)
         page.wait_for_timeout(400)
         assert snapshot(page) == baseline
         verify_layout(page)
         assert metrics == page.evaluate(
             "window.utecvis.nodes.map(n => n.network_metrics)"
         )
-        page.locator("#prediction-toggle").click()
+        toggle_suggestions(page)
         assert page.locator("#weight-structural").is_visible()
         assert page.locator("#prediction-options input:disabled").count() == 0
         page.locator("#top-percent").evaluate(
@@ -256,11 +256,11 @@ def run(url, channel):
         assert page.locator(".observed-edge.edge-dimmed").count() == 73
         page.wait_for_timeout(350)
         page.screenshot(path="/tmp/utecvis-detail.png")
-        page.locator("#prediction-toggle").click()
+        toggle_suggestions(page)
         assert page.locator(".predicted-edge").count() == 0
         assert page.locator("#inspector-panel").is_hidden()
         assert page.locator("#prediction-options input:disabled").count() == 4
-        page.locator("#prediction-toggle").click()
+        toggle_suggestions(page)
         assert page.locator(".predicted-edge").count() > 0
         page.locator('[data-task="bridges"]').click()
         assert page.evaluate("window.utecvis.state.predictions")
@@ -274,7 +274,22 @@ def run(url, channel):
             "Luz Antuanet Adanaque Infante" in page.locator("#inspector").inner_text()
         )
         assert page.locator(".metric-grid strong").first.inner_text() == "0"
+        assert page.locator(".production-details").get_attribute("open") is None
+        assert page.locator(".profile-bio").count() == 0
+        assert (
+            "Candidatos según tus prioridades"
+            not in page.locator("#inspector").inner_text()
+        )
+        page.locator(".production-details > summary").click()
         assert "Publicaciones (5)" in page.locator("#inspector").inner_text()
+        page.locator('[data-kind="projects"]').click()
+        page.wait_for_function(
+            "window.utecvis.state.personKind === 'projects' && document.querySelector('.production-details[open]')"
+        )
+        page.locator('[data-kind="publications"]').click()
+        page.wait_for_function(
+            "window.utecvis.state.personKind === 'publications' && document.querySelector('.production-details[open]')"
+        )
         assert page.locator("#neighbors-only").is_visible()
         page.locator("#neighbors-only").click()
         assert page.locator("g.node").count() == 1
@@ -342,7 +357,7 @@ def run(url, channel):
         assert "Asociada" not in page.locator(".graph-key").inner_text()
         assert page.locator(".observed-edge.association").count() == 0
         page.locator("#reset").click()
-        page.locator("#prediction-toggle").click()
+        toggle_suggestions(page)
         for viewport in [
             {"width": 1920, "height": 1080},
             {"width": 1280, "height": 800},
@@ -371,11 +386,11 @@ def run(url, channel):
             assert page.locator("#top-percent").is_visible()
             assert page.locator("#weight-structural").is_visible()
             assert page.locator("#prediction-options input:disabled").count() == 0
-            page.locator("#prediction-toggle").click()
-            assert page.locator("#weight-structural").is_visible()
+            toggle_suggestions(page)
+            assert page.locator("#weight-structural").is_hidden()
             assert page.locator("#prediction-options input:disabled").count() == 4
             assert page.locator(".predicted-edge").count() == 0
-            page.locator("#prediction-toggle").click()
+            toggle_suggestions(page)
             assert page.locator("#network-svg").evaluate(
                 "el => el.clientHeight===el.parentElement.clientHeight"
             )
@@ -404,7 +419,7 @@ def run(url, channel):
         assert page.locator(".department-box").count() > 1
         assert page.locator(".isolate-ring").count() == 0
         verify_layout(page)
-        page.locator("#prediction-toggle").click()
+        toggle_suggestions(page)
         assert page.locator(".predicted-edge").count() == 53
         page.wait_for_timeout(350)
         verify_layout(page)
@@ -465,6 +480,7 @@ def run(url, channel):
           const core=el.parentElement.querySelector('.node-core').getBoundingClientRect();
           return core.width>=24.9 && el.getAttribute('href').startsWith('/static/photos/');
         })""")
+        toggle_suggestions(page)
         for key, text in [
             ("thematic", "Intereses"),
             ("institutional", "Grupo compartido"),
@@ -474,7 +490,6 @@ def run(url, channel):
             assert page.locator("#criterion-tooltip").is_visible()
             assert text in page.locator("#criterion-tooltip").inner_text()
         page.mouse.move(10, 10)
-        page.locator("#prediction-toggle").click()
         timing = page.evaluate("""async () => {
           const layout=window.utecvis.layout, original=layout.configure;
           let calls=0;

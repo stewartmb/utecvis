@@ -79,7 +79,7 @@
             <span id="candidate-count" class="microcopy"></span>
           </div>
           <p id="prediction-error" class="scope-note" hidden></p>
-          <fieldset id="prediction-options" disabled aria-label="Prioridades de las sugerencias">
+          <fieldset id="prediction-options" hidden disabled aria-label="Prioridades de las sugerencias">
             <div class="top-control">
               <label for="top-percent"
                 >Top <strong id="top-percent-value">1 %</strong></label
@@ -93,6 +93,8 @@
                 aria-label="Top porcentaje de parejas candidatas"
               /><span class="range-limit">10 %</span>
             </div>
+              <details id="criteria-options" class="criteria-options">
+                <summary>Ajustar criterios</summary>
               <div class="weights-grid">
               <div class="weight-control">
                 <label for="weight-thematic"
@@ -143,6 +145,7 @@
                 />
               </div>
               </div>
+              </details>
           </fieldset>
         </section>
         <div class="view-tools">
@@ -192,7 +195,7 @@
                 <button
                   data-task="collaborators"
                   class="task active"
-                  title="Tamaño por colaboradores o trabajos compartidos"
+                  title="Tamaño por número de colaboradores"
                 >
                   Colaboradores
                 </button>
@@ -206,12 +209,6 @@
               </nav>
             </div>
             <span id="metric-key">Conexiones visibles</span>
-            <div class="task-options" aria-label="Opciones de la tarea">
-              <div id="collaborator-options" class="metric-choice" role="group" aria-label="Comparar colaboradores por">
-                <button data-rank="degree" class="active" aria-pressed="true">Personas</button>
-                <button data-rank="weighted_degree" aria-pressed="false">Trabajos</button>
-              </div>
-            </div>
           </div>
           <div
             class="width-key"
@@ -287,7 +284,7 @@
           </p>
           <p>
             Las sugerencias se activan en la esquina inferior izquierda. Top %
-            y las tres importancias se atenúan cuando están desactivadas.
+            aparece al activarlas; los tres pesos están en «Ajustar criterios».
           </p>
           <p>
             <strong>Alcance:</strong> 104 perfiles, 73 pares conectados. La red

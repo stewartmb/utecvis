@@ -50,15 +50,15 @@ requirements.txt     Dependencias para ejecutar la aplicación
 
 ## Cuatro tareas y guion de demostración
 
-1. **Identificar colaboradores destacados.** En “Colaboradores”, elegir “Personas”
-   o “Trabajos”; localizar nodos grandes y consultar sus cifras al pasar el cursor.
+1. **Identificar colaboradores destacados.** En “Colaboradores”, localizar nodos
+   grandes y consultar colaboradores y trabajos compartidos al pasar el cursor.
    Buscar a Jimmy Tarrillo Olano permite comprobar sus nueve colaboradores.
    El detalle distingue personas diferentes de registros compartidos.
 2. **Encontrar puentes.** En “Puentes”, localizar nodos grandes por intermediación
    y consultar su valor exacto al seleccionarlos. Revisar vecinos, departamentos y conexiones.
    La intermediación alta por sí sola no prueba una conexión entre departamentos.
 3. **Descubrir afinidades.** Activar “Sugerencias” abajo a la izquierda, ampliar
-   Top % y modificar las tres importancias visibles. Seleccionar una línea sugerida
+   Top % y, si se desea, abrir «Ajustar criterios» para modificar las tres importancias. Seleccionar una línea sugerida
    para revisar las señales. Buscar a Luz Adanaque para observar que un perfil sin
    conexiones internas puede tener publicaciones y candidatos por afinidad temática.
 4. **Explorar departamentos y pertenencias.** Pasar el cursor por la leyenda para
@@ -70,9 +70,9 @@ requirements.txt     Dependencias para ejecutar la aplicación
 solo al seleccionar un investigador o una conexión. Hay dos vistas: Colaboradores y Puentes. La leyenda es el
 único selector de departamentos; el vecindario se limita desde el perfil. Las
 selecciones activas se quitan con ×. Las sugerencias son una capa independiente
-que se conserva al cambiar de vista. Su interruptor, Top % y tres importancias
-están siempre abajo a la izquierda; al desactivarlas, los cuatro deslizadores
-quedan atenuados y bloqueados. Panorama de los 104 perfiles → zoom, búsqueda y filtros →
+que se conserva al cambiar de vista. Su interruptor permanece abajo a la izquierda. Top % aparece al activarlas;
+los tres pesos se despliegan en «Ajustar criterios». Al desactivarlas se ocultan
+las opciones. Panorama de los 104 perfiles → zoom, búsqueda y filtros →
 detalles al seleccionar personas o conexiones. D3 reacomoda los nodos cuando cambian
 sus radios o las conexiones visibles, para mantener la separación. El
 botón Restablecer recupera la vista y los parámetros iniciales.
@@ -114,7 +114,7 @@ El lienzo crece de manera uniforme si los radios necesitan
 más espacio, manteniendo la proporción de áreas. En escenarios densos puede
 reducirse el tamaño aparente al ajustar toda la vista: se puede ampliar con zoom.
 La agrupación institucional facilita localizar departamentos, pero puede alargar
-y acumular los enlaces entre ellos. Los modos **Colaboradores** y **Puentes** están abajo, junto a los círculos de tamaño. Las opciones Personas/Trabajos se consultan en el mismo lugar.
+y acumular los enlaces entre ellos. Los modos **Colaboradores** y **Puentes** están abajo, junto a los círculos de tamaño. No hay un segundo selector de tamaño.
 
 ## Cómo interpretar la red
 
@@ -147,8 +147,8 @@ conexiones, el radio mínimo es 7. Las sugerencias pueden superar el radio 51.
 Los filtros cuentan solo aristas con ambos extremos visibles. Las sugerencias se
 distinguen en el tooltip y con líneas violetas discontinuas. Esta medida de la
 vista es independiente del grado observado que muestran los detalles.
-“Trabajos” utiliza el grado ponderado observado; “Puentes” utiliza la
-intermediación observada. No hay selectores globales de tamaño o color.
+Los trabajos se representan mediante el grosor de las aristas y se consultan
+en tooltips y detalles; «Puentes» utiliza la intermediación observada. No hay selectores globales de tamaño o color.
 
 **Diseño:** color por departamento principal; tamaño de nodo en escala
 lineal para el grado y de raíz cuadrada para intermediación y grado ponderado,
@@ -255,3 +255,13 @@ Fundamentos: [CollaborationViz](https://journals.plos.org/plosone/article?id=10.
 [Personalized PageRank](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.link_analysis.pagerank_alg.pagerank.html),
 [D3](https://d3js.org/). CollaborationViz utiliza grants compartidos; aquí conservamos
 los tipos de evidencia que publica CRIS y presentamos la afinidad por separado.
+
+## Interfaz centrada en las tareas
+
+El perfil muestra métricas, intereses, pertenencias y colaboradores registrados.
+«Publicaciones y proyectos» se abre solo al solicitarlo. Se retiraron la biografía
+completa, la lista adicional de candidatos y las notas de preparación del perfil.
+El enlace a CRIS conserva acceso al contexto profesional. Las explicaciones del
+método están en «Cómo interpretar»; las limitaciones específicas de una pareja y
+los trabajos que justifican una conexión permanecen en sus detalles. Estos cambios
+no eliminan datos del repositorio ni modifican los cálculos.

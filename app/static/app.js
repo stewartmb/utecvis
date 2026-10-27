@@ -92,7 +92,7 @@ const state = {
   neighborsOnly: false,
   hovered: null,
   personKind: "publications",
-  rankMetric: "degree",
+  productionOpen: false,
 };
 let network,
   nodes,
@@ -181,10 +181,6 @@ function nodeTooltip(node) {
     </div>
     ${state.predictions ? `<div class="tooltip-suggestions">${nf.format(counts.suggested)} conexiones sugeridas</div>` : ""}
     <small>Red registrada visible. Trabajos sumados por colaborador.</small>`;
-}
-
-function metricText(value, key = state.metric) {
-  return key === "betweenness" ? decimal(value, 4) : nf.format(value);
 }
 
 function tags(values, klass = "") {
@@ -717,7 +713,8 @@ function fitGraph(animated = true) {
   const selectionSpace = $("active-filters").hidden ? 0 : $("active-filters").offsetHeight + 15;
   const topSpace = (width <= 720 ? 65 : 55) + selectionSpace;
   // Keep the camera reserve unchanged when suggestions are toggled.
-  const bottomSpace = wide ? 28 : width <= 720 ? 335 : 340;
+  const controls = document.querySelector(".prediction-controls").getBoundingClientRect();
+  const bottomSpace = wide ? 28 : height - (controls.top - $("graph-container").getBoundingClientRect().top) + 18;
   const availableHeight = Math.max(120, height - topSpace - bottomSpace);
   const availableWidth = Math.max(150, width - rightSpace - leftSpace);
   const scale =
@@ -757,6 +754,7 @@ async function selectPerson(id, options = {}) {
   const token = ++requestSerial;
   setInspector(true);
   $("inspector").scrollTop = 0;
+  if (state.selected !== id) state.productionOpen = false;
   state.selected = id;
   state.selectedPair = null;
   state.personKind = options.kind || "publications";
@@ -785,16 +783,8 @@ async function selectPerson(id, options = {}) {
 function renderPerson(data) {
   const n = data.node,
     m = n.network_metrics;
-  const candidates = (state.predictions ? top.ranked : [])
-    .filter((p) => p.source === n.id || p.target === n.id)
-    .slice(0, 5);
-  const sourceNames = {
-    research_areas: "Intereses declarados",
-    fingerprint: "Huella temática",
-    biography: "Biografía como respaldo",
-  };
   $("inspector").innerHTML =
-    `<button class="back-button" data-back>← Volver al panorama</button><div class="avatar" style="color:${nodeColor(n)};background:${nodeColor(n)}18;border-color:${nodeColor(n)}55">${escape(initials(n.name))}</div><div class="eyebrow">INVESTIGADOR / UTEC</div><h2>${escape(n.name)}</h2><p class="department-name">${escape(n.department || "Sin departamento publicado")}</p><a class="text-link" href="${escape(n.source_url)}" target="_blank" rel="noreferrer">Ver perfil en CRIS ↗</a><div class="metric-grid"><div><strong>${m.degree}</strong><span>colaboradores en la cohorte</span></div><div><strong>${nf.format(m.weighted_degree)}</strong><span>registros compartidos</span></div><div><strong>${decimal(m.betweenness, 4)}</strong><span>intermediación</span></div><div><strong>${data.cross_department_neighbors}</strong><span>vecinos de otros departamentos</span></div></div><p class="scope-note">Métricas de la red observada completa.</p><button id="neighbors-only" class="button neighbor-button${state.neighborsOnly ? " active" : ""}" aria-pressed="${state.neighborsOnly}">${state.neighborsOnly ? "Volver a toda la selección" : "Ver solo sus conexiones"}</button>${!m.degree ? '<div class="insight-note"><strong>Sin conexiones dentro de estos 104 perfiles.</strong> Sus trabajos pueden tener coautores externos; no equivale a investigar en solitario.</div>' : ""}<section class="detail-section"><h3>Intereses de investigación</h3>${n.research_areas.length ? tags(n.research_areas) : '<p class="scope-note">No publicados en el perfil.</p>'}<p class="scope-note">${(data.preparation?.sources || []).map((s) => sourceNames[s]).join(" + ") || "Sin preparación temática"}${data.preparation?.biography_fallback ? ". Cobertura temática limitada." : ""}</p></section><section class="detail-section"><h3>Pertenencias</h3>${
+    `<button class="back-button" data-back>← Volver al panorama</button><div class="avatar" style="color:${nodeColor(n)};background:${nodeColor(n)}18;border-color:${nodeColor(n)}55">${escape(initials(n.name))}</div><div class="eyebrow">INVESTIGADOR / UTEC</div><h2>${escape(n.name)}</h2><p class="department-name">${escape(n.department || "Sin departamento publicado")}</p><a class="text-link" href="${escape(n.source_url)}" target="_blank" rel="noreferrer">Ver perfil en CRIS ↗</a><div class="metric-grid"><div><strong>${m.degree}</strong><span>colaboradores en la cohorte</span></div><div><strong>${nf.format(m.weighted_degree)}</strong><span>registros compartidos</span></div><div><strong>${decimal(m.betweenness, 4)}</strong><span>intermediación</span></div><div><strong>${data.cross_department_neighbors}</strong><span>vecinos de otros departamentos</span></div></div><p class="scope-note">Métricas de la red observada completa.</p><button id="neighbors-only" class="button neighbor-button${state.neighborsOnly ? " active" : ""}" aria-pressed="${state.neighborsOnly}">${state.neighborsOnly ? "Volver a toda la selección" : "Ver solo sus conexiones"}</button>${!m.degree ? '<div class="insight-note"><strong>Sin conexiones dentro de estos 104 perfiles.</strong> Sus trabajos pueden tener coautores externos; no equivale a investigar en solitario.</div>' : ""}<section class="detail-section"><h3>Intereses de investigación</h3>${n.research_areas.length ? tags(n.research_areas) : '<p class="scope-note">No publicados en el perfil.</p>'}${data.preparation?.biography_fallback ? '<p class="scope-note">Temática estimada desde la biografía: información limitada.</p>' : ""}</section><section class="detail-section"><h3>Pertenencias</h3>${
       n.affiliations
         .filter((a) => a.type !== "university")
         .map(
@@ -803,21 +793,9 @@ function renderPerson(data) {
         )
         .join("") ||
       '<p class="scope-note">Sin pertenencias específicas publicadas.</p>'
-    }</section>${data.neighbors.length ? `<section class="detail-section"><h3>Colaboradores registrados · ${data.neighbors.length}</h3>${data.neighbors.map((p) => `<button class="rank-row" data-pair="${n.id},${p.id}"><span class="rank-person">${escape(shortName(p.name))}<small>${p.relations.map(relationLabel).join(" · ")}</small></span><span class="rank-value">${nf.format(p.weight)}<small>registros</small></span></button>`).join("")}</section>` : ""}${
-      candidates.length
-        ? `<section class="detail-section"><h3>Candidatos según tus prioridades</h3>${candidates
-            .map((p) => {
-              const other = nodeById.get(
-                p.source === n.id ? p.target : p.source,
-              );
-              return `<button class="rank-row" data-pair="${p.source},${p.target}"><span class="rank-person">${escape(shortName(other.name))}<small>Sin conexión registrada</small></span><span class="rank-value">${decimal(p.score * 100)}<small>/ 100</small></span></button>`;
-            })
-            .join(
-              "",
-            )}<p class="scope-note">Mejores parejas de este perfil entre los filtros actuales, aunque estén fuera del Top global.</p></section>`
-        : ""
-    }<section class="detail-section"><h3>Producción registrada</h3><div class="ranking-tabs"><button data-kind="publications" class="${data.kind === "publications" ? "active" : ""}">Publicaciones (${n.publication_count})</button><button data-kind="projects" class="${data.kind === "projects" ? "active" : ""}">Proyectos (${n.project_count})</button></div><div id="work-list">${renderWorks(data.works) || '<p class="empty-state">No hay registros de este tipo asociados al perfil.</p>'}</div>${data.has_more ? `<button id="load-person-works" class="button load-more" data-offset="20">Ver más registros</button>` : ""}</section>${n.biography ? `<details class="detail-section profile-bio"><summary>Perfil profesional</summary><p>${escape(n.biography)}</p></details>` : ""}`;
+    }</section>${data.neighbors.length ? `<section class="detail-section"><h3>Colaboradores registrados · ${data.neighbors.length}</h3>${data.neighbors.map((p) => `<button class="rank-row" data-pair="${n.id},${p.id}"><span class="rank-person">${escape(shortName(p.name))}<small>${p.relations.map(relationLabel).join(" · ")}</small></span><span class="rank-value">${nf.format(p.weight)}<small>registros</small></span></button>`).join("")}</section>` : ""}<details class="detail-section production-details" ${state.productionOpen ? "open" : ""}><summary>Publicaciones y proyectos</summary><div class="ranking-tabs"><button data-kind="publications" class="${data.kind === "publications" ? "active" : ""}">Publicaciones (${n.publication_count})</button><button data-kind="projects" class="${data.kind === "projects" ? "active" : ""}">Proyectos (${n.project_count})</button></div><div id="work-list">${renderWorks(data.works) || '<p class="empty-state">No hay registros de este tipo asociados al perfil.</p>'}</div>${data.has_more ? `<button id="load-person-works" class="button load-more" data-offset="20">Ver más registros</button>` : ""}</details>`;
   bindInspector();
+  document.querySelector(".production-details").addEventListener("toggle", (event) => { state.productionOpen = event.currentTarget.open; });
   $("neighbors-only").addEventListener("click", () => {
     state.neighborsOnly = !state.neighborsOnly;
     applyFilters();
@@ -1018,15 +996,9 @@ function setTask(task) {
   state.selectedPair = null;
   state.hovered = null;
   state.neighborsOnly = false;
-  state.metric = task === "bridges" ? "betweenness" : state.rankMetric;
+  state.metric = task === "bridges" ? "betweenness" : "degree";
   document.querySelectorAll("[data-task]").forEach((b) => {
     const active = b.dataset.task === task;
-    b.classList.toggle("active", active);
-    b.setAttribute("aria-pressed", String(active));
-  });
-  $("collaborator-options").hidden = task !== "collaborators";
-  document.querySelectorAll("[data-rank]").forEach((b) => {
-    const active = b.dataset.rank === state.rankMetric;
     b.classList.toggle("active", active);
     b.setAttribute("aria-pressed", String(active));
   });
@@ -1041,13 +1013,14 @@ function syncSuggestionControls() {
   $("prediction-toggle").disabled = !recommendations.length;
   $("prediction-toggle").setAttribute("aria-checked", String(state.predictions));
   $("prediction-options").disabled = !state.predictions;
+  $("prediction-options").hidden = !state.predictions;
+  if (!state.predictions) $("criteria-options").open = false;
   document.querySelector(".prediction-controls").classList.toggle("showing-predictions", state.predictions);
 }
 
 function updateMetricKey() {
   $("metric-key").textContent = {
     degree: "Conexiones visibles",
-    weighted_degree: "Trabajos registrados",
     betweenness: "Intermediación observada",
   }[state.metric];
   $("metric-key").title =
@@ -1098,6 +1071,14 @@ function wireCriterionHelp() {
 
 function wireControls() {
   wireCriterionHelp();
+  const legend = document.querySelector(".map-legend");
+  const controls = document.querySelector(".prediction-controls");
+  const reserveControls = new ResizeObserver(() => {
+    document.querySelector(".network-panel").style.setProperty("--legend-height", `${legend.offsetHeight}px`);
+    fitGraph(false);
+  });
+  reserveControls.observe(legend);
+  reserveControls.observe(controls);
   $("inspector-close").addEventListener("click", clearSelection);
   $("active-filters").addEventListener("click", (event) => {
     const key = event.target.closest("[data-clear-filter]")?.dataset.clearFilter;
@@ -1122,17 +1103,6 @@ function wireControls() {
     state.department = state.department === button.dataset.category ? "" : button.dataset.category;
     applyFilters();
   });
-  document.querySelectorAll("[data-rank]").forEach((b) => b.addEventListener("click", () => {
-    state.rankMetric = state.metric = b.dataset.rank;
-    document.querySelectorAll("[data-rank]").forEach((choice) => {
-      const active = choice === b;
-      choice.classList.toggle("active", active);
-      choice.setAttribute("aria-pressed", String(active));
-    });
-    renderGraph();
-    refreshInspector();
-    updateMetricKey();
-  }));
   document
     .querySelectorAll("[data-task]")
     .forEach((b) => b.addEventListener("click", () => setTask(b.dataset.task)));
@@ -1181,7 +1151,7 @@ function wireControls() {
       predictions: false,
       percent: 1,
       weights: { ...DEFAULT_WEIGHTS },
-      rankMetric: "degree",
+      productionOpen: false,
       selected: null,
       selectedPair: null,
       hovered: null,
@@ -1283,7 +1253,7 @@ async function start() {
     network = await getJSON("/api/network");
     nodes = network.nodes;
     observed = network.edges;
-    for (const metric of ["degree", "weighted_degree", "betweenness"])
+    for (const metric of ["degree", "betweenness"])
       metricMaxima[metric] = d3.max(nodes, (n) => n.network_metrics[metric]) || 1;
     nodeById = new Map(nodes.map((n) => [n.id, n]));
     fillControls();

@@ -1524,3 +1524,20 @@ g.node.dragging .node-halo {
 .tooltip-metrics b { font-size: 22px; line-height: 1.1; font-weight: 650; }
 .tooltip-metrics span { font-size: 10px; color: #e0ebe6; }
 .tooltip-suggestions { color: #dccbff; font-size: 10px; margin: 6px 0; }
+
+/* Progressive disclosure keeps the overview focused on the network. */
+.map-legend { bottom: 24px; }
+.prediction-controls { bottom: calc(var(--legend-height, 110px) + 40px); }
+.criteria-options { margin-top: 10px; }
+.criteria-options > summary { width: fit-content; cursor: pointer; font-size: 11px; color: var(--muted); }
+.criteria-options .weights-grid { margin-top: 10px; }
+.production-details > summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+.production-details[open] > summary { margin-bottom: 12px; }
+@media (max-width: 1099px) {
+  .map-legend { bottom: 14px; }
+  .prediction-controls { bottom: calc(var(--legend-height, 110px) + 30px); }
+}
+@media (max-width: 720px) {
+  .map-legend { bottom: 12px; }
+  .prediction-controls { bottom: calc(var(--legend-height, 100px) + 28px); }
+}
