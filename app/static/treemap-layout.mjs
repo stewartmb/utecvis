@@ -106,7 +106,7 @@ export function createTreemapLayout(d3, nodeRadius, options = {}) {
     return groups;
   }
 
-  function configure(visible, observedLinks, currentCounts, suggestedLinks = []) {
+  function configure(visible, observedLinks, currentCounts, suggestedLinks = [], update = {}) {
     const next = visible.map((n) => `${n.id}:${nodeRadius(n).toFixed(5)}`).join("|") +
       observedLinks.map((e) => `${e.source}:${e.target}`).join("|") +
       suggestedLinks.map((e) => `s:${e.source}:${e.target}`).join("|");
@@ -154,9 +154,14 @@ export function createTreemapLayout(d3, nodeRadius, options = {}) {
       .force("drag-x", d3.forceX().strength(0)).force("drag-y", d3.forceY().strength(0))
       .on("tick", () => { project(); notify(); })
       .on("end", () => { project(500); notify(); }).stop();
-    for (let i = 0; i < 200; i++) { simulation.tick(); project(12); }
-    project(1200);
-    items.forEach((n) => { n.vx = n.vy = 0; });
+    if (update.live && animated) {
+      project(300);
+      simulation.alpha(0.18).restart();
+    } else {
+      for (let i = 0; i < 200; i++) { simulation.tick(); project(12); }
+      project(1200);
+      items.forEach((n) => { n.vx = n.vy = 0; });
+    }
     return true;
   }
 

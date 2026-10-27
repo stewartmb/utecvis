@@ -269,6 +269,7 @@ def run(url, channel):
             )
             == 100
         )
+        page.evaluate("() => new Promise(requestAnimationFrame)")
         first_structural = page.evaluate(
             'window.utecvis.top.ranked[0].source + ":" + window.utecvis.top.ranked[0].target'
         )
@@ -485,6 +486,70 @@ def run(url, channel):
         assert page.evaluate("window.utecvis.state.layout") == "circular"
         assert page.locator(".department-box").count() == 0
         verify_layout(page)
+        page.set_viewport_size({"width": 1440, "height": 900})
+        page.locator("#reset").click()
+        page.wait_for_timeout(400)
+        page.wait_for_function(
+            "[...document.querySelectorAll('.node-photo')].some(el=>el.__data__.photoLoaded && getComputedStyle(el).display !== 'none')"
+        )
+        assert (
+            page.evaluate("window.utecvis.nodes.filter(n=>n.photo_url).length") == 102
+        )
+        assert page.evaluate("""() => [...document.querySelectorAll('.node-photo')].every(el=>{
+          if(getComputedStyle(el).display==='none') return true;
+          const core=el.parentElement.querySelector('.node-core').getBoundingClientRect();
+          return core.width>=33.9 && el.getAttribute('href').startsWith('/static/photos/');
+        })""")
+        for key, text in [
+            ("thematic", "Intereses"),
+            ("institutional", "Grupo compartido"),
+            ("structural", "RWR"),
+        ]:
+            page.locator(f'label [data-criterion="{key}"]').hover()
+            assert page.locator("#criterion-tooltip").is_visible()
+            assert text in page.locator("#criterion-tooltip").inner_text()
+        page.mouse.move(10, 10)
+        page.locator("#layout-toggle").click()
+        page.locator("#prediction-toggle").click()
+        timing = page.evaluate("""async () => {
+          const layout=window.utecvis.layout, original=layout.configure;
+          let calls=0;
+          layout.configure=(...args)=>{calls++;return original(...args)};
+          const el=document.querySelector('#weight-institutional'), start=performance.now();
+          for(let i=0;i<30;i++) {el.value=i;el.dispatchEvent(new Event('input'));}
+          const input=performance.now()-start;
+          await new Promise(requestAnimationFrame);
+          layout.configure=original;
+          return {input,calls,frame:performance.now()-start};
+        }""")
+        assert timing["calls"] == 1, timing
+        assert timing["input"] < 100, timing
+        assert timing["frame"] < 1000, timing
+        page.wait_for_timeout(350)
+        verify_layout(page)
+        page.locator("#weight-institutional").evaluate(
+            "el=>{el.value=100;el.dispatchEvent(new Event('input'));}"
+        )
+        page.evaluate("() => new Promise(requestAnimationFrame)")
+        # The screenshot's exact pair shares DADS; put that evidence before the score.
+        page.evaluate("""() => {
+          const a=1417230581705628,b=2497184571018067;
+          const hit=[...document.querySelectorAll('.prediction-hit')].find(el=>[el.__data__.source,el.__data__.target].includes(a)&&[el.__data__.source,el.__data__.target].includes(b));
+          if(!hit)throw new Error('DADS pair absent from institutional Top');
+          hit.dispatchEvent(new MouseEvent('click',{bubbles:true}));
+        }""")
+        page.wait_for_selector(".pair-coincidences")
+        assert "DADS" in page.locator(".pair-coincidences").inner_text()
+        assert (
+            page.locator(".pair-coincidences").bounding_box()["y"]
+            < page.locator(".score-total").bounding_box()["y"]
+        )
+        assert page.locator(".score-total strong").inner_text().startswith("100")
+        assert "100 %" in page.locator(".score-weights").inner_text()
+        page.locator('.signal-label [data-criterion="institutional"]').hover()
+        assert "Departamento: 40" in page.locator("#criterion-tooltip").inner_text()
+        page.mouse.move(10, 10)
+        page.screenshot(path="/tmp/utecvis-evidence-and-photos.png")
         assert not errors, errors
         assert not external_requests, external_requests
         reduced = browser.new_page(reduced_motion="reduce")
@@ -514,6 +579,9 @@ def run(url, channel):
                     "collision_and_boundary": "PASS",
                     "persistent_suggestion_controls_and_legend": "PASS",
                     "treemap_and_return_to_circular": "PASS",
+                    "slider_coalescing": timing,
+                    "portraits_offline": "PASS",
+                    "pair_coincidences_and_help": "PASS",
                     "errors": errors,
                 },
                 ensure_ascii=False,

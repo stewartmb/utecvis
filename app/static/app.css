@@ -290,6 +290,8 @@ p {
 /* Each task exposes one local choice; data selections live on the legend. */
 .sr-only {
   position: absolute;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   padding: 0;
@@ -1476,3 +1478,27 @@ g.node.dragging .node-halo {
 .treemap-mode .observed-edge.edge-dimmed { opacity: 0.04; }
 
 .treemap-mode .observed-edge.category-edge-dimmed { opacity: 0.04; }
+
+.node-photo { pointer-events: none; }
+.criterion-help { cursor: help; border-bottom: 1px dotted #94a49c; outline-offset: 3px; }
+.criterion-tooltip {
+  position: fixed; z-index: 100; width: 250px; padding: 9px 12px;
+  color: white; background: #183b40f5; border-radius: 7px; font-size: 11px;
+  line-height: 1.45; pointer-events: none; box-shadow: 0 5px 18px #173d4320;
+}
+.pair-coincidences { margin: 15px 0; padding: 13px 14px; border: 1px solid #d5e5db; border-radius: 10px; background: #f1f7f3; }
+.pair-coincidences h3 { margin: 0 0 9px; font-size: 12px; }
+.pair-coincidences > div + div { margin-top: 10px; }
+.pair-coincidences strong, .pair-coincidences a { display: block; font-size: 12px; line-height: 1.5; font-weight: 600; }
+.pair-coincidences a { color: var(--accent); text-decoration: none; }
+.pair-coincidences small { display: block; color: var(--muted); font-size: 10px; margin: 0 0 3px; }
+.pair-coincidences p { font-size: 11px; margin: 0; }
+.pair-names { font-size: 17px; line-height: 1.35; gap: 9px; }
+.pair-names small { font-size: 10px; margin-top: 3px; }
+.score-total { padding: 12px 14px; margin-bottom: 5px; }
+.score-total strong { font-size: 29px; }
+.score-total span { font-size: 11px; }
+.score-weights { color: var(--prediction); font-size: 10px; line-height: 1.6; margin: 7px 0; }
+.score-coverage { font-size: 10px; margin-bottom: 15px; }
+.pair-extra { margin-top: 18px; }
+.pair-extra > summary { cursor: pointer; font-size: 11px; color: var(--muted); }

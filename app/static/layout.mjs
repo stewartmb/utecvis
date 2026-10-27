@@ -174,7 +174,7 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
     return result;
   }
 
-  function configure(visible, observedLinks, currentCounts, suggestedLinks = []) {
+  function configure(visible, observedLinks, currentCounts, suggestedLinks = [], update = {}) {
     const next =
       visible
         .map(
@@ -281,7 +281,10 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
         notify();
       })
       .stop();
-    settle();
+    if (update.live && animated) {
+      project();
+      simulation.alpha(0.18).restart();
+    } else settle();
     return true;
   }
 

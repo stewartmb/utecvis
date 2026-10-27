@@ -63,7 +63,19 @@ def create_app(config=None):
         except (ValueError, KeyError, OSError, ValidationError) as exc:
             app.logger.error("Datos de red inválidos: %s", exc)
             return jsonify(error="El archivo de red no cumple el contrato."), 503
-        return jsonify(data)
+        photos = {
+            p.stem: f"/static/photos/{p.name}"
+            for p in (Path(app.static_folder) / "photos").glob("*")
+            if p.suffix in (".jpg", ".png")
+        }
+        return jsonify(
+            {
+                **data,
+                "nodes": [
+                    {**n, "photo_url": photos.get(str(n["id"]))} for n in data["nodes"]
+                ],
+            }
+        )
 
     @app.get("/api/recommendations")
     def recommendations():

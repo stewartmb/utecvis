@@ -76,6 +76,24 @@ detalles al seleccionar personas o conexiones. D3 reacomoda los nodos cuando cam
 sus radios o las conexiones visibles, para mantener la separación. El
 botón Restablecer recupera la vista y los parámetros iniciales.
 
+## Fotos, coincidencias y respuesta de controles
+
+Se incluyen 102 fotos públicas de CRIS en `app/static/photos/`; dos perfiles no
+publican foto. Se muestran en nodos de al menos 34 px de diámetro en pantalla,
+conservando el borde del departamento. En los demás aparecen iniciales. El zoom
+actualiza ese umbral. Las fotos se sirven localmente, sin solicitudes a CRIS al
+explorar; para reponerlas: `python -m extraccion_datos.photos` (requiere conexión).
+
+Al abrir una pareja, las pertenencias y temas coincidentes aparecen antes de la
+puntuación. Los términos relacionados por el modelo se distinguen de coincidencias
+textuales. Los pesos se muestran junto al resultado. Temática, Institución y Red
+incluyen ayudas breves al pasar el cursor o enfocar sus etiquetas.
+
+Los controles de sugerencias actualizan sus valores de inmediato y agrupan los
+cambios del grafo por fotograma. Los radios y el ranking se reutilizan cuando sus
+entradas no cambian; durante el ajuste se evita ejecutar cientos de pasos físicos
+antes de devolver el control. La simulación D3 continúa con límites y colisiones.
+
 ## Prueba reversible: treemap + fuerzas
 
 El botón **Treemap** agrupa la misma red por departamento principal. D3 treemap
