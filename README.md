@@ -51,10 +51,11 @@ requirements.txt     Dependencias para ejecutar la aplicación
 ## Cuatro tareas y guion de demostración
 
 1. **Identificar colaboradores destacados.** En “Colaboradores”, elegir “Personas”
-   o “Trabajos” y abrir “Ver ranking”; seleccionar a Jimmy Tarrillo Olano, con nueve vecinos.
+   o “Trabajos”; localizar nodos grandes y consultar sus cifras al pasar el cursor.
+   Buscar a Jimmy Tarrillo Olano permite comprobar sus nueve colaboradores.
    El detalle distingue personas diferentes de registros compartidos.
-2. **Encontrar puentes.** En “Puentes”, abrir “Ver ranking” y seleccionar el primer
-   investigador por intermediación. Revisar vecinos, departamentos y sus conexiones.
+2. **Encontrar puentes.** En “Puentes”, localizar nodos grandes por intermediación
+   y consultar su valor exacto al seleccionarlos. Revisar vecinos, departamentos y conexiones.
    La intermediación alta por sí sola no prueba una conexión entre departamentos.
 3. **Descubrir afinidades.** Activar “Sugerencias” abajo a la izquierda, ampliar
    Top % y modificar las tres importancias visibles. Seleccionar una línea sugerida
@@ -65,8 +66,8 @@ requirements.txt     Dependencias para ejecutar la aplicación
    pertenencias de sus investigadores en el detalle. Esta cuarta tarea es una
    reformulación de la exploración de grupos; se retiró la vista de comunidades.
 
-**Mantra:** el grafo ocupa toda la pantalla al abrir y los rankings aparecen
-solo al solicitarlos. Hay dos vistas: Colaboradores y Puentes. La leyenda es el
+**Mantra:** el grafo ocupa toda la pantalla al abrir y los detalles aparecen
+solo al seleccionar un investigador o una conexión. Hay dos vistas: Colaboradores y Puentes. La leyenda es el
 único selector de departamentos; el vecindario se limita desde el perfil. Las
 selecciones activas se quitan con ×. Las sugerencias son una capa independiente
 que se conserva al cambiar de vista. Su interruptor, Top % y tres importancias
@@ -113,7 +114,7 @@ El lienzo crece de manera uniforme si los radios necesitan
 más espacio, manteniendo la proporción de áreas. En escenarios densos puede
 reducirse el tamaño aparente al ajustar toda la vista: se puede ampliar con zoom.
 La agrupación institucional facilita localizar departamentos, pero puede alargar
-y acumular los enlaces entre ellos. Los modos **Colaboradores** y **Puentes** están abajo, junto a los círculos de tamaño. Sus opciones y el ranking se consultan en el mismo lugar.
+y acumular los enlaces entre ellos. Los modos **Colaboradores** y **Puentes** están abajo, junto a los círculos de tamaño. Las opciones Personas/Trabajos se consultan en el mismo lugar.
 
 ## Cómo interpretar la red
 
@@ -145,7 +146,7 @@ Con 1, 4 y 9 conexiones, los radios son aproximadamente 11,9; 26,6 y 51. Sin
 conexiones, el radio mínimo es 7. Las sugerencias pueden superar el radio 51.
 Los filtros cuentan solo aristas con ambos extremos visibles. Las sugerencias se
 distinguen en el tooltip y con líneas violetas discontinuas. Esta medida de la
-vista es independiente del grado observado que muestran los rankings y detalles.
+vista es independiente del grado observado que muestran los detalles.
 “Trabajos” utiliza el grado ponderado observado; “Puentes” utiliza la
 intermediación observada. No hay selectores globales de tamaño o color.
 

@@ -285,14 +285,7 @@ def run(url, channel):
         page.locator("#reset").click()
         page.locator('[data-task="bridges"]').click()
         assert page.locator("#inspector-panel").is_hidden()
-        page.locator("#rankings-toggle").click()
-        expected = page.evaluate(
-            "window.utecvis.nodes.reduce((a,b)=>a.network_metrics.betweenness > b.network_metrics.betweenness ? a:b).id"
-        )
-        assert (
-            int(page.locator(".rank-row").first.get_attribute("data-person"))
-            == expected
-        )
+        assert page.locator("#rankings-toggle, .ranking-list").count() == 0
         assert page.evaluate("window.utecvis.state.metric") == "betweenness"
         page.wait_for_timeout(350)
         assert math.isclose(max(n["radius"] for n in snapshot(page).values()), 51)
@@ -405,7 +398,7 @@ def run(url, channel):
         assert page.evaluate("window.utecvis.state.layout") == "treemap"
         assert page.locator("#layout-toggle").count() == 0
         assert page.locator(".size-mode [data-task]").count() == 2
-        assert page.locator(".size-controls #rankings-toggle").is_visible()
+        assert page.locator("#rankings-toggle").count() == 0
         assert page.locator("g.node").count() == 104
         assert page.locator(".observed-edge").count() == 73
         assert page.locator(".department-box").count() > 1

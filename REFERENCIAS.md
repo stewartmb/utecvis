@@ -134,3 +134,10 @@ rectangulares rígidos; no es una reproducción exacta de ese plugin.
 Las referencias respaldan componentes e ideas. No convierten nuestra puntuación
 en una probabilidad ni justifican afirmar que Harvard, UAMS o los autores de
 DRACoR validaron UTECVis. El Top % es una fracción del ranking de candidatos.
+
+## Rankings: fundamento y decisión de interfaz
+
+- [Tamara Munzner, Visualization Analysis & Design, tutorial oficial, sesión 2 (2014)](https://www.cs.ubc.ca/~tmm/talks/minicourse14/minicourse14-session2-4x4.pdf): la diapositiva 9 presenta barras ordenadas por valor y sus tareas de comparación y consulta. Ordenar y alinear son decisiones legítimas de codificación visual.
+- [Gratzl et al., LineUp: Visual Analysis of Multi-Attribute Rankings, IEEE TVCG / InfoVis (2013)](https://vdl.sci.utah.edu/publications/2013_infovis_lineup/), DOI 10.1109/TVCG.2013.173: propone barras interactivas para analizar rankings y cambios de ponderaciones.
+
+Estas fuentes respaldan los rankings visuales; no obligan a añadir uno a toda aplicación. En UTECVis se retiró «Ver ranking», que presentaba una lista de nombres y números. Es una decisión de simplificación de esta interfaz, no una prohibición de Munzner. El tamaño y los detalles conservan las métricas; comparar un orden exacto es menos directo. El ranking interno de parejas candidatas para Top % permanece porque forma parte del cálculo de sugerencias.

@@ -163,7 +163,6 @@ function scheduleSuggestions() {
 
 function setInspector(open) {
   $("inspector-panel").hidden = !open;
-  $("rankings-toggle").setAttribute("aria-expanded", String(open));
 }
 
 
@@ -740,27 +739,9 @@ function fitGraph(animated = true) {
   );
 }
 
-function rankingHTML(metric) {
-  return [...nodes]
-    .filter((n) => visibleIds.has(n.id))
-    .sort(
-      (a, b) =>
-        b.network_metrics[metric] - a.network_metrics[metric] || a.id - b.id,
-    )
-    .slice(0, 10)
-    .map(
-      (n, i) =>
-        `<button class="rank-row" data-person="${n.id}"><span class="rank-number">${String(i + 1).padStart(2, "0")}</span><span class="person-dot" style="background:${nodeColor(n)}"></span><span class="rank-person">${escape(shortName(n.name))}<small>${escape(shortDepartment(n.department))}</small></span><span class="rank-value">${metricText(n.network_metrics[metric], metric)}<small>${metric === "degree" ? "personas" : metric === "weighted_degree" ? "registros" : "intermediación"}</small></span></button>`,
-    )
-    .join("");
-}
-
-function renderOverview() {
-  const panel = $("inspector");
-  const bridges = state.task === "bridges";
-  const metric = bridges ? "betweenness" : state.rankMetric;
-  panel.innerHTML = `<div class="eyebrow">RED OBSERVADA</div><h2>${bridges ? "Puentes" : "Colaboradores"}</h2><p class="scope-note">${bridges ? "Intermediación" : metric === "degree" ? "Colaboradores distintos" : "Trabajos compartidos"} · red observada completa.</p><div class="ranking-list">${rankingHTML(metric)}</div><p class="scope-note">Solo conexiones registradas. Selecciona para consultar evidencia.</p>`;
-  bindInspector();
+function clearInspector() {
+  $("inspector").replaceChildren();
+  setInspector(false);
 }
 
 function renderWorks(works) {
@@ -1004,7 +985,7 @@ function refreshInspector() {
       `/api/professors/${state.selected}?kind=${state.personKind}`,
     );
     if (data) renderPerson(data);
-  } else renderOverview();
+  } else clearInspector();
 }
 
 function clearSelection() {
@@ -1014,7 +995,7 @@ function clearSelection() {
   state.selectedPair = null;
   state.neighborsOnly = false;
   renderGraph();
-  renderOverview();
+  clearInspector();
   $("inspector").scrollTop = 0;
   setInspector(false);
 }
@@ -1051,7 +1032,7 @@ function setTask(task) {
   });
   setInspector(false);
   renderGraph();
-  renderOverview();
+  clearInspector();
   updateMetricKey();
   fitGraph(false);
 }
@@ -1117,11 +1098,6 @@ function wireCriterionHelp() {
 
 function wireControls() {
   wireCriterionHelp();
-  $("rankings-toggle").addEventListener("click", () => {
-    const open = $("inspector-panel").hidden;
-    if (open) clearSelection();
-    setInspector(open);
-  });
   $("inspector-close").addEventListener("click", clearSelection);
   $("active-filters").addEventListener("click", (event) => {
     const key = event.target.closest("[data-clear-filter]")?.dataset.clearFilter;
@@ -1314,7 +1290,7 @@ async function start() {
     setupGraph();
     wireControls();
     renderGraph();
-    renderOverview();
+    clearInspector();
     fitGraph(false);
     try {
       const data = await getJSON("/api/recommendations");

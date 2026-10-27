@@ -8,7 +8,7 @@ Esta guía describe la implementación actual. Distingue datos publicados, resul
 
 La aplicación explora colaboraciones registradas y afinidades entre 104 investigadores de la cohorte extraída de CRIS UTEC. Las tareas son identificar colaboradores destacados, encontrar posibles puentes entre departamentos, explorar nuevas colaboraciones y explorar departamentos y pertenencias institucionales. El profesor propone las primeras tres como ejemplos y exige formular al menos cuatro; la cuarta la añadimos nosotros. La interfaz tiene dos vistas (Colaboradores y Puentes); las sugerencias son una capa y los departamentos se exploran desde la leyenda. La cantidad de tareas no depende de la cantidad de pestañas.
 
-El idiom principal es un diagrama nodo-enlace interactivo de una red no dirigida y ponderada, dispuesto mediante fuerzas. Los rankings y detalles apoyan comparaciones que el grafo por sí solo no permite realizar con precisión.
+El idiom principal es un diagrama nodo-enlace interactivo de una red no dirigida y ponderada, dispuesto mediante fuerzas. El tamaño destaca diferencias; los tooltips y detalles permiten consultar cifras exactas. Se retiró el listado global de ranking para simplificar la interfaz; comparar posiciones exactas requiere más inspección.
 
 ## 2. Qué datos tenemos y qué significan
 
@@ -146,7 +146,7 @@ Top % selecciona una fracción del ranking de candidatas con ambos extremos visi
 
 El orden es puntuación descendente y, ante empate, identificadores estables. Un porcentaje del ranking no es probabilidad de colaboración. Con Sugerencias activadas, seleccionar una candidata desde el perfil puede mostrarla aunque quede fuera del Top actual. Al desactivar la capa desaparecen todas las aristas sugeridas, incluida esa selección.
 
-El ranking de Colaboradores ordena por grado o grado ponderado observado; Puentes, por B observado. Las parejas candidatas se ordenan por puntuación con los pesos actuales y se exploran al activar Sugerencias, sin cambiar de vista. Los filtros afectan a los candidatos y a qué investigadores aparecen, pero no recalculan las métricas globales sobre una subred filtrada.
+Colaboradores permite dimensionar por grado visible o grado ponderado observado; Puentes utiliza B observado. No hay un listado global de ranking. Las parejas candidatas se ordenan por puntuación con los pesos actuales y se exploran al activar Sugerencias, sin cambiar de vista. Los filtros afectan a los candidatos y a qué investigadores aparecen, pero no recalculan las métricas globales sobre una subred filtrada.
 
 ## 10. Tamaño de los nodos
 
@@ -162,7 +162,7 @@ En Puentes: `radio = 7 + 44 × sqrt(B / B_máx)`. En Trabajos compartidos: `radi
 
 7 es el mínimo visual; 44 determina la amplitud de tamaños. No son variables académicas. El radio es una unidad del espacio SVG; el zoom de la cámara afecta al tamaño observado en pantalla. El diámetro es dos veces el radio.
 
-Importante: el grado visible usado en el dibujo puede incluir sugerencias; el grado del ranking y del detalle es el observado. Se distinguen en etiquetas y tooltips.
+Importante: el grado visible usado en el dibujo puede incluir sugerencias; el grado del detalle es el observado. Se distinguen en etiquetas y tooltips.
 
 ## 11. Otros canales visuales e interacción
 
@@ -172,7 +172,7 @@ Importante: el grado visible usado en el dibujo puede incluir sugerencias; el gr
 - Selección o hover: conexiones relacionadas con opacidad 0,95, otras atenuadas; para una pareja se destaca la conexión correspondiente. No cambia el peso ni el dato de origen.
 - Fotos locales en nodos de al menos 25 px de diámetro en pantalla; iniciales en nodos menores o sin foto. El borde conserva el color de departamento. Hay 102 fotos incluidas y dos perfiles sin foto. Nombres al buscar, seleccionar, pasar el cursor o ampliar suficientemente la vista. Evita mostrar 104 etiquetas largas simultáneas.
 - Zoom 0,25–5, desplazamiento, arrastre y búsqueda sin depender de tildes. La leyenda anticipa los miembros de una categoría al pasar el cursor y es el único control para seleccionar departamentos al hacer clic; la opción de ver solo conexiones aparece en el perfil. Las pertenencias institucionales se consultan en los detalles. Las selecciones activas se quitan con ×. No hay panel global de filtros ni selectores repetidos de tamaño o color.
-- Colaboradores ofrece Personas/Trabajos y Puentes usa intermediación. Las sugerencias se activan con un interruptor persistente abajo a la izquierda y se mantienen al cambiar de vista. Top % y las tres importancias están siempre visibles, atenuados y bloqueados cuando Sugerencias está desactivado. Los rankings y detalles comparten un solo panel, cerrado hasta que el usuario lo solicita.
+- Colaboradores ofrece Personas/Trabajos y Puentes usa intermediación. Las sugerencias se activan con un interruptor persistente abajo a la izquierda y se mantienen al cambiar de vista. Top % y las tres importancias están siempre visibles, atenuados y bloqueados cuando Sugerencias está desactivado. El panel de detalles se abre solo al seleccionar una persona o conexión.
 - Las coincidencias concretas de la pareja aparecen antes de la puntuación y los pesos junto a ella. Las etiquetas Temática/Institución/Red muestran criterios breves al pasar el cursor o enfocarlas.
 - Los deslizadores actualizan el grafo una vez por fotograma, con radios precalculados y reutilización del ranking cuando solo cambia Top %. En el ajuste interactivo D3 evita el asentamiento inicial de cientos de pasos y mantiene límites y colisiones.
 - Rankings seleccionables, detalle de perfil, evidencia de parejas y enlaces de fuente; registros paginados de 20 en 20.
@@ -225,7 +225,7 @@ Calculado a partir de los datos: aristas bajo las reglas de evidencia, pesos, gr
 
 Elegido como heurística o diseño: nivel institucional 1/0,7/0,4; pesos 60/30/10; hasta 20 conceptos y términos excluidos; reinicio RWR de 10 %; escalas de radio y grosor; colores, transparencia, fricción y fuerzas. Que una fórmula esté implementada correctamente no valida sus supuestos como predictor del futuro.
 
-La única disposición es treemap + fuerzas por departamento principal. D3 treemap reparte áreas proporcionales al número de investigadores; fuerzas y límites rectangulares mantienen los nodos dentro del bloque, incluidos los aislados. Compartir bloque no prueba colaboración ni representa una comunidad calculada. La superficie total puede crecer para evitar solapamientos conservando las proporciones. Los enlaces entre bloques pueden cruzarse. Los modos Colaboradores y Puentes aparecen abajo junto a los círculos de tamaño; sus opciones y el ranking se encuentran allí mismo. La cuarta tarea explora departamentos y pertenencias desde la leyenda y los detalles.
+La única disposición es treemap + fuerzas por departamento principal. D3 treemap reparte áreas proporcionales al número de investigadores; fuerzas y límites rectangulares mantienen los nodos dentro del bloque, incluidos los aislados. Compartir bloque no prueba colaboración ni representa una comunidad calculada. La superficie total puede crecer para evitar solapamientos conservando las proporciones. Los enlaces entre bloques pueden cruzarse. Los modos Colaboradores y Puentes aparecen abajo junto a los círculos de tamaño; sus opciones Personas/Trabajos se encuentran allí mismo. La cuarta tarea explora departamentos y pertenencias desde la leyenda y los detalles.
 
 No se ha entrenado ni validado un modelo de predicción con colaboraciones futuras. No hay precisión predictiva medida, ni un umbral de S que garantice éxito. El control español/inglés comprueba un ejemplo de comportamiento semántico; no valida todas las afinidades.
 
@@ -241,7 +241,7 @@ No se usa h-index/citas para valorar la calidad de una persona. No se considera 
 6. Qué valores son decisiones nuestras y qué limitaciones tienen.
 7. Por qué el Top % es una selección del ranking, no una probabilidad.
 8. Qué codifica cada canal y qué significa que los nodos se muevan o crezcan.
-9. Cómo se cumple el mantra y cómo ayudan los rankings y los detalles.
+9. Cómo se cumple el mantra y cómo ayudan los tooltips y los detalles.
 10. Cómo se reproduce la extracción y cómo se ejecuta la entrega sin scraping ni modelo durante la exposición.
 11. Qué se verificó: métricas contra NetworkX; componentes/aislados de RWR; candidatos, señales faltantes y pesos extremos; interacción, contraste de tamaños, arrastre, colisiones, filtros y pantallas; ZIP descomprimido con dependencias de ejecución.
 12. Qué no se puede concluir: ausencia universal de colaboración, calidad científica por tamaño, causalidad o certeza de colaboración futura.
