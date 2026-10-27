@@ -10,10 +10,10 @@ extracción, controles y parámetros físicos.
 
 ## Preparar la presentación
 
-[PRESENTACIONES.md](PRESENTACIONES.md) contiene el brief completo para construir
-el PPT: secuencia de diapositivas, fórmulas con leyendas y ejemplos, capturas de
-origen por obtener, evidencias históricas incluidas, hallazgos, guion y cobertura
-de los 20 puntos de la rúbrica. Es la guía de trabajo; el PPT aún no está generado.
+[PRESENTACIONES.md](PRESENTACIONES.md) documenta el relato, las fórmulas, las
+evidencias y la cobertura de los 20 puntos de la rúbrica. La presentación ya está
+generada: [PPTX](presentacion/UTECVis-presentacion.pptx) y
+[PDF](presentacion/UTECVis-presentacion.pdf), con capturas de la app y de CRIS.
 
 ## Clonar el proyecto completo
 

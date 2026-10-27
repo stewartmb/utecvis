@@ -4,7 +4,8 @@
 
 Este documento es el **brief para el agente o la persona que construya la
 presentación**. Debe poder continuar sin leer nuestra conversación. La entrega
-actual es esta guía y las evidencias indicadas; **todavía no es un PPT terminado**.
+actual incluye esta guía, las evidencias recopiladas y el PPTX/PDF generado. La
+secuencia siguiente explica el contenido y las decisiones de la presentación.
 
 Queremos que el profesor comprenda **qué problema resolvimos, de dónde salió cada
 dato, cómo construimos y medimos las relaciones, qué decisiones visuales tomamos
@@ -211,10 +212,10 @@ oral sobre programación.
 
 - IDs: `1745516346752422` y `1973806351557672`.
 - Peso 8 = 6 publicaciones + 2 proyectos distintos.
-- Publicación de ejemplo: [Assessment of the mechanical properties of Peruvian
-  Stipa obtusa fibers for their use as reinforcement in composite materials](https://cris.utec.edu.pe/es/publications/assessment-of-the-mechanical-properties-of-peruvian-stipa-obtusa-/),
-  DOI `10.1016/j.compositesa.2020.105950`. Verificar el título literal en la ficha
-  antes de copiarlo; la pareja y el DOI están en las evidencias del JSON.
+- Publicación de ejemplo: [Assessment of the mechanical properties of peruvian
+  Stipa Obtusa fibers for their use as reinforcement in composite materials](https://cris.utec.edu.pe/es/publications/assessment-of-the-mechanical-properties-of-peruvian-stipa-obtusa-/),
+  DOI `10.1016/j.compositesa.2020.105950`. El título reproduce la ficha guardada
+  en CRIS, incluido el uso de mayúsculas de la fuente.
 - Proyecto de ejemplo: [Fabricación de paneles de fibrocemento](https://cris.utec.edu.pe/es/projects/103-2018-fondecyt-fabricaci%C3%B3n-de-paneles-de-fibrocemento-utilizan/).
 - La captura debe mostrar ambos participantes, no solo el título del trabajo.
 
