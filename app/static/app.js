@@ -402,14 +402,15 @@ function showDepartmentTooltip(event, box) {
 function updateTreemapLabels() {
   const groups = layer?.select(".treemap-layer").selectAll("g.department-box");
   if (!groups) return;
-  // Keep headings readable at overview scale; very small screens use color and
-  // the shared legend until zooming in. Labels never spill into the next box.
+  // Keep department headings readable even when growing nodes enlarge the world
+  // and the camera fits it below the usual overview zoom. Truncate to box width.
   const font = Math.max(14, 9.5 / zoomLevel);
   groups.select(".department-box-label")
     .attr("x", (b) => b.x0 + 14)
     .attr("y", (b) => b.y0 + Math.max(20, 13 / zoomLevel))
     .style("font-size", `${font}px`)
-    .style("display", zoomLevel < 0.3 ? "none" : null)
+    .style("display", null)
+    .style("stroke-width", `${2 / zoomLevel}px`)
     .text((b) => {
       const label = shortDepartment(b.key);
       const limit = Math.max(3, Math.floor((b.x1 - b.x0 - 28) / (font * 0.55)));

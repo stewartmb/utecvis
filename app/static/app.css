@@ -1602,3 +1602,6 @@ g.node.dragging .node-halo {
 .node-tooltip .tooltip-metrics b { font-size: 14px; }
 .node-tooltip .tooltip-metrics span { font-size: 9px; }
 .node-tooltip .tooltip-suggestions { grid-column: 1 / -1; margin: 0; font-size: 9px; }
+
+/* A light text halo improves department-heading contrast against the background. */
+.department-box-label { paint-order: stroke; stroke: #fff; stroke-opacity: 0.9; stroke-linejoin: round; }
