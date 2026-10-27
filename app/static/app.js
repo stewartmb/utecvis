@@ -117,6 +117,7 @@ let width = 700,
 let lastFitRadius = null;
 let requestSerial = 0;
 let connectionCounts = new Map();
+let visibleWorkCounts = new Map();
 let nodeRadii = new Map();
 let metricMaxima = {};
 let rankingSignature = "";
@@ -168,7 +169,19 @@ function setInspector(open) {
 
 function nodeConnectionText(node) {
   const counts = connectionCounts.get(node.id) || { recorded: 0, suggested: 0 };
-  return `${counts.recorded} registradas${counts.suggested ? ` + ${counts.suggested} sugeridas` : ""}`;
+  return `${counts.recorded} colaboradores registrados, ${visibleWorkCounts.get(node.id) || 0} trabajos compartidos${counts.suggested ? `, ${counts.suggested} conexiones sugeridas` : ""}`;
+}
+
+function nodeTooltip(node) {
+  const counts = connectionCounts.get(node.id) || { recorded: 0, suggested: 0 };
+  const works = visibleWorkCounts.get(node.id) || 0;
+  return `<strong>${escape(node.name)}</strong><small>${escape(shortDepartment(node.department))}</small>
+    <div class="tooltip-metrics">
+      <div><b>${nf.format(counts.recorded)}</b><span>Colaboradores</span></div>
+      <div><b>${nf.format(works)}</b><span>Trabajos compartidos</span></div>
+    </div>
+    ${state.predictions ? `<div class="tooltip-suggestions">${nf.format(counts.suggested)} conexiones sugeridas</div>` : ""}
+    <small>Red registrada visible. Trabajos sumados por colaborador.</small>`;
 }
 
 function metricText(value, key = state.metric) {
@@ -499,6 +512,11 @@ function renderGraph({ live = false } = {}) {
     visibleEdges,
     predictionEdges,
   );
+  visibleWorkCounts = new Map([...visibleIds].map((id) => [id, 0]));
+  for (const edge of visibleEdges) {
+    for (const id of [edge.source, edge.target])
+      visibleWorkCounts.set(id, visibleWorkCounts.get(id) + edge.weight);
+  }
   updateNodeRadii();
   predictionSelection = layer
     .select(".prediction-layer")
@@ -583,14 +601,14 @@ function renderGraph({ live = false } = {}) {
       focusStyles();
       showTooltip(
         event,
-        `<strong>${escape(n.name)}</strong><small>${escape(shortDepartment(n.department))}</small><small>${nodeConnectionText(n)}</small>`,
+        nodeTooltip(n),
       );
     })
     .on("mousemove", (event, n) => {
       if (!$("tooltip").hidden)
         showTooltip(
           event,
-          `<strong>${escape(n.name)}</strong><small>${escape(shortDepartment(n.department))}</small><small>${nodeConnectionText(n)}</small>`,
+          nodeTooltip(n),
         );
     })
     .on("mouseleave", () => {

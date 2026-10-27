@@ -94,6 +94,11 @@ cambios del grafo por fotograma. Los radios y el ranking se reutilizan cuando su
 entradas no cambian; durante el ajuste se evita ejecutar cientos de pasos físicos
 antes de devolver el control. La simulación D3 continúa con límites y colisiones.
 
+Al pasar sobre un nodo se muestran **Colaboradores** y **Trabajos compartidos**
+de la red registrada visible. Los trabajos se suman por colaborador, como en el
+grado ponderado; un mismo trabajo con varios colaboradores puede contar en varios
+vínculos. Las conexiones sugeridas se muestran por separado.
+
 ## Vista: treemap + fuerzas
 
 La vista agrupa la misma red por departamento principal. D3 treemap

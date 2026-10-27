@@ -1517,3 +1517,10 @@ g.node.dragging .node-halo {
   .map-legend .task-options { justify-content: flex-start; gap: 12px; }
   .prediction-controls { bottom: 190px; }
 }
+
+/* Two immediate counts on node hover; suggested connections stay separate. */
+.tooltip-metrics { display: flex; gap: 20px; margin: 10px 0 8px; }
+.tooltip-metrics > div { display: flex; flex-direction: column; gap: 1px; }
+.tooltip-metrics b { font-size: 22px; line-height: 1.1; font-weight: 650; }
+.tooltip-metrics span { font-size: 10px; color: #e0ebe6; }
+.tooltip-suggestions { color: #dccbff; font-size: 10px; margin: 6px 0; }
