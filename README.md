@@ -239,6 +239,8 @@ usa scipy, incluido en los requisitos opcionales de preparación; CI lo instala.
 Para repetir la prueba visual opcional, con Playwright y Chrome instalados y la
 app ejecutándose: `python tests/browser_smoke.py`.
 
+Antecedentes, artículos, demos y alcance de cada referencia: [REFERENCIAS.md](REFERENCIAS.md).
+
 Fundamentos: [CollaborationViz](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0111928),
 [modelo multilingüe](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2),
 [Personalized PageRank](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.link_analysis.pagerank_alg.pagerank.html),

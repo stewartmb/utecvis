@@ -1,5 +1,7 @@
 # Guía para explicar UTECVis
 
+Las fuentes y su relación con las decisiones del proyecto están en [REFERENCIAS.md](REFERENCIAS.md).
+
 Esta guía describe la implementación actual. Distingue datos publicados, resultados calculados y decisiones visuales. Las fórmulas de radio anteriores con `7 + 12 × √k` fueron reemplazadas: la versión actual usa `7 + 44 × k / k_ref` para conexiones.
 
 ## 1. Objetivo y tareas
