@@ -1052,3 +1052,31 @@ El resultado esperado es una presentación que permita **entender y defender el
 proyecto completo**, con capturas de origen, decisiones de transformación,
 métricas explicadas, evolución visual, hallazgos y referencias. El cuidado del
 proyecto debe apreciarse en esas evidencias y en la coherencia del relato.
+
+## 15. Estado de la presentación (27-10-2026)
+
+- **PPTX generado:** [presentacion/UTECVis-presentacion.pptx](presentacion/UTECVis-presentacion.pptx)
+  (44 láminas: 32 principales + 12 anexos A1–A12, notas del expositor en todas) y
+  copia en PDF. Formato 16:9, español, fórmulas F01–F16 con variables, constantes y
+  ejemplos; rúbrica E08 en A1. Antes de exponer, completar en la portada los
+  nombres de los integrantes y la fecha.
+- **Capturas producidas** (commit `6fb18ab`, pesos 60/30/10 salvo indicación):
+  `presentacion/evidencias/app/` contiene C09–C25 (panorama, hover, búsqueda,
+  Jimmy, Carmen, pareja Carmen–Samuel, Puentes, foco de Jimmy y Monica, filtro
+  Bioingeniería con zoom, departamentos C21, Top 0/1/5 en Colaboradores y en
+  Puentes, pareja con camino Deyby–Ruth Canahuire, pareja DADS, Luz–Luciano en
+  Top 2 %, sensibilidad C23, diálogo «Cómo interpretar», arrastre). Los archivos
+  `*-completo.png` son el panel de detalle sin recorte de scroll.
+  `presentacion/evidencias/cris/` contiene C02–C08 y C18 con sus recortes
+  `*-cabecera.png`, además de C03 (intereses) y C04 (conceptos de huella).
+- **Pendiente:** C01 (directorio `/es/persons/`) no pudo capturarse de forma
+  automatizada porque el directorio exige una verificación de navegador; tomarla a
+  mano antes de exponer o mostrar el directorio en vivo. La lámina 4 lo indica en
+  sus notas.
+- **Pareja fuera del Top:** Cerda–De La Puente ocupa el puesto 1.486 de 5.283 y no
+  aparece como línea sugerida; la lámina 22 usa su dato guardado (`/api/pairs`) y
+  la captura de detalle de Deyby–Ruth Canahuire (puesto dentro del Top 1 %).
+- **Verificado contra la app:** B simulada de Jimmy con Top 1 % y 5 % coincide con la
+  tabla F04 (0,08577835 / 0,04148199; radios 49,11 / 36,14). Luz–Luciano: puesto
+  100, S = 56,6. Flores Luyo–Gutierrez Alva: puesto 193 (Top 3,75 %).
+- Scripts de captura y generación: [presentacion/herramientas/](presentacion/herramientas/README.md).

@@ -1,0 +1,39 @@
+{
+  "with_path": {
+    "institutional": 1,
+    "source": 316425594635431,
+    "structural": 0.236311,
+    "target": 1676009493098778,
+    "thematic": 0.853603,
+    "score": 0.8357929000000002,
+    "coverage": 1,
+    "contributions": {
+      "thematic": 0.5121618,
+      "institutional": 0.3,
+      "structural": 0.0236311
+    }
+  },
+  "rank_deyby_juliov": 356,
+  "rank_dads": 193,
+  "rank_luz": 100,
+  "rank_cerda": 1486,
+  "bridges_top0": {
+    "max": 0.06796751062884701,
+    "jimmy": 0.06796751062884701,
+    "radius": "51",
+    "edges": 0
+  },
+  "bridges_top1": {
+    "max": 0.09366121853272052,
+    "jimmy": 0.08577834585830016,
+    "radius": "49.10770854169668",
+    "edges": 53
+  },
+  "bridges_top5": {
+    "max": 0.0945888335129772,
+    "jimmy": 0.041481986592579255,
+    "radius": "36.13818625437969",
+    "edges": 265
+  },
+  "errors": []
+}
