@@ -175,17 +175,13 @@ pres.addSection({ title: "Apertura" });
     "Las colaboraciones están dispersas en perfiles individuales de CRIS: nadie las ve juntas.",
     "La red representa la evidencia publicada dentro de la cohorte, no toda la actividad de UTEC.",
   ], { x: 3.5, y: 1.65, w: 4.2, h: 1.9, fontSize: 13 });
-  text(s, "Audiencia", { x: 3.5, y: 3.6, w: 4.2, h: 0.35, fontSize: 12, bold: true, color: C.accent1 });
-  bullets(s, [
-    "Investigadores de UTEC que buscan coautores o quieren ubicar su posición en la red.",
-    "Responsables de departamentos y de gestión de la investigación que evalúan la integración entre áreas.",
-    "No requiere conocer teoría de redes: cada métrica se lee con su leyenda y su detalle.",
-  ], { x: 3.5, y: 3.95, w: 4.2, h: 2.5, fontSize: 13 });
+  text(s, "¿Para quién diseñamos UTECVis?", { x: 3.5, y: 3.6, w: 4.2, h: 0.35, fontSize: 12, bold: true, color: C.accent1 });
+  text(s, "Para coordinadores de investigación de UTEC que necesitan explorar la colaboración entre investigadores y departamentos, e identificar oportunidades de colaboración respaldadas por información de CRIS.", { x: 3.5, y: 3.95, w: 4.2, h: 2.5, fontSize: 13 });
   image(s, APP("C09-panorama-colaboradores.png"), 7.9, 1.3, 4.9, 5.3, "C09 · Panorama de colaboraciones registradas: 104 personas, 73 registradas, sin sugerencias");
   notes(s, `
     Diferenciar 73 parejas de 2.474 publicaciones: una publicación con tres profesores internos genera tres parejas; muchas publicaciones solo tienen un autor de la cohorte y no generan aristas.
     57 de los 104 perfiles no tienen conexiones registradas dentro de la cohorte; eso no significa que no colaboren fuera.
-    Audiencia: la herramienta está pensada para quien quiere encontrar colaboradores o evaluar la integración entre departamentos; el público de la exposición es el curso, y la demo no presupone teoría de redes.
+    Audiencia: coordinadores de investigación de UTEC que exploran la colaboración entre investigadores y departamentos e identifican oportunidades respaldadas por CRIS. El público de la exposición es el curso.
     Fuente: directorio de personas de CRIS UTEC, instantánea local incluida en el repositorio.`);
 }
 // 03 Cuatro tareas
