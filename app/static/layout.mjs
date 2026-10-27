@@ -62,6 +62,31 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
     items.forEach(confine);
   }
 
+  function slideOnBoundary(moving, obstacle, required) {
+    if (fixed(moving)) return;
+    const limit = Math.max(1, coreRadius - nodeRadius(moving) - gap);
+    if (Math.hypot(moving.x, moving.y) < limit - 0.01) return;
+    const obstacleDistance = Math.hypot(obstacle.x, obstacle.y);
+    if (obstacleDistance < 0.001) return;
+    const cosine =
+      (limit * limit + obstacleDistance ** 2 - required ** 2) /
+      (2 * limit * obstacleDistance);
+    if (cosine <= -1 || cosine >= 1) return;
+    const obstacleAngle = Math.atan2(obstacle.y, obstacle.x);
+    const relative = Math.atan2(
+      Math.sin(Math.atan2(moving.y, moving.x) - obstacleAngle),
+      Math.cos(Math.atan2(moving.y, moving.x) - obstacleAngle),
+    );
+    const side =
+      Math.abs(relative) > 1e-6
+        ? Math.sign(relative)
+        : moving.id < obstacle.id ? -1 : 1;
+    const angle = obstacleAngle + side * (Math.acos(cosine) + 0.0001);
+    moving.x = limit * Math.cos(angle);
+    moving.y = limit * Math.sin(angle);
+    moving.vx = moving.vy = 0;
+  }
+
   function separate(maxIterations = 250) {
     const largest = d3.max(items, nodeRadius) || 0;
     for (let iteration = 0; iteration < maxIterations; iteration++) {
@@ -100,6 +125,18 @@ export function createNetworkLayout(d3, nodeRadius, options = {}) {
                     a.y -= (dy / distance) * shift * wa;
                     b.x += (dx / distance) * shift * wb;
                     b.y += (dy / distance) * shift * wb;
+                    confine(a);
+                    confine(b);
+                    // A radial push can be cancelled by the circular boundary.
+                    // Slide the free circle along that boundary instead of
+                    // repeatedly pressing it into a pinned, larger neighbour.
+                    if (Math.hypot(a.x - b.x, a.y - b.y) < required - 0.005) {
+                      if (!bf) slideOnBoundary(b, a, required + 0.015);
+                      if (
+                        !af &&
+                        Math.hypot(a.x - b.x, a.y - b.y) < required - 0.005
+                      ) slideOnBoundary(a, b, required + 0.015);
+                    }
                     overlap = Math.max(overlap, penetration);
                   }
                 }

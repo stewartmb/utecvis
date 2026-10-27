@@ -25,8 +25,9 @@ const candidates = analysis.recommendations.pairs.filter(
 function fixture() {
   const nodes = structuredClone(data.nodes);
   let counts = new Map();
+  const reference = Math.max(1, ...nodes.map((n) => n.network_metrics.degree));
   const radius = (n) =>
-    7 + 12 * Math.sqrt(counts.get(n.id)?.total ?? n.network_metrics.degree);
+    7 + 44 * ((counts.get(n.id)?.total ?? n.network_metrics.degree) / reference);
   const layout = createNetworkLayout(d3, radius);
   const update = (
     percent = 0,

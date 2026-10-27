@@ -66,10 +66,16 @@ def run(url, channel):
         baseline = snapshot(page)
         baseline_screen = screen_radii(page)
         assert sum(n["degree"] for n in baseline.values()) == 146
+        reference_degree = page.evaluate(
+            "Math.max(...window.utecvis.nodes.map(n=>n.network_metrics.degree))"
+        )
         assert all(
-            math.isclose(n["radius"], 7 + 12 * math.sqrt(n["degree"]))
+            math.isclose(n["radius"], 7 + 44 * n["degree"] / reference_degree)
             for n in baseline.values()
         )
+        connected_radii = [n["radius"] for n in baseline.values() if n["degree"] > 0]
+        assert max(connected_radii) / min(connected_radii) > 4
+        assert math.isclose(max(connected_radii), 51)
         metrics = page.evaluate("window.utecvis.nodes.map(n => n.network_metrics)")
         verify_layout(page)
         widths = page.locator(".observed-edge").evaluate_all(
@@ -266,8 +272,14 @@ def run(url, channel):
             == expected
         )
         assert page.locator("#metric").input_value() == "betweenness"
+        page.wait_for_timeout(350)
+        assert math.isclose(max(n["radius"] for n in snapshot(page).values()), 51)
+        verify_layout(page)
         page.locator('[data-task="communities"]').click()
         assert page.locator("#color").input_value() == "community"
+        page.wait_for_timeout(350)
+        assert snapshot(page) == baseline
+        verify_layout(page)
         assert page.locator(".group-card").count() > 0
         page.locator("#filters-toggle").click()
         options = page.locator("#organisation option").evaluate_all(

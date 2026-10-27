@@ -136,9 +136,11 @@ function radius(node) {
   if (state.metric === "degree") {
     const count =
       connectionCounts.get(node.id)?.total ?? node.network_metrics.degree;
-    // Fixed scale: adding a connection always grows its endpoints, even when
-    // another node becomes the new maximum. Zero-degree nodes remain visible.
-    return 7 + 12 * Math.sqrt(count);
+    // A linear radius makes low/high degrees easier to distinguish. Keep the
+    // observed-cohort reference fixed while adding suggestions or filtering:
+    // new connections always grow their endpoints, without shrinking others.
+    const reference = d3.max(nodes, (n) => n.network_metrics.degree) || 1;
+    return 7 + 44 * (count / reference);
   }
   const max = d3.max(nodes, (n) => n.network_metrics[state.metric]) || 1;
   return (

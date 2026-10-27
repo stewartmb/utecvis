@@ -76,15 +76,22 @@ comunidades = modularidad ponderada. Se calculan sobre la red observada completa
 Los filtros cambian la vista y los candidatos; las sugerencias no alteran estas métricas.
 
 **Tamaño dinámico:** por defecto cuenta vecinos por las aristas visibles, tanto
-registradas como sugeridas. Radio = `7 + 12 × √conexiones_visibles`. La escala
-es fija: cada nueva conexión hace crecer sus dos extremos, y al quitarla disminuyen.
+registradas como sugeridas. Radio = `7 + 44 × conexiones_visibles / grado_referencia`.
+El grado de referencia es el mayor grado de la red observada completa (actualmente
+9). La escala conserva esa referencia al filtrar o activar sugerencias: cada nueva
+conexión hace crecer sus dos extremos, y al quitarla disminuyen. El radio es lineal
+con el número de vecinos para reforzar el contraste entre pocos y muchos; el área
+del círculo no es proporcional al grado. Los valores exactos están en el detalle.
+Con 1, 4 y 9 conexiones, los radios son aproximadamente 11,9; 26,6 y 51. Sin
+conexiones, el radio mínimo es 7. Las sugerencias pueden superar el radio 51.
 Los filtros cuentan solo aristas con ambos extremos visibles. Las sugerencias se
 distinguen en el tooltip y con líneas violetas discontinuas. Esta medida de la
 vista es independiente del grado observado que muestran los rankings y detalles.
 Los selectores alternativos conservan grado ponderado e intermediación observados.
 
 **Diseño:** color por departamento principal o comunidad; tamaño de nodo en escala
-de raíz cuadrada, con un mínimo para conservar visibles los aislados; grosor de
+lineal para el grado y de raíz cuadrada para intermediación y grado ponderado,
+con un mínimo para conservar visibles los aislados; grosor de
 arista logarítmico para manejar pesos entre 1 y 8. Líneas continuas para vínculos
 registrados y discontinuas violetas para sugerencias. La posición facilita explorar
 la topología, no mide similitud.
