@@ -226,9 +226,11 @@ function updateStats() {
   $("network-stats").innerHTML =
     `<div class="stat"><strong>${visibleIds.size}</strong><span>personas</span></div><div class="stat"><strong>${edges.length}</strong><span>registradas</span></div>${displayedPredictions.length ? `<div class="stat predicted-stat"><strong>+${displayedPredictions.length}</strong><span>sugeridas</span></div>` : ""}`;
   $("candidate-count").textContent =
-    state.predictions ? `${top.display.length} / ${nf.format(top.eligible)} parejas` : "Desactivadas";
+    state.predictions ? `${nf.format(top.display.length)} ${top.display.length === 1 ? "sugerencia" : "sugerencias"}` : "Desactivadas";
   $("candidate-count").title =
-    "Fracción de parejas candidatas. No es una probabilidad de colaboración.";
+    state.predictions
+      ? `Seleccionadas de ${nf.format(top.eligible)} parejas sin conexión registrada, dentro de los filtros actuales. No es una probabilidad de colaboración.`
+      : "Activa las sugerencias para explorar posibles colaboraciones.";
   renderActiveFilters();
   $("network-svg").setAttribute(
     "aria-label",
