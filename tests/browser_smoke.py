@@ -26,6 +26,27 @@ def verify_layout(page):
     }""")
 
 
+def verify_edge_hover(page, kind):
+    point = page.locator(f".{kind}-hit").evaluate_all("""els => {
+      for(const el of els) for(const fraction of [.5,.3,.7,.15,.85]) {
+        const p=el.getPointAtLength(el.getTotalLength()*fraction).matrixTransform(el.getScreenCTM());
+        if(document.elementFromPoint(p.x,p.y)===el) return {x:p.x,y:p.y};
+      }
+    }""")
+    assert point, kind
+    selected = page.evaluate("window.utecvis.state.selected")
+    page.mouse.move(point["x"], point["y"])
+    line = ".observed-edge" if kind == "observed" else ".predicted-edge"
+    hovered = page.locator(line + ".edge-hovered")
+    assert hovered.count() == 1
+    assert hovered.evaluate("el => getComputedStyle(el).strokeOpacity") == "1"
+    assert hovered.evaluate("el => getComputedStyle(el).opacity") == "1"
+    assert page.locator("#tooltip").is_visible()
+    page.mouse.move(10, 10)
+    assert page.locator(".edge-hovered").count() == 0
+    assert page.evaluate("window.utecvis.state.selected") == selected
+
+
 def toggle_suggestions(page):
     page.locator("#prediction-toggle").click()
     enabled = page.locator("#prediction-toggle").get_attribute("aria-checked") == "true"
@@ -84,6 +105,14 @@ def run(url, channel):
         assert page.locator("[data-rank], #collaborator-options").count() == 0
         assert page.locator("#graph-container").bounding_box()["height"] > 800
         assert page.evaluate("document.documentElement.scrollWidth") == 1440
+        assert page.locator(".department-box title").count() == 0
+        label = page.locator(".department-box-label").first
+        department = label.evaluate("el => el.__data__.key")
+        label.hover()
+        assert department in page.locator("#tooltip").inner_text()
+        assert page.locator("#tooltip").bounding_box()["width"] <= 260
+        page.mouse.move(10, 10)
+        verify_edge_hover(page, "observed")
         baseline = snapshot(page)
         assert sum(n["degree"] for n in baseline.values()) == 146
         reference_degree = page.evaluate(
@@ -178,6 +207,7 @@ def run(url, channel):
         assert page.locator(".predicted-edge").count() == 53
         assert page.locator("#inspector-panel").is_hidden()
         verify_layout(page)
+        verify_edge_hover(page, "prediction")
         first = snapshot(page)
         assert sum(n["degree"] for n in first.values()) == 2 * (73 + 53)
         assert all(n["radius"] >= baseline[id]["radius"] for id, n in first.items())
@@ -291,6 +321,7 @@ def run(url, channel):
             "window.utecvis.state.personKind === 'publications' && document.querySelector('.production-details[open]')"
         )
         assert page.locator("#neighbors-only").is_visible()
+        verify_edge_hover(page, "observed")
         page.locator("#neighbors-only").click()
         assert page.locator("g.node").count() == 1
         assert page.locator('[data-clear-filter="neighborsOnly"]').is_visible()

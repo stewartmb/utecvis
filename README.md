@@ -265,3 +265,11 @@ El enlace a CRIS conserva acceso al contexto profesional. Las explicaciones del
 método están en «Cómo interpretar»; las limitaciones específicas de una pareja y
 los trabajos que justifican una conexión permanecen en sus detalles. Estos cambios
 no eliminan datos del repositorio ni modifican los cálculos.
+
+Al pasar sobre una arista registrada o sugerida se oscurece esa conexión y se
+identifican sus dos extremos; al salir se recupera la selección anterior. Los
+bloques departamentales muestran un tooltip únicamente sobre su nombre, con el
+nombre completo y el número de investigadores visibles. Se sustituyó el título
+nativo del bloque por una tarjeta compacta de fondo claro, texto oscuro y un
+acento del color del departamento. Los tooltips de nodos, aristas y criterios
+comparten ese estilo.

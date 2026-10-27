@@ -91,6 +91,7 @@ const state = {
   selectedPair: null,
   neighborsOnly: false,
   hovered: null,
+  hoveredPair: null,
   personKind: "publications",
   productionOpen: false,
 };
@@ -273,15 +274,28 @@ function showTooltip(event, html) {
   tip.style.top = `${Math.max(8, Math.min(rect.height - tip.offsetHeight - 8, event.clientY - rect.top - 15))}px`;
 }
 
+function hoverEdge(event, edge, html) {
+  state.hoveredPair = [edge.source, edge.target];
+  state.hovered = null;
+  focusStyles();
+  showTooltip(event, html);
+}
+
+function leaveEdge() {
+  state.hoveredPair = null;
+  $("tooltip").hidden = true;
+  focusStyles();
+}
+
 function focusStyles() {
-  const seed = state.hovered || state.selected;
+  const seed = state.hoveredPair ? null : state.hovered || state.selected;
   const adjacent = new Set(seed ? [seed] : []);
   if (seed)
     for (const e of [...observed, ...displayedPredictions]) {
       if (e.source === seed) adjacent.add(e.target);
       if (e.target === seed) adjacent.add(e.source);
     }
-  const pair = !seed ? state.selectedPair : null;
+  const pair = state.hoveredPair || (!seed ? state.selectedPair : null);
   if (pair) pair.forEach((id) => adjacent.add(id));
   const focusActive = Boolean(seed || pair);
   const focusedEdge = (e) =>
@@ -301,20 +315,22 @@ function focusStyles() {
   nodeSelection
     .select(".node-label")
     .style("display", (n) =>
-      n.id === seed || state.selectedPair?.includes(n.id) || zoomLevel > 1.7
+      n.id === seed || pair?.includes(n.id) || zoomLevel > 1.7
         ? null
         : "none",
     );
   edgeSelection
     .classed("edge-dimmed", (e) => focusActive && !focusedEdge(e))
-    .classed("edge-focused", focusedEdge);
+    .classed("edge-focused", focusedEdge)
+    .classed("edge-hovered", (e) => Boolean(state.hoveredPair && pairKey(e.source, e.target) === pairKey(...state.hoveredPair)));
   edgeSelection.filter(focusedEdge).raise();
   predictionSelection
     ?.classed("edge-dimmed", (e) => focusActive && !focusedEdge(e))
     .classed("edge-focused", focusedEdge)
+    .classed("edge-hovered", (e) => Boolean(state.hoveredPair && pairKey(e.source, e.target) === pairKey(...state.hoveredPair)))
     .classed(
       "selected",
-      (p) => pair && pairKey(p.source, p.target) === pairKey(...pair),
+      (p) => state.selectedPair && pairKey(p.source, p.target) === pairKey(...state.selectedPair),
     );
   predictionSelection?.filter(focusedEdge).raise();
 }
@@ -349,14 +365,24 @@ function renderTreemap() {
       group.append("rect");
       group.append("text").attr("class", "department-box-label");
       group.append("text").attr("class", "department-box-count");
-      group.append("title");
       return group;
     });
   groups.select("rect").attr("x", (b) => b.x0).attr("y", (b) => b.y0)
     .attr("width", (b) => b.x1 - b.x0).attr("height", (b) => b.y1 - b.y0)
     .attr("fill", (b) => b.key === "Sin departamento" ? "#a3afa6" : colors(b.key));
   updateTreemapLabels();
-  groups.select("title").text((b) => `${b.key}: ${b.count} investigadores. Área proporcional al número de personas visibles. Compartir bloque no prueba colaboración.`);
+  groups.select(".department-box-label")
+    .on("mouseenter", showDepartmentTooltip)
+    .on("mousemove", showDepartmentTooltip)
+    .on("mouseleave", () => { $("tooltip").hidden = true; });
+}
+
+function showDepartmentTooltip(event, box) {
+  const color = box.key === "Sin departamento" ? "#a3afa6" : colors(box.key);
+  showTooltip(event, `<div class="tooltip-kicker"><i style="background:${color}"></i>Departamento</div>
+    <strong>${escape(box.key)}</strong>
+    <div class="department-tooltip-count"><b>${nf.format(box.count)}</b> ${box.count === 1 ? "investigador visible" : "investigadores visibles"}</div>
+    <small>Área del bloque = número de investigadores.</small>`);
 }
 
 function updateTreemapLabels() {
@@ -398,6 +424,7 @@ function setupGraph() {
     .on("zoom", (event) => {
       layer.attr("transform", event.transform);
       zoomLevel = event.transform.k;
+      state.hoveredPair = null;
       updateTreemapLabels();
       if (nodeSelection) { focusStyles(); updateNodePhotos(); }
       $("tooltip").hidden = true;
@@ -419,6 +446,7 @@ function setupGraph() {
 }
 
 function renderGraph({ live = false } = {}) {
+  if (state.hoveredPair) { state.hoveredPair = null; $("tooltip").hidden = true; }
   if (suggestionFrame !== null) {
     cancelAnimationFrame(suggestionFrame);
     suggestionFrame = null;
@@ -468,14 +496,12 @@ function renderGraph({ live = false } = {}) {
     .join("path")
     .attr("class", "edge-hit observed-hit")
     .on("mouseenter", (event, e) =>
-      showTooltip(
-        event,
-        `<strong>${escape(shortName(nodeById.get(e.source).name))} ↔ ${escape(shortName(nodeById.get(e.target).name))}</strong><small>${e.weight} registros compartidos · ${e.relations.map(relationLabel).join(" / ")}</small>`,
+      hoverEdge(
+        event, e,
+        `<div class="tooltip-kicker">Conexión registrada</div><strong>${escape(shortName(nodeById.get(e.source).name))} ↔ ${escape(shortName(nodeById.get(e.target).name))}</strong><div class="tooltip-inline-stat"><b>${e.weight}</b> ${e.weight === 1 ? "trabajo compartido" : "trabajos compartidos"}</div><small>${e.relations.map(relationLabel).join(" / ")}</small>`,
       ),
     )
-    .on("mouseleave", () => {
-      $("tooltip").hidden = true;
-    })
+    .on("mouseleave", leaveEdge)
     .on("click", (event, e) => {
       event.stopPropagation();
       selectPair(e.source, e.target);
@@ -534,14 +560,12 @@ function renderGraph({ live = false } = {}) {
     .join("path")
     .attr("class", "edge-hit prediction-hit")
     .on("mouseenter", (event, p) =>
-      showTooltip(
-        event,
-        `<strong>Conexión sugerida</strong><small>${escape(shortName(nodeById.get(p.source).name))} ↔ ${escape(shortName(nodeById.get(p.target).name))}</small><small>Prioridad ${decimal(p.score * 100)} / 100 · Clic para ver por qué</small>`,
+      hoverEdge(
+        event, p,
+        `<div class="tooltip-kicker">Conexión sugerida</div><strong>${escape(shortName(nodeById.get(p.source).name))} ↔ ${escape(shortName(nodeById.get(p.target).name))}</strong><div class="tooltip-inline-stat"><b>${decimal(p.score * 100)}</b> / 100 · prioridad</div><small>Clic para ver las coincidencias.</small>`,
       ),
     )
-    .on("mouseleave", () => {
-      $("tooltip").hidden = true;
-    })
+    .on("mouseleave", leaveEdge)
     .on("click", (event, p) => {
       event.stopPropagation();
       selectPair(p.source, p.target);
@@ -592,6 +616,7 @@ function renderGraph({ live = false } = {}) {
         `${n.name}, ${nodeConnectionText(n)}, ${shortDepartment(n.department)}`,
     )
     .on("mouseenter", (event, n) => {
+      state.hoveredPair = null;
       state.hovered = n.id;
       focusStyles();
       showTooltip(
@@ -608,6 +633,7 @@ function renderGraph({ live = false } = {}) {
     })
     .on("mouseleave", () => {
       state.hovered = null;
+      state.hoveredPair = null;
       $("tooltip").hidden = true;
       focusStyles();
     })
@@ -628,6 +654,7 @@ function renderGraph({ live = false } = {}) {
         .clickDistance(4)
         .on("start", function (event, n) {
           $("tooltip").hidden = true;
+          state.hoveredPair = null;
           state.hovered = n.id;
           d3.select(this).classed("dragging", true).raise();
           layout.startDrag(n);
@@ -640,6 +667,7 @@ function renderGraph({ live = false } = {}) {
         .on("end", function (event, n) {
           d3.select(this).classed("dragging", false);
           state.hovered = null;
+          state.hoveredPair = null;
           layout.release(n);
           focusStyles();
           tick();
@@ -969,6 +997,7 @@ function refreshInspector() {
 function clearSelection() {
   ++requestSerial;
   state.hovered = null;
+  state.hoveredPair = null;
   state.selected = null;
   state.selectedPair = null;
   state.neighborsOnly = false;
@@ -995,6 +1024,7 @@ function setTask(task) {
   state.selected = null;
   state.selectedPair = null;
   state.hovered = null;
+  state.hoveredPair = null;
   state.neighborsOnly = false;
   state.metric = task === "bridges" ? "betweenness" : "degree";
   document.querySelectorAll("[data-task]").forEach((b) => {
@@ -1155,6 +1185,7 @@ function wireControls() {
       selected: null,
       selectedPair: null,
       hovered: null,
+      hoveredPair: null,
       neighborsOnly: false,
     });
     $("search").value = "";

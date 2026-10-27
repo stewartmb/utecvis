@@ -1541,3 +1541,28 @@ g.node.dragging .node-halo {
   .map-legend { bottom: 12px; }
   .prediction-controls { bottom: calc(var(--legend-height, 100px) + 28px); }
 }
+
+/* Compact, neutral tooltips; department color is only an identifying accent. */
+.tooltip, .criterion-tooltip {
+  background: #fffffffa; color: #243c40; border: 1px solid #d9e3df;
+  border-radius: 10px; box-shadow: 0 6px 22px #203c401a;
+  padding: 11px 13px; font-size: 11px; line-height: 1.45;
+}
+.tooltip { max-width: 260px; }
+.tooltip > strong { display: block; font-size: 12px; line-height: 1.35; }
+.tooltip small { color: #6c7f80; }
+.tooltip-metrics { gap: 18px; margin: 10px 0 7px; }
+.tooltip-metrics b { font-size: 19px; color: #183d40; }
+.tooltip-metrics span { color: #586f71; }
+.tooltip-suggestions { color: #7855a5; }
+.tooltip-kicker { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; color: #718183; font-size: 9px; }
+.tooltip-kicker i { width: 7px; height: 7px; border-radius: 50%; }
+.department-tooltip-count { margin-top: 8px; font-size: 10px; color: #607679; }
+.department-tooltip-count b { color: #243c40; font-size: 16px; margin-right: 3px; }
+.department-box .department-box-label { pointer-events: auto; cursor: help; }
+.observed-edge.edge-hovered { stroke: #193e43; stroke-opacity: 1; }
+.predicted-edge.edge-hovered { stroke: #684796; stroke-opacity: 1; }
+.treemap-mode .observed-edge.edge-hovered, .predicted-edge.edge-hovered { opacity: 1; }
+
+.tooltip-inline-stat { margin-top: 8px; font-size: 10px; color: #607679; }
+.tooltip-inline-stat b { font-size: 16px; color: #243c40; margin-right: 3px; }
