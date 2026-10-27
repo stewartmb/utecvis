@@ -50,22 +50,28 @@ requirements.txt     Dependencias para ejecutar la aplicación
 
 ## Cuatro tareas y guion de demostración
 
-1. **Identificar colaboradores destacados.** En “Colaboradores”, comparar grado
-   y trabajos compartidos; seleccionar a Jimmy Tarrillo Olano, con nueve vecinos.
+1. **Identificar colaboradores destacados.** En “Colaboradores”, elegir “Personas”
+   o “Trabajos” y abrir “Ver ranking”; seleccionar a Jimmy Tarrillo Olano, con nueve vecinos.
    El detalle distingue personas diferentes de registros compartidos.
-2. **Encontrar puentes.** En “Puentes”, seleccionar el primer investigador del
-   ranking de intermediación. Revisar vecinos, departamentos y sus conexiones.
+2. **Encontrar puentes.** En “Puentes”, abrir “Ver ranking” y seleccionar el primer
+   investigador por intermediación. Revisar vecinos, departamentos y sus conexiones.
    La intermediación alta por sí sola no prueba una conexión entre departamentos.
-3. **Descubrir afinidades.** Activar las sugerencias, ampliar Top % y modificar
-   las tres importancias. Seleccionar una pareja para revisar las señales y la
+3. **Descubrir afinidades.** Entrar en “Afinidades”, ampliar Top % y desplegar
+   “Ajustar criterios” para modificar las tres importancias. Seleccionar una pareja para revisar las señales y la
    evidencia. Buscar a Luz Adanaque para observar que un perfil sin conexiones
    internas puede tener publicaciones y candidatos por afinidad temática.
-4. **Explorar grupos y comunidades.** Cambiar a “Grupos y comunidades”, comparar
-   agrupaciones calculadas con pertenencias institucionales y filtrar RIC, DADS
-   o un centro. Una persona puede pertenecer a varios grupos.
+4. **Explorar grupos y comunidades.** Entrar en “Comunidades” y seleccionar un
+   color de la leyenda. Comparar agrupaciones calculadas con pertenencias
+   institucionales mediante el único selector “Todos los grupos y centros”. Una persona puede pertenecer a varios grupos.
 
-**Mantra:** el grafo ocupa toda la pantalla al abrir; filtros y rankings aparecen
-solo al solicitarlos. Panorama de los 104 perfiles → zoom, búsqueda y filtros →
+**Mantra:** el grafo ocupa toda la pantalla al abrir y los rankings aparecen
+solo al solicitarlos. No hay un panel global de filtros: la leyenda selecciona
+el departamento o comunidad del color mostrado y anticipa sus miembros al pasar
+el cursor; el grupo/centro se elige solo en
+Comunidades; el vecindario se limita desde el detalle de la persona. Las selecciones
+activas aparecen sobre la red y se quitan con ×. Cada tarea fija automáticamente
+la métrica y el color. Las sugerencias se muestran solo en Afinidades, con Top %
+visible y las importancias desplegables en “Ajustar criterios”. Panorama de los 104 perfiles → zoom, búsqueda y filtros →
 detalles al seleccionar personas o conexiones. D3 reacomoda los nodos cuando cambian
 sus radios o las conexiones visibles, para mantener la separación. El
 botón Restablecer recupera la vista y los parámetros iniciales.
@@ -101,7 +107,8 @@ conexiones, el radio mínimo es 7. Las sugerencias pueden superar el radio 51.
 Los filtros cuentan solo aristas con ambos extremos visibles. Las sugerencias se
 distinguen en el tooltip y con líneas violetas discontinuas. Esta medida de la
 vista es independiente del grado observado que muestran los rankings y detalles.
-Los selectores alternativos conservan grado ponderado e intermediación observados.
+“Trabajos” utiliza el grado ponderado observado; “Puentes” utiliza la
+intermediación observada. No hay selectores globales de tamaño o color.
 
 **Diseño:** color por departamento principal o comunidad; tamaño de nodo en escala
 lineal para el grado y de raíz cuadrada para intermediación y grado ponderado,

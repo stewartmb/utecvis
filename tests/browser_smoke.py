@@ -59,8 +59,14 @@ def run(url, channel):
         assert page.locator("g.node").count() == 104
         assert page.locator(".observed-edge").count() == 73
         assert page.locator(".predicted-edge").count() == 0
-        assert page.locator("#filters-panel").is_hidden()
+        assert page.locator("#filters-panel").count() == 0
         assert page.locator("#inspector-panel").is_hidden()
+        assert page.locator(".prediction-controls").is_hidden()
+        assert (
+            page.locator("#metric, #color, #department, #prediction-toggle").count()
+            == 0
+        )
+        assert page.locator("[data-rank]").count() == 2
         assert page.locator("#graph-container").bounding_box()["height"] > 800
         assert page.evaluate("document.documentElement.scrollWidth") == 1440
         baseline = snapshot(page)
@@ -76,6 +82,15 @@ def run(url, channel):
         connected_radii = [n["radius"] for n in baseline.values() if n["degree"] > 0]
         assert max(connected_radii) / min(connected_radii) > 4
         assert math.isclose(max(connected_radii), 51)
+        page.locator('[data-rank="weighted_degree"]').click()
+        page.wait_for_timeout(350)
+        assert page.evaluate("window.utecvis.state.metric") == "weighted_degree"
+        assert page.locator('[data-rank][aria-pressed="true"]').count() == 1
+        assert page.locator("#inspector-panel").is_hidden()
+        verify_layout(page)
+        page.locator('[data-rank="degree"]').click()
+        page.wait_for_timeout(350)
+        assert snapshot(page) == baseline
         metrics = page.evaluate("window.utecvis.nodes.map(n => n.network_metrics)")
         verify_layout(page)
         widths = page.locator(".observed-edge").evaluate_all(
@@ -182,14 +197,16 @@ def run(url, channel):
         assert page.locator(".predicted-edge").count() == 106
         assert sum(n["degree"] for n in second.values()) == 2 * (73 + 106)
         assert all(n["radius"] >= first[id]["radius"] for id, n in second.items())
-        page.locator("#prediction-toggle").click()
+        page.locator('[data-task="collaborators"]').click()
         page.wait_for_timeout(400)
         assert snapshot(page) == baseline
         verify_layout(page)
         assert metrics == page.evaluate(
             "window.utecvis.nodes.map(n => n.network_metrics)"
         )
-        page.locator("#prediction-toggle").click()
+        page.locator('[data-task="affinities"]').click()
+        assert not page.locator("#weights-options").evaluate("el=>el.open")
+        assert page.locator("#weight-structural").is_hidden()
         page.locator("#top-percent").evaluate(
             "el => {el.value=0;el.dispatchEvent(new Event('input'));}"
         )
@@ -213,6 +230,8 @@ def run(url, channel):
         page.wait_for_timeout(400)
         page.screenshot(path="/tmp/utecvis-predictions.png")
 
+        page.locator("#weights-options summary").click()
+        assert page.locator("#weight-structural").is_visible()
         first_thematic = page.evaluate(
             'window.utecvis.top.ranked[0].source + ":" + window.utecvis.top.ranked[0].target'
         )
@@ -254,16 +273,17 @@ def run(url, channel):
         )
         assert page.locator(".metric-grid strong").first.inner_text() == "0"
         assert "Publicaciones (5)" in page.locator("#inspector").inner_text()
-        page.locator("#filters-toggle").click()
-        assert page.locator("#filters-panel").is_visible()
+        assert page.locator("#neighbors-only").is_visible()
         page.locator("#neighbors-only").click()
         assert page.locator("g.node").count() == 1
+        assert page.locator('[data-clear-filter="neighborsOnly"]').is_visible()
         page.locator("#neighbors-only").click()
         assert page.locator("g.node").count() == 104
-        page.locator("#filters-close").click()
 
         page.locator("#reset").click()
         page.locator('[data-task="bridges"]').click()
+        assert page.locator("#inspector-panel").is_hidden()
+        page.locator("#rankings-toggle").click()
         expected = page.evaluate(
             "window.utecvis.nodes.reduce((a,b)=>a.network_metrics.betweenness > b.network_metrics.betweenness ? a:b).id"
         )
@@ -271,17 +291,26 @@ def run(url, channel):
             int(page.locator(".rank-row").first.get_attribute("data-person"))
             == expected
         )
-        assert page.locator("#metric").input_value() == "betweenness"
+        assert page.evaluate("window.utecvis.state.metric") == "betweenness"
         page.wait_for_timeout(350)
         assert math.isclose(max(n["radius"] for n in snapshot(page).values()), 51)
         verify_layout(page)
         page.locator('[data-task="communities"]').click()
-        assert page.locator("#color").input_value() == "community"
+        assert page.evaluate("window.utecvis.state.color") == "community"
         page.wait_for_timeout(350)
         assert snapshot(page) == baseline
         verify_layout(page)
-        assert page.locator(".group-card").count() > 0
-        page.locator("#filters-toggle").click()
+        assert page.locator("#rankings-toggle").is_hidden()
+        assert page.locator("#organisation").is_visible()
+        assert page.locator(".group-card").count() == 0
+        page.locator(".color-legend summary").click()
+        community_button = page.locator('.legend-item[data-category="0"]')
+        community_size = int(community_button.locator("strong").inner_text())
+        community_button.click()
+        assert page.locator("g.node").count() == community_size
+        assert page.locator('[data-clear-filter="community"]').is_visible()
+        page.locator('[data-clear-filter="community"]').click()
+        assert page.locator("g.node").count() == 104
         options = page.locator("#organisation option").evaluate_all(
             "els => els.map(el=>({value:el.value,text:el.textContent}))"
         )
@@ -292,14 +321,42 @@ def run(url, channel):
             sum(n["degree"] for n in snapshot(page).values())
             == 2 * page.locator(".observed-edge").count()
         )
-        page.locator("#department").select_option("Departamento de Negocios Digitales")
+        page.locator('[data-task="collaborators"]').click()
+        assert page.locator("#organisation").is_hidden()
+        assert page.locator('[data-clear-filter="organisation"]').is_visible()
+        assert page.locator("g.node").count() == 8
+        page.locator(
+            '.legend-item[data-category="Departamento de Negocios Digitales"]'
+        ).click()
         assert page.locator("g.node").count() == 0
         assert "No hay investigadores" in page.locator("#graph-message").inner_text()
-        page.locator("#clear-filters").click()
+        page.locator('[data-clear-filter="all"]').click()
         assert page.locator("g.node").count() == 104
+        assert page.locator("#active-filters").is_hidden()
+        department_button = page.locator(
+            '.legend-item[data-category="Departamento de Ciencia de Computación y de Datos"]'
+        )
+        department_size = int(department_button.locator("strong").inner_text())
+        department_button.hover()
+        assert page.locator("g.node.category-dimmed").count() == 104 - department_size
+        assert page.locator("g.node").count() == 104
+        department_button.click()
+        assert page.locator("g.node").count() == department_size
+        assert page.locator('.legend-item[aria-pressed="true"]').count() == 1
+        # Search restores visibility when a person was outside the chosen category.
+        page.locator("#search").fill("Luz Antuanet")
+        page.locator("#search").press("Enter")
+        page.wait_for_selector(".avatar")
+        assert "Luz Antuanet" in page.locator("#inspector").inner_text()
+        assert (
+            page.locator(
+                f'g.node[data-id="{page.evaluate("window.utecvis.state.selected")}"]'
+            ).count()
+            == 1
+        )
 
         page.locator("#reset").click()
-        assert page.locator("#filters-panel").is_hidden()
+        assert page.locator("#filters-panel").count() == 0
         assert page.locator("#inspector-panel").is_hidden()
         assert page.locator(".predicted-edge").count() == 0
         assert page.evaluate("window.utecvis.state.weights") == {
@@ -327,6 +384,7 @@ def run(url, channel):
         for viewport in [
             {"width": 1920, "height": 1080},
             {"width": 1280, "height": 800},
+            {"width": 740, "height": 1034},
             {"width": 390, "height": 844},
         ]:
             page.set_viewport_size(viewport)
@@ -340,7 +398,14 @@ def run(url, channel):
                 <= viewport["height"]
             )
             assert page.locator("g.node").count() == 104
+            assert page.locator("#network-stats").evaluate(
+                "el=>el.getBoundingClientRect().right<=window.innerWidth"
+            )
+            assert page.locator("#top-percent").is_visible()
+            page.locator("#weights-options summary").click()
             assert page.locator("#weight-structural").is_visible()
+            page.locator("#weights-options summary").click()
+            assert page.locator("#weight-structural").is_hidden()
             assert page.locator("#network-svg").evaluate(
                 "el => el.clientHeight===el.parentElement.clientHeight"
             )
@@ -360,13 +425,7 @@ def run(url, channel):
         reduced.wait_for_function(
             "window.utecvis && window.utecvis.top.eligible === 5283"
         )
-        assert (
-            reduced.locator(".switch span").evaluate(
-                "el => getComputedStyle(el).transitionDuration"
-            )
-            == "0s"
-        )
-        reduced.locator("#prediction-toggle").click()
+        reduced.locator('[data-task="affinities"]').click()
         reduced.wait_for_function(
             "document.querySelectorAll('.predicted-edge').length === 53"
         )
@@ -383,8 +442,9 @@ def run(url, channel):
                     "top_1_percent": 53,
                     "dynamic_node_sizes": "PASS",
                     "live_drag_and_neighbors": "PASS",
-                    "viewports": [1920, 1440, 1280, 390],
+                    "viewports": [1920, 1440, 1280, 740, 390],
                     "collision_and_boundary": "PASS",
+                    "contextual_controls_and_legend": "PASS",
                     "errors": errors,
                 },
                 ensure_ascii=False,

@@ -148,7 +148,7 @@ El ranking de Colaboradores ordena por grado o grado ponderado observado; Puente
 
 ## 10. Tamaño de los nodos
 
-En Colaboradores por defecto, Afinidades y Grupos:
+En Colaboradores por defecto, Afinidades y Comunidades:
 
 `radio = 7 + 44 × k_visible / k_ref`.
 
@@ -164,12 +164,13 @@ Importante: el grado visible usado en el dibujo puede incluir sugerencias; el gr
 
 ## 11. Otros canales visuales e interacción
 
-- Color de nodo por defecto: primer departamento listado. En Grupos: comunidad calculada. Gris: departamento no disponible o aislado en la vista de comunidades. Color categórico, sin jerarquía de importancia.
+- Color de nodo por defecto: primer departamento listado. En Comunidades: comunidad calculada. Gris: departamento no disponible o aislado en la vista de comunidades. Color categórico, sin jerarquía de importancia.
 - Arista registrada: continua, gris azulada. Grosor `1,5 + 4,5 × ln(peso)/ln(8)` en la red actual (pesos 1–8), con opacidad base 0,38.
 - Arista sugerida: violeta discontinua, 1,4 px, opacidad base 0,30. Su grosor no representa la puntuación.
 - Selección o hover: conexiones relacionadas con opacidad 0,95, otras atenuadas; para una pareja se destaca la conexión correspondiente. No cambia el peso ni el dato de origen.
 - Iniciales en nodos; nombres al buscar, seleccionar, pasar el cursor o ampliar suficientemente la vista. Evita mostrar 104 etiquetas largas simultáneas.
-- Zoom 0,25–5, desplazamiento, arrastre, búsqueda sin depender de tildes, filtros por departamento/organización y vecinos.
+- Zoom 0,25–5, desplazamiento, arrastre y búsqueda sin depender de tildes. La leyenda anticipa los miembros de una categoría al pasar el cursor y es el único control para seleccionar departamentos o comunidades al hacer clic; el selector institucional aparece solo en Comunidades y la opción de ver solo conexiones aparece en el perfil. Las selecciones activas se quitan con ×. No hay panel global de filtros ni selectores repetidos de tamaño o color.
+- Cada tarea determina su codificación. Solo Colaboradores ofrece Personas/Trabajos. Las sugerencias aparecen automáticamente al entrar en Afinidades; Top 0 % permite ocultarlas sin un interruptor adicional. Las tres importancias se abren en Ajustar criterios. Los rankings y detalles comparten un solo panel, cerrado hasta que el usuario lo solicita.
 - Rankings seleccionables, detalle de perfil, evidencia de parejas y enlaces de fuente; registros paginados de 20 en 20.
 - Transiciones habituales de 300 ms; con movimiento reducido, se suprimen esas animaciones y el asentamiento temporal.
 - Mantra: panorama inicial sin sugerencias → zoom/filtros → detalles al solicitarlos.
@@ -220,7 +221,7 @@ Calculado a partir de los datos: aristas bajo las reglas de evidencia, pesos, gr
 
 Elegido como heurística o diseño: nivel institucional 1/0,7/0,4; pesos 60/30/10; hasta 20 conceptos y términos excluidos; reinicio RWR de 10 %; escalas de radio y grosor; colores, transparencia, fricción y fuerzas. Que una fórmula esté implementada correctamente no valida sus supuestos como predictor del futuro.
 
-No incorporado actualmente: Force-in-a-Box, treemap o empaquetado de comunidades en regiones circulares. Lo conversamos como alternativa, pero Grupos actualmente cambia color, métrica y filtros; no impone una región circular por comunidad.
+No incorporado actualmente: Force-in-a-Box, treemap o empaquetado de comunidades en regiones circulares. Lo conversamos como alternativa, pero Comunidades actualmente cambia color, métrica y filtros; no impone una región circular por comunidad.
 
 No se ha entrenado ni validado un modelo de predicción con colaboraciones futuras. No hay precisión predictiva medida, ni un umbral de S que garantice éxito. El control español/inglés comprueba un ejemplo de comportamiento semántico; no valida todas las afinidades.
 

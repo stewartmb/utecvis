@@ -76,6 +76,7 @@ const state = {
   color: "department",
   department: "",
   organisation: "",
+  community: "",
   predictions: false,
   percent: 1,
   weights: { ...DEFAULT_WEIGHTS },
@@ -153,11 +154,6 @@ function setInspector(open) {
   $("rankings-toggle").setAttribute("aria-expanded", String(open));
 }
 
-function setFilters(open) {
-  $("filters-panel").hidden = !open;
-  $("filters-toggle").setAttribute("aria-expanded", String(open));
-  if (open) setInspector(false);
-}
 
 function nodeConnectionText(node) {
   const counts = connectionCounts.get(node.id) || { recorded: 0, suggested: 0 };
@@ -193,15 +189,6 @@ function fillControls() {
     (a, b) =>
       b.members.size - a.members.size || a.name.localeCompare(b.name, "es"),
   );
-  $("department").insertAdjacentHTML(
-    "beforeend",
-    departments
-      .map(
-        (d) =>
-          `<option value="${escape(d)}">${escape(shortDepartment(d))}</option>`,
-      )
-      .join("") + '<option value="unknown">Sin departamento publicado</option>',
-  );
   $("organisation").insertAdjacentHTML(
     "beforeend",
     institutions
@@ -227,7 +214,11 @@ function computeVisible() {
       (!state.department ||
         (state.department === "unknown"
           ? !n.department
-          : n.departments.includes(state.department))) &&
+          : n.department === state.department)) &&
+      (!state.community ||
+        (state.community === "isolated"
+          ? n.network_metrics.degree === 0
+          : n.network_metrics.community === Number(state.community))) &&
       (!state.organisation ||
         n.affiliations.some((o) => o.organisation_id === state.organisation)),
   );
@@ -252,12 +243,7 @@ function updateStats() {
     `${top.display.length} / ${nf.format(top.eligible)} parejas`;
   $("candidate-count").title =
     "Fracción de parejas candidatas. No es una probabilidad de colaboración.";
-  const count =
-    Number(Boolean(state.department)) +
-    Number(Boolean(state.organisation)) +
-    Number(state.neighborsOnly);
-  $("filter-count").hidden = !count;
-  $("filter-count").textContent = count;
+  renderActiveFilters();
   $("network-svg").setAttribute(
     "aria-label",
     `Red académica: ${visibleIds.size} investigadores visibles, ${edges.length} conexiones registradas y ${displayedPredictions.length} sugerencias visibles.`,
@@ -267,28 +253,48 @@ function updateStats() {
     : "No hay investigadores con esta combinación de filtros. Prueba otro grupo o departamento.";
 }
 
+function renderActiveFilters() {
+  const filters = [];
+  if (state.department)
+    filters.push(["department", state.department === "unknown" ? "Sin departamento" : shortDepartment(state.department)]);
+  if (state.community)
+    filters.push(["community", state.community === "isolated" ? "Sin conexiones observadas" : `Comunidad ${Number(state.community) + 1}`]);
+  if (state.organisation)
+    filters.push(["organisation", institutions.find((o) => o.organisation_id === state.organisation)?.name || "Grupo institucional"]);
+  if (state.neighborsOnly && state.selected)
+    filters.push(["neighborsOnly", `Conexiones de ${shortName(nodeById.get(state.selected).name)}`]);
+  $("active-filters").hidden = !filters.length;
+  $("active-filters").innerHTML = filters.map(([key, label]) =>
+    `<button class="filter-chip" data-clear-filter="${key}" aria-label="Quitar selección: ${escape(label)}"><span class="chip-label">${escape(label)}</span><span aria-hidden="true">×</span></button>`
+  ).join("") + (filters.length > 1 ? '<button class="text-button" data-clear-filter="all">Quitar todo</button>' : "");
+}
+
+function previewCategory(value = null) {
+  const matches = (n) => value === null || (state.color === "department"
+    ? value === "unknown" ? !n.department : n.department === value
+    : value === "isolated" ? !n.network_metrics.degree : n.network_metrics.community === Number(value));
+  nodeSelection?.classed("category-dimmed", (n) => !matches(n));
+  const unrelated = (e) => !matches(nodeById.get(e.source)) && !matches(nodeById.get(e.target));
+  edgeSelection?.classed("category-edge-dimmed", unrelated);
+  predictionSelection?.classed("category-edge-dimmed", unrelated);
+}
+
 function renderLegend() {
-  $("legend-title").textContent =
-    state.color === "department" ? "Departamentos" : "Comunidades";
-  const entries =
-    state.color === "department"
-      ? [
-          ...departments.map((d) => [shortDepartment(d), colors(d)]),
-          ["Sin departamento", "#a3afa6"],
-        ]
-      : [
-          ...nontrivialCommunities.map((c) => [
-            `Comunidad ${c + 1}`,
-            communityColors(c),
-          ]),
-          ["Sin conexiones observadas", "#a3afa6"],
-        ];
-  $("color-legend").innerHTML = entries
-    .map(
-      ([name, color]) =>
-        `<span class="legend-item"><i class="legend-dot" style="background:${color}"></i>${escape(name)}</span>`,
-    )
-    .join("");
+  const byDepartment = state.color === "department";
+  $("legend-title").textContent = byDepartment ? "Departamentos" : "Comunidades";
+  const selected = byDepartment ? state.department : state.community;
+  const entries = byDepartment
+    ? [
+        ...departments.map((d) => [shortDepartment(d), colors(d), d, nodes.filter((n) => n.department === d).length]),
+        ["Sin departamento", "#a3afa6", "unknown", nodes.filter((n) => !n.department).length],
+      ]
+    : [
+        ...nontrivialCommunities.map((c) => [`Comunidad ${c + 1}`, communityColors(c), String(c), nodes.filter((n) => n.network_metrics.community === c).length]),
+        ["Sin conexiones observadas", "#a3afa6", "isolated", nodes.filter((n) => !n.network_metrics.degree).length],
+      ];
+  $("color-legend").innerHTML = entries.map(([name, color, value, count]) =>
+    `<button class="legend-item${selected === value ? " active" : ""}" data-category="${escape(value)}" aria-pressed="${selected === value}" title="Ver ${escape(name)}"><i class="legend-dot" style="background:${color}"></i><span>${escape(name)}</span><strong>${count}</strong></button>`
+  ).join("");
 }
 
 function showTooltip(event, html) {
@@ -652,6 +658,7 @@ function renderGraph() {
   focusStyles();
   updateStats();
   renderLegend();
+  previewCategory();
   if (layoutChanged && lastFitRadius !== layout.outerRadius) fitGraph(false);
 }
 
@@ -668,7 +675,10 @@ function fitGraph(animated = true) {
   // the otherwise empty right margin rather than covering the network.
   const wide = width >= 1100;
   const rightSpace = wide ? 320 : 24;
-  const topSpace = width <= 720 ? 105 : 70;
+  const selectionSpace = $("active-filters").hidden ? 0 : $("active-filters").offsetHeight + 15;
+  const topSpace = (width <= 720 ? 135 : 110) + selectionSpace;
+  // Reserve the same camera space across tasks so switching to affinities
+  // does not visually shrink nodes just as new connections make them grow.
   const bottomSpace = width <= 720 ? 225 : wide ? 28 : 165;
   const availableHeight = Math.max(120, height - topSpace - bottomSpace);
   const availableWidth = Math.max(150, width - rightSpace - 24);
@@ -720,14 +730,11 @@ function renderOverview() {
       '<p class="empty-state">Sin candidatos con estos pesos y filtros.</p>'
     }</div>`;
   } else if (state.task === "communities") {
-    const groups = institutions.filter((o) =>
-      [...o.members].some((id) => visibleIds.has(id)),
-    );
-    panel.innerHTML = `<div class="eyebrow">PERTENENCIAS</div><h2>Grupos y centros</h2><p class="scope-note">El color muestra comunidades de la red observada.</p>${groups.map((o) => `<button class="group-card" data-group="${escape(o.organisation_id)}"><span>${escape(o.name)}</span><strong>${[...o.members].filter((id) => visibleIds.has(id)).length}</strong></button>`).join("") || '<p class="empty-state">Sin grupos publicados en esta selección.</p>'}`;
+    panel.innerHTML = '<div class="eyebrow">COMUNIDADES</div><h2>Comunidades de colaboración</h2><p class="scope-note">Selecciona un color de la leyenda para ver sus investigadores. El selector superior muestra pertenencias institucionales.</p>';
   } else {
     const bridges = state.task === "bridges";
     const metric = bridges ? "betweenness" : state.rankMetric;
-    panel.innerHTML = `<div class="eyebrow">RED OBSERVADA</div><h2>${bridges ? "Puentes" : "Colaboradores"}</h2>${bridges ? '<p class="scope-note">Intermediación · red completa de 104 personas.</p>' : `<div class="ranking-tabs"><button data-rank="degree" class="${metric === "degree" ? "active" : ""}">Colaboradores</button><button data-rank="weighted_degree" class="${metric === "weighted_degree" ? "active" : ""}">Trabajos</button></div>`}<div class="ranking-list">${rankingHTML(metric)}</div><p class="scope-note">Solo conexiones registradas. Selecciona para consultar evidencia.</p>`;
+    panel.innerHTML = `<div class="eyebrow">RED OBSERVADA</div><h2>${bridges ? "Puentes" : "Colaboradores"}</h2><p class="scope-note">${bridges ? "Intermediación" : metric === "degree" ? "Colaboradores distintos" : "Trabajos compartidos"} · red observada completa.</p><div class="ranking-list">${rankingHTML(metric)}</div><p class="scope-note">Solo conexiones registradas. Selecciona para consultar evidencia.</p>`;
   }
   bindInspector();
 }
@@ -743,13 +750,11 @@ function renderWorks(works) {
 
 async function selectPerson(id, options = {}) {
   const token = ++requestSerial;
-  setFilters(false);
   setInspector(true);
   $("inspector").scrollTop = 0;
   state.selected = id;
   state.selectedPair = null;
   state.personKind = options.kind || "publications";
-  $("neighbors-only").disabled = false;
   $("search-results").hidden = true;
   renderGraph();
   if (!options.keepPosition) {
@@ -784,7 +789,7 @@ function renderPerson(data) {
     biography: "Biografía como respaldo",
   };
   $("inspector").innerHTML =
-    `<button class="back-button" data-back>← Volver al panorama</button><div class="avatar" style="color:${nodeColor(n)};background:${nodeColor(n)}18;border-color:${nodeColor(n)}55">${escape(initials(n.name))}</div><div class="eyebrow">INVESTIGADOR / UTEC</div><h2>${escape(n.name)}</h2><p class="department-name">${escape(n.department || "Sin departamento publicado")}</p><a class="text-link" href="${escape(n.source_url)}" target="_blank" rel="noreferrer">Ver perfil en CRIS ↗</a><div class="metric-grid"><div><strong>${m.degree}</strong><span>colaboradores en la cohorte</span></div><div><strong>${nf.format(m.weighted_degree)}</strong><span>registros compartidos</span></div><div><strong>${decimal(m.betweenness, 4)}</strong><span>intermediación</span></div><div><strong>${data.cross_department_neighbors}</strong><span>vecinos de otros departamentos</span></div></div><p class="scope-note">Métricas de la red observada completa.</p>${!m.degree ? '<div class="insight-note"><strong>Sin conexiones dentro de estos 104 perfiles.</strong> Sus trabajos pueden tener coautores externos; no equivale a investigar en solitario.</div>' : ""}<section class="detail-section"><h3>Intereses de investigación</h3>${n.research_areas.length ? tags(n.research_areas) : '<p class="scope-note">No publicados en el perfil.</p>'}<p class="scope-note">${(data.preparation?.sources || []).map((s) => sourceNames[s]).join(" + ") || "Sin preparación temática"}${data.preparation?.biography_fallback ? ". Cobertura temática limitada." : ""}</p></section><section class="detail-section"><h3>Pertenencias</h3>${
+    `<button class="back-button" data-back>← Volver al panorama</button><div class="avatar" style="color:${nodeColor(n)};background:${nodeColor(n)}18;border-color:${nodeColor(n)}55">${escape(initials(n.name))}</div><div class="eyebrow">INVESTIGADOR / UTEC</div><h2>${escape(n.name)}</h2><p class="department-name">${escape(n.department || "Sin departamento publicado")}</p><a class="text-link" href="${escape(n.source_url)}" target="_blank" rel="noreferrer">Ver perfil en CRIS ↗</a><div class="metric-grid"><div><strong>${m.degree}</strong><span>colaboradores en la cohorte</span></div><div><strong>${nf.format(m.weighted_degree)}</strong><span>registros compartidos</span></div><div><strong>${decimal(m.betweenness, 4)}</strong><span>intermediación</span></div><div><strong>${data.cross_department_neighbors}</strong><span>vecinos de otros departamentos</span></div></div><p class="scope-note">Métricas de la red observada completa.</p><button id="neighbors-only" class="button neighbor-button${state.neighborsOnly ? " active" : ""}" aria-pressed="${state.neighborsOnly}">${state.neighborsOnly ? "Volver a toda la selección" : "Ver solo sus conexiones"}</button>${!m.degree ? '<div class="insight-note"><strong>Sin conexiones dentro de estos 104 perfiles.</strong> Sus trabajos pueden tener coautores externos; no equivale a investigar en solitario.</div>' : ""}<section class="detail-section"><h3>Intereses de investigación</h3>${n.research_areas.length ? tags(n.research_areas) : '<p class="scope-note">No publicados en el perfil.</p>'}<p class="scope-note">${(data.preparation?.sources || []).map((s) => sourceNames[s]).join(" + ") || "Sin preparación temática"}${data.preparation?.biography_fallback ? ". Cobertura temática limitada." : ""}</p></section><section class="detail-section"><h3>Pertenencias</h3>${
       n.affiliations
         .filter((a) => a.type !== "university")
         .map(
@@ -808,6 +813,10 @@ function renderPerson(data) {
         : ""
     }<section class="detail-section"><h3>Producción registrada</h3><div class="ranking-tabs"><button data-kind="publications" class="${data.kind === "publications" ? "active" : ""}">Publicaciones (${n.publication_count})</button><button data-kind="projects" class="${data.kind === "projects" ? "active" : ""}">Proyectos (${n.project_count})</button></div><div id="work-list">${renderWorks(data.works) || '<p class="empty-state">No hay registros de este tipo asociados al perfil.</p>'}</div>${data.has_more ? `<button id="load-person-works" class="button load-more" data-offset="20">Ver más registros</button>` : ""}</section>${n.biography ? `<details class="detail-section profile-bio"><summary>Perfil profesional</summary><p>${escape(n.biography)}</p></details>` : ""}`;
   bindInspector();
+  $("neighbors-only").addEventListener("click", () => {
+    state.neighborsOnly = !state.neighborsOnly;
+    applyFilters();
+  });
   $("load-person-works")?.addEventListener("click", async (event) => {
     const button = event.currentTarget,
       offset = Number(button.dataset.offset);
@@ -834,14 +843,11 @@ function renderPerson(data) {
 
 async function selectPair(a, b) {
   const token = ++requestSerial;
-  setFilters(false);
   setInspector(true);
   $("inspector").scrollTop = 0;
   state.selected = null;
   state.selectedPair = [Math.min(a, b), Math.max(a, b)];
   state.neighborsOnly = false;
-  $("neighbors-only").disabled = true;
-  $("neighbors-only").classList.remove("active");
   renderGraph();
   $("inspector").innerHTML =
     '<div class="loading-placeholder">Consultando las señales y su evidencia…</div>';
@@ -933,27 +939,6 @@ function bindInspector() {
       ),
     );
   $("inspector")
-    .querySelectorAll("[data-rank]")
-    .forEach((b) =>
-      b.addEventListener("click", () => {
-        state.rankMetric = b.dataset.rank;
-        state.metric = state.rankMetric;
-        $("metric").value = state.metric;
-        renderGraph();
-        renderOverview();
-        updateMetricKey();
-      }),
-    );
-  $("inspector")
-    .querySelectorAll("[data-group]")
-    .forEach((b) =>
-      b.addEventListener("click", () => {
-        state.organisation = b.dataset.group;
-        $("organisation").value = state.organisation;
-        applyFilters();
-      }),
-    );
-  $("inspector")
     .querySelectorAll("[data-kind]")
     .forEach((b) =>
       b.addEventListener("click", () =>
@@ -986,8 +971,6 @@ function clearSelection() {
   state.selected = null;
   state.selectedPair = null;
   state.neighborsOnly = false;
-  $("neighbors-only").disabled = true;
-  $("neighbors-only").classList.remove("active");
   renderGraph();
   renderOverview();
   $("inspector").scrollTop = 0;
@@ -1005,47 +988,39 @@ function applyFilters() {
   fitGraph(true);
 }
 
-function setPredictions(enabled) {
-  if (!recommendations.length && enabled) return;
-  state.predictions = enabled;
-  document
-    .querySelector(".prediction-controls")
-    .classList.toggle("showing-predictions", enabled);
-  $("prediction-toggle").setAttribute("aria-checked", String(enabled));
-  $("prediction-options").hidden = !enabled;
-  $("prediction-status").hidden = enabled;
-  $("candidate-count").hidden = !enabled;
-  renderGraph();
-  updateMetricKey();
-  refreshInspector();
-}
-
 function setTask(task) {
+  ++requestSerial;
   state.task = task;
-  document.querySelector(".controls").scrollTop = 0;
-  document
-    .querySelectorAll("[data-task]")
-    .forEach((b) => b.classList.toggle("active", b.dataset.task === task));
-  if (task === "bridges") {
-    state.metric = "betweenness";
-    $("metric").value = state.metric;
-  }
-  if (task === "collaborators") {
-    state.metric = state.rankMetric;
-    $("metric").value = state.metric;
-  }
-  if (task === "affinities" || task === "communities") {
-    state.metric = "degree";
-    $("metric").value = state.metric;
-  }
+  state.selected = null;
+  state.selectedPair = null;
+  state.hovered = null;
+  state.neighborsOnly = false;
+  state.metric = task === "bridges" ? "betweenness" : task === "collaborators" ? state.rankMetric : "degree";
   state.color = task === "communities" ? "community" : "department";
-  $("color").value = state.color;
-  if (task === "affinities") setPredictions(true);
-  else setPredictions(false);
-  clearSelection();
-  setFilters(false);
-  setInspector(task !== "affinities");
+  state.predictions = task === "affinities" && recommendations.length > 0;
+  document.querySelectorAll("[data-task]").forEach((b) => {
+    const active = b.dataset.task === task;
+    b.classList.toggle("active", active);
+    b.setAttribute("aria-pressed", String(active));
+  });
+  $("collaborator-options").hidden = task !== "collaborators";
+  $("institution-options").hidden = task !== "communities";
+  $("rankings-toggle").hidden = task === "communities";
+  $("rankings-toggle").textContent = task === "affinities" ? "Ver parejas" : "Ver ranking";
+  const predictionPanel = document.querySelector(".prediction-controls");
+  predictionPanel.hidden = task !== "affinities";
+  predictionPanel.classList.toggle("showing-predictions", task === "affinities");
+  $("weights-options").open = false;
+  document.querySelectorAll("[data-rank]").forEach((b) => {
+    const active = b.dataset.rank === state.rankMetric;
+    b.classList.toggle("active", active);
+    b.setAttribute("aria-pressed", String(active));
+  });
+  setInspector(false);
+  renderGraph();
+  renderOverview();
   updateMetricKey();
+  fitGraph(false);
 }
 
 function updateMetricKey() {
@@ -1061,50 +1036,55 @@ function updateMetricKey() {
 }
 
 function wireControls() {
-  $("filters-toggle").addEventListener("click", () =>
-    setFilters($("filters-panel").hidden),
-  );
-  $("filters-close").addEventListener("click", () => setFilters(false));
   $("rankings-toggle").addEventListener("click", () => {
     const open = $("inspector-panel").hidden;
-    setFilters(false);
     if (open) clearSelection();
     setInspector(open);
   });
   $("inspector-close").addEventListener("click", clearSelection);
-  $("clear-filters").addEventListener("click", () => {
-    state.department = "";
-    state.organisation = "";
-    state.neighborsOnly = false;
-    $("department").value = "";
-    $("organisation").value = "";
-    $("neighbors-only").classList.remove("active");
+  $("active-filters").addEventListener("click", (event) => {
+    const key = event.target.closest("[data-clear-filter]")?.dataset.clearFilter;
+    if (!key) return;
+    if (key === "all") {
+      Object.assign(state, { department: "", organisation: "", community: "", neighborsOnly: false });
+    } else state[key] = key === "neighborsOnly" ? false : "";
+    $("organisation").value = state.organisation;
     applyFilters();
   });
+  for (const type of ["mouseover", "focusin"])
+    $("color-legend").addEventListener(type, (event) => {
+      const value = event.target.closest("[data-category]")?.dataset.category;
+      if (value !== undefined) previewCategory(value);
+    });
+  $("color-legend").addEventListener("mouseleave", () => previewCategory());
+  $("color-legend").addEventListener("focusout", (event) => {
+    if (!$("color-legend").contains(event.relatedTarget)) previewCategory();
+  });
+  $("color-legend").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-category]");
+    if (!button) return;
+    const key = state.color === "department" ? "department" : "community";
+    state[key] = state[key] === button.dataset.category ? "" : button.dataset.category;
+    applyFilters();
+  });
+  document.querySelectorAll("[data-rank]").forEach((b) => b.addEventListener("click", () => {
+    state.rankMetric = state.metric = b.dataset.rank;
+    document.querySelectorAll("[data-rank]").forEach((choice) => {
+      const active = choice === b;
+      choice.classList.toggle("active", active);
+      choice.setAttribute("aria-pressed", String(active));
+    });
+    renderGraph();
+    refreshInspector();
+    updateMetricKey();
+  }));
   document
     .querySelectorAll("[data-task]")
     .forEach((b) => b.addEventListener("click", () => setTask(b.dataset.task)));
-  $("department").addEventListener("change", (event) => {
-    state.department = event.target.value;
-    applyFilters();
-  });
   $("organisation").addEventListener("change", (event) => {
     state.organisation = event.target.value;
     applyFilters();
   });
-  $("metric").addEventListener("change", (event) => {
-    state.metric = event.target.value;
-    renderGraph();
-    updateMetricKey();
-  });
-  $("color").addEventListener("change", (event) => {
-    state.color = event.target.value;
-    renderGraph();
-    refreshInspector();
-  });
-  $("prediction-toggle").addEventListener("click", () =>
-    setPredictions(!state.predictions),
-  );
   $("top-percent").addEventListener("input", (event) => {
     state.percent = Number(event.target.value);
     $("top-percent-value").textContent = `${decimal(state.percent)} %`;
@@ -1126,11 +1106,6 @@ function wireControls() {
       refreshInspector();
     }),
   );
-  $("neighbors-only").addEventListener("click", () => {
-    state.neighborsOnly = !state.neighborsOnly;
-    $("neighbors-only").classList.toggle("active", state.neighborsOnly);
-    applyFilters();
-  });
   $("fit").addEventListener("click", () => fitGraph(true));
   $("zoom-in").addEventListener("click", () =>
     svg.transition().duration(duration).call(zoom.scaleBy, 1.35),
@@ -1145,6 +1120,7 @@ function wireControls() {
     Object.assign(state, {
       department: "",
       organisation: "",
+      community: "",
       percent: 1,
       weights: { ...DEFAULT_WEIGHTS },
       rankMetric: "degree",
@@ -1153,10 +1129,10 @@ function wireControls() {
       hovered: null,
       neighborsOnly: false,
     });
-    $("department").value = "";
     $("organisation").value = "";
     $("search").value = "";
     $("search-results").hidden = true;
+    document.querySelector(".color-legend").open = false;
     $("top-percent").value = 1;
     $("top-percent-value").textContent = "1 %";
     for (const [key, value] of Object.entries(state.weights)) {
@@ -1166,11 +1142,10 @@ function wireControls() {
     layout.reset(nodes);
     setTask("collaborators");
     setInspector(false);
-    setFilters(false);
     fitGraph(true);
   });
   const dialog = $("method-dialog");
-  for (const id of ["method-open", "footer-method"])
+  for (const id of ["method-open"])
     $(id).addEventListener("click", (event) => {
       event.preventDefault();
       dialog.showModal();
@@ -1231,22 +1206,17 @@ function wireControls() {
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !$("method-dialog").open) {
-      setFilters(false);
       clearSelection();
     }
   });
 }
 
 function findPerson(id) {
-  const n = nodeById.get(id);
   if (!visibleIds.has(id)) {
-    state.department = "";
-    state.organisation = "";
-    state.neighborsOnly = false;
-    $("department").value = "";
+    Object.assign(state, { department: "", organisation: "", community: "", neighborsOnly: false });
     $("organisation").value = "";
   }
-  $("search").value = n.name;
+  $("search").value = nodeById.get(id).name;
   selectPerson(id);
   fitGraph(true);
 }
@@ -1267,12 +1237,13 @@ async function start() {
       const data = await getJSON("/api/recommendations");
       recommendations = data.pairs;
       preparation = data.profiles;
+      state.predictions = state.task === "affinities";
       renderGraph();
       refreshInspector();
-      $("prediction-status").textContent = "Desactivadas";
+      $("prediction-error").hidden = true;
     } catch (error) {
-      $("prediction-status").textContent = error.message;
-      $("prediction-toggle").disabled = true;
+      $("prediction-error").textContent = error.message;
+      $("prediction-error").hidden = false;
     }
     window.utecvis = {
       state,

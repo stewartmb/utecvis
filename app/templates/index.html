@@ -43,25 +43,6 @@
       </div>
       <div class="header-actions">
         <button
-          id="filters-toggle"
-          class="button"
-          aria-expanded="false"
-          aria-controls="filters-panel"
-        >
-          <span aria-hidden="true">☷</span> Filtros<span
-            id="filter-count"
-            hidden
-          ></span>
-        </button>
-        <button
-          id="rankings-toggle"
-          class="button"
-          aria-expanded="false"
-          aria-controls="inspector-panel"
-        >
-          Ranking
-        </button>
-        <button
           id="method-open"
           class="icon-button"
           title="Cómo interpretar"
@@ -112,70 +93,35 @@
             class="task"
             title="Grupos y comunidades"
           >
-            Grupos
+            Comunidades
           </button>
         </nav>
-        <div class="network-stats" id="network-stats" aria-live="polite"></div>
-        <aside
-          id="filters-panel"
-          class="controls floating-panel"
-          aria-label="Filtros de la red"
-          hidden
-        >
-          <div class="panel-heading">
-            <h2>Filtros</h2>
-            <button
-              id="filters-close"
-              class="icon-button"
-              aria-label="Cerrar filtros"
-            >
-              ×
-            </button>
+        <div class="task-options" aria-label="Opciones de la tarea">
+          <div id="collaborator-options" class="metric-choice" role="group" aria-label="Comparar colaboradores por">
+            <button data-rank="degree" class="active" aria-pressed="true">Personas</button>
+            <button data-rank="weighted_degree" aria-pressed="false">Trabajos</button>
           </div>
-          <label for="department">Departamento</label
-          ><select id="department">
-            <option value="">Todos los departamentos</option>
-          </select>
-          <label for="organisation">Grupo o centro</label
-          ><select id="organisation">
-            <option value="">Todos los grupos y centros</option>
-          </select>
-          <label for="metric">Tamaño</label
-          ><select id="metric">
-            <option value="degree">Conexiones visibles</option>
-            <option value="weighted_degree">Trabajos registrados</option>
-            <option value="betweenness">Intermediación observada</option>
-          </select>
-          <label for="color">Color</label
-          ><select id="color">
-            <option value="department">Departamento</option>
-            <option value="community">Comunidad</option>
-          </select>
-          <button id="neighbors-only" class="button neighbor-button" disabled>
-            Solo su vecindario
-          </button>
-          <button id="clear-filters" class="text-button">
-            Limpiar filtros
-          </button>
-        </aside>
+          <div id="institution-options" class="institution-choice" hidden>
+            <label class="sr-only" for="organisation">Grupo o centro institucional</label>
+            <select id="organisation" aria-label="Grupo o centro institucional">
+              <option value="">Todos los grupos y centros</option>
+            </select>
+          </div>
+          <button id="rankings-toggle" class="text-button" aria-expanded="false" aria-controls="inspector-panel">Ver ranking</button>
+        </div>
+        <div id="active-filters" class="active-filters" aria-label="Selección activa" hidden></div>
+        <div class="network-stats" id="network-stats" aria-live="polite"></div>
         <section
           class="prediction-controls"
           aria-label="Sugerencias de colaboración"
+          hidden
         >
           <div class="prediction-head">
-            <span class="prediction-title">Sugerencias</span
-            ><button
-              id="prediction-toggle"
-              class="switch"
-              role="switch"
-              aria-checked="false"
-              aria-label="Mostrar conexiones sugeridas"
-            >
-              <span></span></button
-            ><span id="prediction-status" class="microcopy">Desactivadas</span
-            ><span id="candidate-count" class="microcopy" hidden></span>
+            <span class="prediction-title">Sugerencias</span>
+            <span id="candidate-count" class="microcopy"></span>
           </div>
-          <div id="prediction-options" hidden>
+          <div id="prediction-options">
+            <p id="prediction-error" class="scope-note" hidden></p>
             <div class="top-control">
               <label for="top-percent"
                 >Top <strong id="top-percent-value">1 %</strong></label
@@ -189,7 +135,9 @@
                 aria-label="Top porcentaje de parejas candidatas"
               /><span class="range-limit">10 %</span>
             </div>
-            <div class="weights-grid">
+            <details id="weights-options" class="weights-options">
+              <summary>Ajustar criterios</summary>
+              <div class="weights-grid">
               <div class="weight-control">
                 <label for="weight-thematic"
                   ><i class="signal-dot thematic"></i>Temática<strong
@@ -238,7 +186,8 @@
                   value="10"
                 />
               </div>
-            </div>
+              </div>
+            </details>
           </div>
         </section>
         <div class="view-tools">
@@ -295,7 +244,6 @@
             ></span>
             <span>Trabajos compartidos</span>
           </div>
-          <a id="footer-method" href="#">Método y fuentes</a>
         </div>
         <aside
           id="inspector-panel"
@@ -353,8 +301,9 @@
         <section>
           <h3>Panorama → filtrar → detalle</h3>
           <p>
-            Empieza con toda la cohorte. Acerca, busca y filtra sin perder el
-            contexto. Selecciona una persona o una línea para consultar la
+            Empieza con toda la cohorte. Selecciona un color de la leyenda para
+            ver esa categoría, o busca una persona. En Comunidades puedes elegir
+            un grupo institucional. Las selecciones activas se quitan con ×. Selecciona una persona o una línea para consultar la
             evidencia. Arrastra un nodo para moverlo: sus enlaces registrados
             tiran de sus vecinos y los círculos se separan durante el movimiento.
             Los aislados se pueden reordenar por el perímetro.
