@@ -10,7 +10,10 @@ import networkx as nx
 import pytest
 
 from app import create_app
-from app.recommendations import graph_from, institutional, rwr_scores, selected_inputs
+from app.recommendations import (
+    calibrate_institutional, graph_from, institutional,
+    recalibrate_institutional, rwr_scores, selected_inputs,
+)
 
 DATA = Path(__file__).resolve().parents[1] / "data"
 
@@ -20,6 +23,7 @@ def affiliation(id, kind):
 
 
 def test_institutional_specificity_does_not_add_nested_memberships():
+    scores = calibrate_institutional(json.loads((DATA / "network.json").read_text()))["scores"]
     a = {
         "affiliations": [
             affiliation("g", "research_group"),
@@ -32,21 +36,21 @@ def test_institutional_specificity_does_not_add_nested_memberships():
             affiliation("d", "department"),
         ]
     }
-    assert institutional(a, b)["score"] == 1
-    assert institutional(a, b)["level"] == "research_group"
-    assert len(institutional(a, b)["shared"]) == 1
+    assert institutional(a, b, scores)["score"] == 1
+    assert institutional(a, b, scores)["level"] == "research_group"
+    assert len(institutional(a, b, scores)["shared"]) == 1
     assert (
-        institutional(a, {"affiliations": [affiliation("d", "department")]})["score"]
-        == 0.4
+        institutional(a, {"affiliations": [affiliation("d", "department")]}, scores)["score"]
+        == scores["department"]
     )
     assert (
-        institutional(a, {"affiliations": [affiliation("other", "department")]})[
+        institutional(a, {"affiliations": [affiliation("other", "department")]}, scores)[
             "score"
         ]
         == 0
     )
     assert (
-        institutional(a, {"affiliations": [affiliation("UTEC", "university")]})["score"]
+        institutional(a, {"affiliations": [affiliation("UTEC", "university")]}, scores)["score"]
         is None
     )
     center = {
@@ -55,7 +59,7 @@ def test_institutional_specificity_does_not_add_nested_memberships():
             affiliation("d", "department"),
         ]
     }
-    assert institutional(center, center)["score"] == 0.7
+    assert institutional(center, center, scores)["score"] == scores["research_center_or_institute"]
 
 
 def test_rwr_respects_paths_components_and_isolated_nodes():
@@ -208,3 +212,76 @@ def test_api_excludes_observed_pairs_and_provides_evidence(bundle):
     assert client.get(f"/api/professors/{a}?offset=-1").status_code == 400
     assert client.get(f"/api/professors/{a}?limit=900").status_code == 400
     assert client.get(f"/api/professors/{a}?kind=invalid").status_code == 400
+
+
+def test_institutional_calibration_matches_counts_formula_prepared_pairs_and_api(bundle):
+    network, analysis = bundle
+    calibrated = calibrate_institutional(network)
+    assert calibrated["counts"] == {
+        "research_group": {"pairs": 94, "observed": 18},
+        "research_center_or_institute": {"pairs": 85, "observed": 6},
+        "department": {"pairs": 378, "observed": 17},
+        "none": {"pairs": 4594, "observed": 32},
+        "unavailable": {"pairs": 205, "observed": 0},
+    }
+    assert sum(c["pairs"] for c in calibrated["counts"].values()) == 5356
+    assert sum(c["observed"] for c in calibrated["counts"].values()) == 73
+    base, group = 32 / 4594, 18 / 94
+    assert calibrated["scores"]["research_group"] == 1
+    assert calibrated["scores"]["research_center_or_institute"] == pytest.approx((6 / 85 - base) / (group - base))
+    assert calibrated["scores"]["department"] == pytest.approx((17 / 378 - base) / (group - base))
+    assert calibrated["rates"]["unavailable"] is None
+    metadata = analysis["recommendations"]["metadata"]
+    assert metadata["institutional_calibration"] == calibrated
+    assert metadata["institutional_levels"] == calibrated["scores"]
+    nodes = {n["id"]: n for n in network["nodes"]}
+    client = create_app({"TESTING": True}).test_client()
+    checked = set()
+    for pair in analysis["recommendations"]["pairs"]:
+        a, b = pair["source"], pair["target"]
+        match = institutional(nodes[a], nodes[b], calibrated["scores"])
+        assert pair["institutional"] == match["score"]
+        reverse = institutional(nodes[b], nodes[a], calibrated["scores"])
+        assert (match["score"], match["level"]) == (reverse["score"], reverse["level"])
+        assert [o["organisation_id"] for o in match["shared"]] == [o["organisation_id"] for o in reverse["shared"]]
+        if match["level"] not in checked:
+            response = client.get(f"/api/pairs/{a}/{b}").json
+            assert response["institution"]["score"] == response["signals"]["institutional"] == match["score"]
+            checked.add(match["level"])
+
+
+def test_institutional_recalibration_preserves_other_signals_and_rejects_stale_network(bundle, tmp_path):
+    network, analysis = bundle
+    for name in ("network", "analysis"):
+        (tmp_path / f"{name}.json").write_bytes((DATA / f"{name}.json").read_bytes())
+    recalibrate_institutional(tmp_path)
+    result = json.loads((tmp_path / "analysis.json").read_text())
+    assert result == analysis  # Repeatable; neither T nor R nor the catalog changes.
+    network["nodes"][0]["name"] += " changed"
+    (tmp_path / "network.json").write_text(json.dumps(network))
+    before = (tmp_path / "analysis.json").read_bytes()
+    with pytest.raises(ValueError, match="La red cambió"):
+        recalibrate_institutional(tmp_path)
+    assert (tmp_path / "analysis.json").read_bytes() == before
+
+
+def test_calibration_handles_absent_categories_and_rejects_missing_contrast():
+    network = {
+        "nodes": [
+            {"id": 1, "affiliations": [affiliation("g", "research_group")]},
+            {"id": 2, "affiliations": [affiliation("g", "research_group")]},
+            {"id": 3, "affiliations": [affiliation("d1", "department")]},
+            {"id": 4, "affiliations": [affiliation("d2", "department")]},
+        ],
+        "edges": [{"source": 1, "target": 2}],
+    }
+    calibrated = calibrate_institutional(network)
+    assert calibrated["scores"] == {
+        "research_group": 1,
+        "research_center_or_institute": None,
+        "department": None,
+    }
+    assert calibrated["counts"]["none"] == {"pairs": 5, "observed": 0}
+    network["edges"] = []
+    with pytest.raises(ValueError, match="contraste suficiente"):
+        calibrate_institutional(network)

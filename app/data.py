@@ -168,7 +168,10 @@ class Dataset:
             if edge
             else None,
             "signals": signals,
-            "institution": institutional(self.nodes[a], self.nodes[b]),
+            "institution": institutional(
+                self.nodes[a], self.nodes[b],
+                self.prepared.get("metadata", {}).get("institutional_levels", {}),
+            ),
             "common_neighbors": shared,
             "path": path,
             "works": works,

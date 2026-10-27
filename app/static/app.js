@@ -55,7 +55,7 @@ const signalLabel = (key) =>
   })[key];
 const criterionText = {
   thematic: "Intereses y huellas temáticas. Biografía solo si faltan ambos.",
-  institutional: "Grupo compartido: 100. Centro/instituto: 70. Departamento: 40. Solo el nivel más específico.",
+  institutional: "Coincidencia institucional publicada; solo el nivel más específico.",
   structural: "RWR sobre colaboraciones registradas: continúa 90 % y reinicia 10 %. Sin camino: 0.",
 };
 const criterionName = (key, label = signalLabel(key)) =>
@@ -1313,6 +1313,10 @@ async function start() {
     fitGraph(false);
     try {
       const data = await getJSON("/api/recommendations");
+      const levels = data.metadata.institutional_levels;
+      criterionText.institutional = `Grupo compartido: ${decimal(100 * levels.research_group)}. Centro/instituto: ${decimal(100 * levels.research_center_or_institute)}. Departamento: ${decimal(100 * levels.department)}. Solo el nivel más específico; valores calibrados con la red observada.`;
+      $("criterion-description-institutional").textContent = criterionText.institutional;
+      $("institutional-method-values").textContent = `Grupo: ${decimal(100 * levels.research_group)}; centro/instituto: ${decimal(100 * levels.research_center_or_institute)}; departamento: ${decimal(100 * levels.department)} (sobre 100).`;
       recommendations = data.pairs;
       preparation = data.profiles;
       syncSuggestionControls();

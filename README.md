@@ -4,8 +4,9 @@ Aplicación **Flask + D3** para explorar colaboración académica y afinidades e
 **104 investigadores de UTEC**. Incluye 73 conexiones registradas, sus evidencias
 y sugerencias explicadas mediante temática, institución y estructura de la red.
 
-La [guía del proyecto](GUIA_PROYECTO.md) explica los datos, todas las métricas,
-las fórmulas, los parámetros visuales y los límites de las sugerencias.
+Este README reúne las fórmulas, variables, ejemplos y decisiones necesarias para
+explicar el proyecto. La [guía del proyecto](GUIA_PROYECTO.md) amplía detalles de
+extracción, controles y parámetros físicos.
 
 ## Clonar el proyecto completo
 
@@ -130,10 +131,59 @@ Cada pareja aparece una vez; el peso cuenta registros distintos por DOI/URL y
 conserva los tipos por separado. La red tiene 47 investigadores con conexiones,
 57 aislados y 62 componentes. Un aislado puede colaborar con personas externas.
 
-**Métricas:** grado = vecinos distintos; grado ponderado = suma de trabajos
-compartidos; intermediación = caminos mínimos sin usar frecuencia como distancia;
-comunidades = modularidad ponderada. Se calculan sobre la red observada completa.
-Los filtros cambian la vista y los candidatos; las sugerencias no alteran estas métricas.
+### Métricas: qué significan y cómo se calculan
+
+La red registrada es un grafo **no dirigido** `G=(V,E)`: `V` son investigadores y
+`E`, parejas con evidencia aceptada. `N=104` y `E=73`. En una arista, `source` y
+`target` identifican sus extremos; no indican quién colaboró primero. El peso
+`w_AB` cuenta publicaciones y proyectos distintos compartidos por esa pareja.
+Un trabajo con tres investigadores genera tres parejas, por lo que sumar pesos
+por persona no equivale a contar su producción única.
+
+| Variable | Fórmula o criterio | Lectura y alcance |
+|---|---|---|
+| Grado `k(v)` | Número de vecinos distintos registrados | Cuántos colaboradores internos tiene; máximo actual 9. No cuenta colaboradores externos. |
+| Grado ponderado `W(v)` | `Σ w_vu` sobre sus vecinos | Intensidad de trabajos compartidos por pareja; máximo 20. Un trabajo con varios vecinos puede aportar varias veces. |
+| Centralidad de grado | `k(v)/(N−1) = k(v)/103` | Grado normalizado; guardado en los datos, sin selector visual adicional. |
+| Intermediación `B(v)` | Fracciones de caminos mínimos entre otras parejas que pasan por v, normalizadas | Identifica posiciones de paso en la red; determina el tamaño en Puentes. |
+| Componente | Conjunto conectado mediante algún camino | 62 componentes, incluidos 57 aislados. No es un departamento. |
+| Comunidad | Modularidad ponderada con `greedy_modularity_communities` de NetworkX | Agrupación calculada por conexiones, distinta de afiliaciones publicadas. Se conserva en datos; se retiró su vista. Hay 10 comunidades de más de una persona y 57 unitarias. |
+| Nodo de articulación | Retirarlo aumenta el número de componentes | 9 investigadores. No equivale a todo nodo con B alta. |
+| Arista puente | Retirarla aumenta el número de componentes | 13 conexiones. Es una propiedad de la arista, distinta de B de una persona. |
+| Densidad | `2E/(N(N−1)) = 73/5356 ≈ 1,36 %` | Fracción de parejas posibles con vínculo registrado. |
+| Vecinos de otros departamentos | Vecinos registrados con departamento conocido diferente al propio | Ayuda a examinar conexiones institucionales; un departamento faltante no se trata como uno distinto. |
+| Vecinos comunes de A y B | Intersección de sus conjuntos de vecinos | Contexto de una pareja; no es una cuarta señal añadida a S. |
+| Camino mínimo entre A y B | Ruta con menor número de aristas | Evidencia de conectividad topológica; no prueba circulación real de información. |
+
+**Intermediación paso a paso:**
+
+```text
+B(v) = [Σ sobre parejas s<t, s≠v, t≠v de σ_st(v)/σ_st] / [(N−1)(N−2)/2]
+```
+
+`σ_st` es el número de caminos mínimos entre s y t; `σ_st(v)`, cuántos pasan
+por v como intermediario. Los extremos no cuentan. Si hay dos caminos mínimos
+y uno pasa por v, esa pareja aporta 1/2. Una pareja desconectada aporta cero.
+Con 104 nodos, el divisor es `103 × 102 / 2 = 5.253`.
+NetworkX calcula B sin pesos (`weight=None`): cada conexión cuesta un paso;
+no interpretamos más publicaciones como más distancia.
+
+Jimmy Tarrillo Olano tiene la mayor B, aproximadamente **0,06797**, y grado **9**.
+B alta señala una posición estructural de paso; para afirmar que une
+**departamentos** se revisan además los departamentos de sus conexiones.
+No es una medida de calidad académica ni una probabilidad de colaboración.
+
+**Modularidad:** `Q = (1/(2m)) × Σ_ij [w_ij − s_i s_j/(2m)] × δ(c_i,c_j)`.
+`s_i` es la suma de pesos de i; `m`, la suma de pesos de todas las aristas;
+`δ` vale 1 cuando i y j pertenecen a la misma comunidad. El algoritmo fusiona
+comunidades buscando mejorar Q. Es una partición algorítmica, no demuestra
+la existencia de grupos oficiales ni una solución única del problema.
+
+**Python y D3 cumplen funciones diferentes:** NetworkX prepara estas métricas y
+RWR en Python; D3 dibuja y gestiona fuerzas, treemap, zoom e interacción en el
+navegador. NetworkX no forma parte de D3. Las métricas corresponden a **toda la
+red registrada**, aunque se filtre la vista o se activen sugerencias.
+
 
 **Tamaño dinámico:** por defecto cuenta vecinos por las aristas visibles, tanto
 registradas como sugeridas. Radio = `7 + 44 × conexiones_visibles / grado_referencia`.
@@ -147,11 +197,17 @@ conexiones, el radio mínimo es 7. Las sugerencias pueden superar el radio 51.
 Los filtros cuentan solo aristas con ambos extremos visibles. Las sugerencias se
 distinguen en el tooltip y con líneas violetas discontinuas. Esta medida de la
 vista es independiente del grado observado que muestran los detalles.
+En Puentes, `radio = 7 + 44 × sqrt(B/B_max)`, con B y B_max de la red observada
+completa. Su tamaño no cambia con sugerencias, porque estas no son evidencia
+registrada. El máximo B actual es aproximadamente 0,06797. El radio es una unidad
+del espacio SVG y el diámetro es su doble; el zoom cambia su tamaño en pantalla.
+7 conserva visibles los aislados y 44 fija el contraste: son parámetros visuales.
+
 Los trabajos se representan mediante el grosor de las aristas y se consultan
 en tooltips y detalles; «Puentes» utiliza la intermediación observada. No hay selectores globales de tamaño o color.
 
 **Diseño:** color por departamento principal; tamaño de nodo en escala
-lineal para el grado y de raíz cuadrada para intermediación y grado ponderado,
+lineal para el grado visible y de raíz cuadrada para intermediación,
 con un mínimo para conservar visibles los aislados; grosor de
 arista logarítmico para manejar pesos entre 1 y 8. Líneas continuas para vínculos
 registrados y discontinuas violetas para sugerencias. La posición facilita explorar
@@ -164,7 +220,9 @@ movimiento. Las sugerencias no modifican las fuerzas de enlace ni las métricas.
 Los escenarios densos amplían el espacio de cálculo y se encuadran
 automáticamente. El ajuste usa toda la altura disponible; en pantallas amplias los
 controles de sugerencias ocupan el margen izquierdo. El grosor de las aristas va de
-1,5 a 6 px en escala logarítmica y permanece legible al ajustar el zoom.
+1,5 a 6 px en escala logarítmica: `1,5 + 4,5 × ln(w)/ln(8)` para los pesos
+actuales 1–8. Así, pesos 1, 2 y 8 tienen grosores 1,5; 3 y 6 px. Las
+sugerencias tienen grosor constante de 1,4 px: no codifica su puntuación.
 La vista general usa transparencia para reducir la acumulación visual en los
 cruces; al pasar el cursor o seleccionar, se resaltan solo las conexiones de esa
 persona o pareja y se atenúan las demás. Los enlaces más largos y una repulsión
@@ -180,41 +238,277 @@ y [Gephi](https://gephi.org/quickstart/). Fuerzas y arrastre según las API ofic
 [D3 Collide](https://d3js.org/d3-force/collide) y
 [D3 Link](https://d3js.org/d3-force/link).
 
-## Fundamento de las sugerencias
+## Método de las sugerencias: tres señales por pareja
 
-- **T — Temática:** modelo multilingüe de intereses declarados y hasta 20 conceptos
-  de huella. Se seleccionan por peso de CRIS × frecuencia inversa entre perfiles.
-  Se excluyen “Peru” y “Numerical Example” del cálculo, conservándolos en los datos.
-  Las etiquetas repetidas se cuentan una vez, conservando su mayor relevancia.
-  Cada fuente se normaliza y ambas tienen igual importancia si están disponibles.
-  Para cinco perfiles sin ambas fuentes se utiliza la biografía, dividida en
-  fragmentos según el límite del modelo. La similitud es coseno, con negativos a 0.
-  No volvemos a sumar títulos/abstracts, que pueden duplicar información de huella.
-- **I — Institución:** mismo grupo = 1; centro/instituto = 0,7; departamento = 0,4.
-  Se toma solo el nivel más específico. La jerarquía refleja especificidad, no
-  coeficientes aprendidos. Compartir UTEC o facultad no aumenta la puntuación.
-  Sin pertenencias relevantes suficientes, la señal se marca como no disponible.
-- **R — Estructura:** Personalized PageRank ponderado, continuación 0,90 y reinicio
-  0,10 en el origen. Se promedian ambos sentidos y se divide por el máximo entre
-  parejas sin arista, limitando a 1. Componentes desconectados producen cero.
+Una sugerencia compara **dos investigadores sin conexión registrada**. Las tres
+señales son T (temática), I (institución) y R (red). Cada una está en **0–1** y se
+muestra multiplicada por 100. `null` significa información no disponible; **cero
+es un resultado conocido**. Ninguna señal ni la puntuación final es una
+probabilidad de colaboración futura. Las coincidencias concretas y sus fuentes
+se consultan al seleccionar la línea sugerida.
 
-**Combinación:** `S = αT + βI + γR`. Inicio: 60/30/10, un escenario exploratorio.
-Los controles suman 100 %; al mover uno se redistribuye proporcionalmente el resto.
-Si una señal falta se renormalizan los pesos disponibles y se indica cobertura.
-No se rellenan recomendaciones con puntuaciones cero ni parejas existentes.
+### 1. Temática T: semejanza de lo que investigan
 
-**Top %:** porcentaje de las parejas sin vínculo dentro de los filtros actuales.
-Con toda la cohorte hay 5.283 parejas candidatas; Top 1 % muestra hasta 53. El rango
-0–5 % permite ampliar gradualmente. Top 5 % muestra hasta 265 sugerencias:
-con las 73 conexiones registradas son 338 aristas, por debajo de 4 × 104 = 416.
-El límite es una decisión de diseño orientada a controlar la densidad visual;
-no es un umbral de precisión predictiva ni garantiza legibilidad por sí solo.
+**Datos utilizados:** `research_areas` (intereses declarados) y `fingerprint`
+(conceptos y relevancia publicados en el perfil). Las huellas son términos de
+investigación, no identificadores personales ni huellas biométricas.
 
-**Límites:** no es una probabilidad ni un modelo validado de colaboración futura.
-Se comprueban las fórmulas, la sensibilidad a los pesos y un control multilingüe;
-no se presenta precisión predictiva no medida. La afinidad puede ser amplia o
-estar basada en información limitada: consultar términos, pertenencias y fuentes.
-El desplegable “Cómo interpretar” explica estas decisiones dentro de la app.
+El modelo preentrenado
+[`sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2)
+convierte cada texto en un **embedding**, un vector numérico que permite comparar
+significados, incluso entre español e inglés. MiniLM es el modelo que genera esos
+vectores; no lo entrenamos con nuestros profesores. Su revisión se fija en
+`e8f8c211226b894fcb81acc59f3b34ba3efd5f42` y la preparación se ejecuta en CPU.
+
+Preparación de cada perfil:
+
+1. Normalizar Unicode, espacios y puntuación de borde. Deduplicar intereses
+   ignorando mayúsculas; no traducir manualmente los textos.
+2. En las huellas, excluir pesos no positivos y los conceptos genéricos `Peru` y
+   `Numerical Example`. La exclusión afecta al cálculo, conservando el original.
+3. Calcular la frecuencia inversa de cada concepto:
+   `IDF(c) = ln((N_h + 1) / (df(c) + 1)) + 1`.
+   `N_h` es el número de perfiles con huella; `df(c)`, los perfiles que contienen
+   ese identificador de concepto. Así se reduce la importancia relativa de
+   conceptos presentes en muchos perfiles.
+4. Calcular `q(c) = peso_CRIS(c) × IDF(c)`. Si hay etiquetas iguales con distintos
+   identificadores, conservar la de mayor q dentro del perfil. Seleccionar hasta
+   **20 conceptos**, ordenados por q: una decisión para limitar ruido y coste.
+5. Promediar los embeddings normalizados de los intereses y normalizar ese
+   promedio: `u_A = normalizar(promedio(embeddings_intereses_A))`.
+6. Promediar los embeddings de conceptos ponderados por q y normalizar:
+   `f_A = normalizar(Σ q(c) × embedding(c) / Σ q(c))`.
+7. Si hay ambas fuentes, `v_A = normalizar((u_A + f_A) / 2)`; si hay solo una,
+   utilizarla. Dar igual importancia a las fuentes evita que una lista más larga
+   de huellas anule por cantidad los intereses declarados.
+8. En los **cinco perfiles sin ambas fuentes**, utilizar la biografía como
+   respaldo. Dividirla en fragmentos de hasta `model.max_seq_length − 2` tokens,
+   con solapamiento de 16; promediar sus embeddings y normalizar. El detalle
+   señala esta cobertura temática más limitada. Si no hay texto utilizable, T
+   queda no disponible.
+
+`normalizar(v) = v / ||v||`: conserva la dirección del vector y lo lleva a longitud
+1. La similitud final es el coseno entre los vectores de ambos investigadores:
+
+```text
+T(A,B) = max(0, min(1, (v_A · v_B) / (||v_A|| × ||v_B||)))
+```
+
+El punto indica producto escalar; las barras dobles, longitud del vector.
+**Mayor T significa mayor semejanza semántica según el modelo.** No equivale a
+identidad de temas ni demuestra que hayan trabajado juntos. No sumamos títulos
+y abstracts como fuentes adicionales porque pueden repetir información ya
+representada en las huellas. Fotos, nombres, citas y h-index no aportan a T.
+
+**Control real del modelo:** “Machine learning” y “Aprendizaje automático” tienen
+coseno **0,835962**; “Machine learning” y “Mecánica de suelos y cimentaciones”,
+**0,146285**. Este ejemplo comprueba una equivalencia lingüística, no valida todas
+las comparaciones. En el detalle se muestran coincidencias textuales y hasta dos
+pares de términos relacionados con coseno ≥ 0,45; son explicaciones y **no se
+suman otra vez** a T.
+
+### 2. Institución I: coincidencia de afiliaciones
+
+**Datos utilizados:** `affiliations`, comparando `organisation_id`, no solo textos
+parecidos. En CRIS, grupos, centros e institutos aparecen en la misma lista de
+organizaciones del perfil. Nuestro ETL asigna `affiliations[].type` según el
+nombre: `research_group`, `research_center`, `institute`, `department`, etc., y
+conserva las clases HTML originales en `source_classes`. Encontramos marcas
+`researchgroup` y `center`; un instituto como ASRI también puede tener marca
+`center`. Estos tipos normalizados y los identificadores internos los construye
+la extracción; la URL de organización conserva el enlace original.
+
+El campo antiguo `research_groups` reúne nombres de grupos y centros. **El cálculo
+usa `affiliations`, que sí distingue los tipos.** No suponemos que todo grupo
+pertenezca a un centro ni que estas categorías formen un organigrama anidado.
+
+Para cada pareja se toma **una sola categoría**, en este orden: grupo compartido,
+centro/instituto compartido, departamento compartido, ninguna coincidencia.
+No se suman varias pertenencias. Universidad y facultades generales no puntúan
+porque aportan poca discriminación en esta cohorte. Si a cualquiera de los dos
+le faltan afiliaciones relevantes, I queda **no disponible**, no cero.
+
+#### De dónde salen los valores institucionales
+
+Se cuentan **todas las parejas distintas de la cohorte**, tanto conectadas como
+sin conexión. Para cada categoría c:
+
+```text
+p_c = parejas con colaboración registrada de categoría c / todas las parejas de categoría c
+```
+
+Una pareja cuenta una vez, aunque comparta varios trabajos o pertenencias.
+Las categorías siguientes son excluyentes; no se mezclan los conteos brutos de
+coincidencias superpuestas:
+
+| Coincidencia más específica | Parejas totales | Con colaboración registrada | Proporción p_c | I mostrado sobre 100 |
+|---|---:|---:|---:|---:|
+| Mismo grupo | 94 | 18 | 19,1489 % | **100** |
+| Mismo centro/instituto, sin grupo compartido | 85 | 6 | 7,0588 % | **34,48** |
+| Mismo departamento, sin coincidencia superior | 378 | 17 | 4,4974 % | **20,60** |
+| Ninguna coincidencia publicada, con información suficiente | 4.594 | 32 | 0,6966 % | **0** |
+| Información institucional insuficiente | 205 | 0 | No se estima | **N/D** |
+| **Total** | **5.356** | **73** | | |
+
+La base `p_0 = 32/4594` recoge la colaboración registrada sin coincidencia
+institucional. La referencia `p_g = 18/94` corresponde al grupo compartido:
+
+```text
+I(c) = limitar_a_0_1((p_c − p_0) / (p_g − p_0))
+Valor mostrado = 100 × I(c)
+```
+
+**Ejemplo con centros/institutos:**
+
+```text
+p_c = 6/85; p_0 = 32/4594; p_g = 18/94
+I(centro) = ((6/85) − (32/4594)) / ((18/94) − (32/4594))
+          = 0,3447936998… → 34,48/100
+```
+
+Se resta la base porque también se observan colaboraciones sin afiliaciones
+compartidas. Se divide por el contraste entre grupo y base para situar grupo en
+100 y ninguna coincidencia en 0. Por tanto, **34,48 expresa un contraste relativo
+observado**, no 34,48 % de probabilidad de colaborar. Los valores aproximados
+35 y 21 discutidos en el diseño resultaban del redondeo; la aplicación calcula
+con las fracciones completas y redondea solo al mostrarlas.
+
+**Ejemplo real de afiliación:** Deyby Huamanchahua Canchanya y Julio Ernesto
+Valdivia Silva comparten el Centro de Investigación en Bioingeniería – BIO y
+reciben I = 0,3447936998… por esa categoría.
+
+**Alcance de la justificación:** reemplazamos la heurística inicial 100–70–40 por
+una calibración descriptiva de esta misma red. Las proporciones sustentan el
+orden observado; la normalización lineal y la selección del nivel más específico
+siguen siendo decisiones del método. No prueban causalidad, significación
+estadística ni precisión predictiva. Solo hay seis colaboraciones en la categoría
+centro/instituto; además, las parejas comparten investigadores y no son
+observaciones independientes. Una arista ausente tampoco prueba ausencia real
+de colaboración. Para evaluar predicción futura se necesitarían datos de prueba
+independientes, preferiblemente temporales.
+
+**Comprobación del efecto del cambio:** con los pesos iniciales y sin filtros,
+40 de las 53 sugerencias del Top 1 % se conservan respecto al esquema 100–70–40;
+entran 13 parejas y salen 13. En Top 5 %, se conservan 220 de 265 y cambian 45.
+T y R permanecen idénticos. Esto muestra sensibilidad a la regla institucional,
+no demuestra que las nuevas parejas sean mejores predicciones.
+
+La tabla, las fracciones, la fórmula y los valores exactos se guardan en
+`analysis.json → recommendations.metadata.institutional_calibration`.
+Al regenerar se recalibran sobre la cohorte completa, nunca sobre los filtros o
+sugerencias visibles. Se limita el resultado a 0–1; una categoría sin ejemplos
+queda no disponible. Si grupo no supera a la base o falta alguna de esas dos
+referencias, el comando se detiene: esa normalización ya no sería justificable.
+
+### 3. Red R: proximidad por caminos registrados
+
+**Datos utilizados:** únicamente los nodos y las aristas registradas de
+`network.json`. El peso de cada arista es su cantidad de trabajos compartidos.
+La pregunta es si dos profesores están próximos mediante colaboradores
+intermedios, aunque no tengan una conexión directa.
+
+Aplicamos **Random Walk with Restart (RWR)** mediante Personalized PageRank de
+NetworkX. Desde cada investigador A, un paseo aleatorio:
+
+- Sigue una conexión con **90 %** de probabilidad, eligiéndola proporcionalmente
+  a su peso. Si los únicos vecinos tienen pesos 2 y 6, sus probabilidades
+  condicionadas a continuar son 2/8 y 6/8.
+- Vuelve al investigador A con **10 %** de probabilidad. Si no hay salidas,
+  también vuelve a A; no salta a otro componente.
+
+```text
+P_A = 0,90 × Mᵀ × P_A + 0,10 × e_A
+R_bruto(A,B) = (P_A(B) + P_B(A)) / 2
+R(A,B) = min(1, R_bruto(A,B) / máximo_R_bruto_entre_parejas_sin_arista)
+```
+
+`M` es la matriz de transición normalizada por los pesos salientes, con las
+salidas inexistentes dirigidas al origen; `e_A` concentra el reinicio en A;
+`P_A(B)` es la masa estacionaria que llega a B al reiniciar en A. No equivale a
+probabilidad de colaboración. Promediamos ambos sentidos porque la sugerencia
+es una pareja sin dirección. El máximo es global entre parejas sin vínculo,
+no cambia con los filtros. Si ese máximo fuera cero, todos los R serían cero.
+
+R está en 0–1: **cero entre componentes desconectados o desde un aislado hacia
+otro nodo**. Una pareja puede compartir temas o institución y tener R = 0.
+El cálculo utiliza hasta 1.000 iteraciones y tolerancia `1e-12`.
+El reinicio del 10 % es un parámetro exploratorio, distinto del peso global de
+Red. Las sugerencias nunca se añaden al grafo que calcula R o intermediación:
+una hipótesis no genera nueva evidencia para sí misma.
+
+### 4. Combinación S, pesos y cobertura
+
+Con las tres señales disponibles:
+
+```text
+S(A,B) = αT + βI + γR
+α = 0,60; β = 0,30; γ = 0,10
+Valor mostrado = 100 × S
+```
+
+α, β y γ son **importancias configurables**, distintas de los valores calculados
+de cada señal. El inicio 60/30/10 prioriza temática; es una decisión exploratoria,
+no un ajuste validado. Al mover una barra, las otras dos se redistribuyen
+proporcionalmente para sumar 100 %; si ambas estaban en cero, se reparte entre
+ellas por igual, ajustando el redondeo.
+
+**Ejemplo real:** Jose Javier Cerda Hernandez y Jose De La Puente Maldonado
+comparten el Departamento de Ingeniería Industrial y Gestión de la Ingeniería:
+
+```text
+T = 0,470273; I = 0,2059785624…; R = 0
+S = 0,60 × 0,470273 + 0,30 × 0,2059785624… + 0,10 × 0
+  = 0,3439573687… → 34,40/100
+```
+
+Temática aporta 28,22 puntos; institución, 6,18; red, 0. Tener R = 0 no significa
+que falte la señal: entra al promedio con su peso. El mismo centro aportaría
+`30 × 0,3447936998… = 10,34` puntos con el peso inicial de 30 %.
+
+Si falta una señal, se divide por la suma de pesos disponibles. Por ejemplo,
+con I faltante: `S = (0,60T + 0,10R) / 0,70`. La cobertura sería **70 %**, la
+fracción del peso solicitado con datos, no el porcentaje extraído del perfil.
+Si no hay señales disponibles con peso positivo, no se asigna puntuación.
+La puntuación sigue en 0–100 y **no es una probabilidad**.
+
+### 5. Candidatas, Top % y densidad
+
+Hay `104 × 103 / 2 = 5.356` parejas posibles. Se excluyen los 73 vínculos
+registrados: quedan **5.283 candidatas**, sin autoenlaces ni duplicados A–B/B–A.
+Los filtros conservan solo parejas con ambos extremos visibles.
+
+Se ordenan por S descendente, con desempate estable por identificadores.
+Top % toma `techo(candidatas × porcentaje / 100)` posiciones, mostrando solamente
+puntuaciones positivas: puede haber menos resultados si no hay suficientes.
+El rango es **0–5 %**, con pasos de 0,1 e inicio 1 %.
+
+Sin filtros, Top 1 % muestra hasta 53 sugerencias y Top 5 % hasta 265; junto con
+73 conexiones registradas son 338 aristas. El porcentaje es una fracción del
+ranking, no una probabilidad ni un umbral mínimo de afinidad.
+
+El máximo 5 % controla densidad visual. La demo de CollaborationViz tiene un
+control hasta 5, pero no encontramos una justificación científica de ese número
+exacto. Además, su implementación aplica el porcentaje a puntuaciones guardadas
+antes de excluir conexiones, mientras aquí contamos candidatas sin conexión:
+los denominadores no son idénticos. La orientación de Munzner `E < 4N` para redes
+nodo–enlace aporta una referencia de escala: aquí `338 < 4 × 104 = 416`, sin
+asegurar legibilidad. El límite no demuestra precisión predictiva.
+Véanse las fuentes y sus alcances en [REFERENCIAS.md](REFERENCIAS.md).
+
+### 6. Qué está calculado y qué hemos elegido
+
+| Calculado a partir de los datos | Decisiones del método o de presentación |
+|---|---|
+| Grados, intermediación, componentes y comunidades | Usar una red sin dirección y la evidencia aceptada para crear una arista |
+| Proporciones institucionales y valores I resultantes | Categoría más específica, restar la base y normalizar respecto a grupo |
+| Coseno entre vectores temáticos | Modelo, fuentes, igual importancia entre fuentes, hasta 20 conceptos y exclusiones |
+| RWR y su normalización global | Reinicio 10 %, pesos por trabajos y simetrización |
+| S para los pesos actuales y orden de candidatas | Inicio 60/30/10 y máximo Top 5 % |
+| Vecinos visibles y número de miembros por departamento | Radio, colores, grosor, distribución por departamentos y fuerzas D3 |
+
+Corregir y verificar una fórmula no valida automáticamente sus supuestos.
+La app sirve para **explorar candidatos y la red publicada**, sin presentar
+causalidad ni precisión predictiva no evaluadas.
 
 ## Regenerar los datos y el análisis
 
@@ -230,13 +524,29 @@ python -m app.recommendations --prepare
 El scraping conserva los datos anteriores hasta completar y validar la extracción;
 respeta robots.txt y se detiene si Cloudflare bloquea la sesión. El último comando
 usa los JSON locales, descarga un modelo público fijado y reemplaza las puntuaciones
-dentro de `analysis.json`. No crea carpetas por corrida. Si se actualiza la red sin
+dentro de `analysis.json`, incluida la calibración institucional calculada de
+nuevo sobre todas las parejas. No crea carpetas por corrida. Si se actualiza la red sin
 regenerar el análisis, la app detecta el desajuste y desactiva las sugerencias.
 
 El modelo es `paraphrase-multilingual-MiniLM-L12-v2`, revisión
 `e8f8c211226b894fcb81acc59f3b34ba3efd5f42`, ejecutado en CPU. No se usan APIs de pago.
 La extracción conserva listas completas de la cohorte y fichas detalladas de los
 129 proyectos y 90 publicaciones; no incluye todos los textos completos ni abstracts.
+
+Si solo se modifica la regla institucional y la red no cambió, se puede actualizar
+I sin descargar el modelo ni recalcular T o R:
+
+```bash
+python -m app.recommendations --recalibrate-institutional
+```
+
+Este comando comprueba que la red coincide con la preparación existente y cambia
+únicamente los valores institucionales y su metodología. Flask sirve los valores
+guardados; el navegador calcula S y Top % al mover las barras, sin volver a ejecutar
+embeddings ni PageRank. Las fórmulas de preparación están en
+[app/recommendations.py](app/recommendations.py); las métricas de la red, en
+[extraccion_datos/network.py](extraccion_datos/network.py); la combinación y el
+ranking interactivo, en [app/static/scoring.mjs](app/static/scoring.mjs).
 
 ## Comprobaciones
 

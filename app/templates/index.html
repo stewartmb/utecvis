@@ -349,9 +349,10 @@
             duplicar la evidencia de las huellas.
           </p>
           <p>
-            <strong>Institución:</strong> mismo grupo = 1; centro/instituto =
-            0,7; departamento = 0,4. Solo se toma el nivel más específico. Son
-            reglas heurísticas, no pesos aprendidos.
+            <strong>Institución:</strong> <span id="institutional-method-values">Valores calibrados con la red observada.</span>
+            Solo se toma la coincidencia más específica. Restamos la proporción
+            de colaboración sin coincidencias y normalizamos respecto a compartir grupo.
+            Es una calibración descriptiva, no una probabilidad de colaboración futura.
           </p>
           <p>
             <strong>Red:</strong> RWR, con 90 % de continuación y 10 % de

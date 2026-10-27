@@ -558,7 +558,7 @@ def run(url, channel):
         assert page.locator(".score-total strong").inner_text().startswith("100")
         assert "100 %" in page.locator(".score-weights").inner_text()
         page.locator('.signal-label [data-criterion="institutional"]').hover()
-        assert "Departamento: 40" in page.locator("#criterion-tooltip").inner_text()
+        assert "Departamento: 20.6" in page.locator("#criterion-tooltip").inner_text()
         page.mouse.move(10, 10)
         page.screenshot(path="/tmp/utecvis-evidence-and-photos.png")
         assert not errors, errors

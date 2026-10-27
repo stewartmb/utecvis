@@ -127,7 +127,7 @@ rectangulares rígidos; no es una reproducción exacta de ese plugin.
 | Red académica y evidencias | CollaborationViz; casos de Harvard | Cohorte y reglas de aristas de CRIS UTEC. |
 | Sugerencias estructurales R | CollaborationViz; NetworkX | Parámetros, simetrización, normalización y evaluación sobre nuestra cohorte. |
 | Afinidad temática T | Duke como antecedente del caso; Sentence-BERT y modelo multilingüe como componentes | Fuentes textuales, ponderación de huellas y cobertura de perfiles. |
-| Cercanía institucional I | Afiliaciones publicadas por CRIS | Jerarquía y valores 1 / 0,70 / 0,40: heurística, no coeficientes aprendidos. |
+| Cercanía institucional I | Afiliaciones publicadas por CRIS | Categoría más específica y normalización elegidas; valores 1 / 0,3447937 / 0,2059786 calibrados con proporciones de la cohorte, no validados como predicción. Véase el README. |
 | Combinación de señales | Antecedentes híbridos como DRACoR | 60/30/10 ajustable: escenario exploratorio sin validación predictiva. |
 | Treemap + fuerzas | Group-in-a-Box; Force in a Box | Departamentos, paredes rígidas y evaluación de legibilidad. |
 

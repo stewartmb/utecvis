@@ -102,15 +102,26 @@ T alta indica semejanza semántica según ese modelo, no demuestra una colaborac
 
 ## 6. Cercanía institucional I
 
-Comparamos `organisation_id` de afiliaciones estructuradas. Aplicamos únicamente el nivel compartido más específico:
+Comparamos `organisation_id` de `affiliations`, tomando solo la coincidencia más
+específica: grupo, centro/instituto o departamento. Compartir universidad o
+facultad general no suma; falta de afiliaciones relevantes en cualquiera de los
+dos perfiles produce no disponible, no cero. Los tipos se normalizan en el ETL
+según el nombre de la organización; CRIS los muestra en una misma lista.
 
-- Mismo grupo de investigación: 1,00.
-- Mismo centro o instituto: 0,70.
-- Mismo departamento: 0,40.
-- Ambos tienen pertenencias relevantes publicadas y ninguna coincide: 0.
-- A uno le faltan pertenencias relevantes: no disponible, no cero.
+Reemplazamos 1/0,7/0,4 por una calibración descriptiva de todas las parejas:
+`I(c) = limitar_a_0_1((p_c − p_0)/(p_g − p_0))`.
+`p_c` es la proporción de parejas registradas de la categoría; `p_0 = 32/4594`
+corresponde a ninguna coincidencia y `p_g = 18/94`, al grupo compartido.
+Las categorías son excluyentes: grupo 18/94; centro/instituto 6/85; departamento
+17/378; ninguna coincidencia 32/4594. Otras 205 parejas carecen de información.
 
-No sumamos grupo + centro + departamento. Compartir UTEC o una facultad general no suma porque discrimina poco en la cohorte. Los valores 1 / 0,7 / 0,4 son heurísticas elegidas, no resultados aprendidos o validados como probabilidades.
+Resultados sobre 100: **grupo 100; centro/instituto 34,48; departamento 20,60;
+ninguna coincidencia 0**. Se usan las fracciones completas; los redondeos son solo
+para presentación. No se suman niveles ni se supone un organigrama anidado.
+La tabla, el ejemplo explicado, las limitaciones y el comando para reproducirlo
+están en el [README](README.md#2-institución-i-coincidencia-de-afiliaciones).
+No es una probabilidad ni una validación predictiva: se usan las mismas
+colaboraciones observadas, con solo seis casos positivos en centros/institutos.
 
 ## 7. Proximidad estructural R
 
@@ -146,7 +157,7 @@ Top % selecciona una fracción del ranking de candidatas con ambos extremos visi
 
 El orden es puntuación descendente y, ante empate, identificadores estables. Un porcentaje del ranking no es probabilidad de colaboración. Las candidatas se exploran mediante las líneas del Top visible. Al desactivar la capa desaparecen las aristas sugeridas.
 
-Colaboradores permite dimensionar por grado visible o grado ponderado observado; Puentes utiliza B observado. No hay un listado global de ranking. Las parejas candidatas se ordenan por puntuación con los pesos actuales y se exploran al activar Sugerencias, sin cambiar de vista. Los filtros afectan a los candidatos y a qué investigadores aparecen, pero no recalculan las métricas globales sobre una subred filtrada.
+Colaboradores dimensiona por grado visible; Puentes utiliza B observado. No hay un listado global de ranking. Las parejas candidatas se ordenan por puntuación con los pesos actuales y se exploran al activar Sugerencias, sin cambiar de vista. Los filtros afectan a los candidatos y a qué investigadores aparecen, pero no recalculan las métricas globales sobre una subred filtrada.
 
 ## 10. Tamaño de los nodos
 
@@ -175,7 +186,7 @@ Importante: el grado visible usado en el dibujo puede incluir sugerencias; el gr
 - Colaboradores usa conexiones visibles y Puentes usa intermediación. Las sugerencias se activan con un interruptor persistente arriba a la izquierda, debajo de la leyenda y se mantienen al cambiar de vista. Top % aparece al activar Sugerencias. Las tres importancias se despliegan mediante «Ajustar criterios»; al desactivar las sugerencias se ocultan todas las opciones. El panel de detalles se abre solo al seleccionar una persona o conexión.
 - Las coincidencias concretas de la pareja aparecen antes de la puntuación y los pesos junto a ella. Las etiquetas Temática/Institución/Red muestran criterios breves al pasar el cursor o enfocarlas.
 - Los deslizadores actualizan el grafo una vez por fotograma, con radios precalculados y reutilización del ranking cuando solo cambia Top %. En el ajuste interactivo D3 evita el asentamiento inicial de cientos de pasos y mantiene límites y colisiones.
-- Rankings seleccionables, detalle de perfil, evidencia de parejas y enlaces de fuente; registros paginados de 20 en 20.
+- Selección de nodos y parejas, detalle de perfil, evidencia y enlaces de fuente; registros paginados de 20 en 20.
 - Transiciones habituales de 300 ms; con movimiento reducido, se suprimen esas animaciones y el asentamiento temporal.
 - Mantra: panorama inicial sin sugerencias → zoom/filtros → detalles al solicitarlos.
 
@@ -223,7 +234,8 @@ Archivos: `network.json` contiene nodos, aristas y métricas; `publications.json
 
 Calculado a partir de los datos: aristas bajo las reglas de evidencia, pesos, grado, B, comunidades, componentes, articulaciones, RWR y similitudes del modelo.
 
-Elegido como heurística o diseño: nivel institucional 1/0,7/0,4; pesos 60/30/10; hasta 20 conceptos y términos excluidos; reinicio RWR de 10 %; escalas de radio y grosor; colores, transparencia, fricción y fuerzas. Que una fórmula esté implementada correctamente no valida sus supuestos como predictor del futuro.
+Calculado descriptivamente: valores institucionales con proporciones observadas.
+Elegido como método o diseño: nivel más específico y normalización respecto a grupo; pesos 60/30/10; hasta 20 conceptos y términos excluidos; reinicio RWR de 10 %; escalas de radio y grosor; colores, transparencia, fricción y fuerzas. Que una fórmula esté implementada correctamente no valida sus supuestos como predictor del futuro.
 
 La única disposición es treemap + fuerzas por departamento principal. D3 treemap reparte áreas proporcionales al número de investigadores; fuerzas y límites rectangulares mantienen los nodos dentro del bloque, incluidos los aislados. Compartir bloque no prueba colaboración ni representa una comunidad calculada. La superficie total puede crecer para evitar solapamientos conservando las proporciones. Los enlaces entre bloques pueden cruzarse. Los modos Colaboradores y Puentes aparecen arriba junto a los círculos de tamaño; no hay un segundo selector de tamaño. La cuarta tarea explora departamentos y pertenencias desde la leyenda y los detalles.
 

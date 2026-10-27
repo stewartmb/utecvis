@@ -29,12 +29,12 @@ def clean(value):
     return re.sub(r"\s+", " ", text).strip(" \t\n,;:•.-")
 
 
-def institutional(a, b):
+def institutional(a, b, scores):
     """Una sola coincidencia jerárquica; no acumula grupo + centro + departamento."""
     levels = [
-        ({"research_group"}, 1.0),
-        ({"research_center", "institute"}, 0.7),
-        ({"department"}, 0.4),
+        ({"research_group"}, scores.get("research_group")),
+        ({"research_center", "institute"}, scores.get("research_center_or_institute")),
+        ({"department"}, scores.get("department")),
     ]
     relevant = {kind for kinds, _score in levels for kind in kinds}
     aa = {
@@ -55,6 +55,61 @@ def institutional(a, b):
         if matches:
             return {"score": score, "level": matches[0]["type"], "shared": matches}
     return {"score": 0.0, "level": None, "shared": []}
+
+
+def calibrate_institutional(network):
+    """Calibración descriptiva sobre todas las parejas, no solo candidatas."""
+    levels = ("research_group", "research_center_or_institute", "department", "none")
+    counts = {level: {"pairs": 0, "observed": 0} for level in (*levels, "unavailable")}
+    observed = {tuple(sorted((e["source"], e["target"]))) for e in network["edges"]}
+    for a, b in combinations(sorted(network["nodes"], key=lambda n: n["id"]), 2):
+        match = institutional(a, b, {level: 1 for level in levels})
+        level = match["level"]
+        if level in {"research_center", "institute"}:
+            level = "research_center_or_institute"
+        if level is None:
+            level = "unavailable" if match["score"] is None else "none"
+        counts[level]["pairs"] += 1
+        counts[level]["observed"] += int((a["id"], b["id"]) in observed)
+    rates = {k: v["observed"] / v["pairs"] if v["pairs"] else None for k, v in counts.items()}
+    rates["unavailable"] = None
+    baseline, maximum = rates["none"], rates["research_group"]
+    if baseline is None or maximum is None or maximum <= baseline:
+        raise ValueError("No hay contraste suficiente entre grupo y ninguna coincidencia para calibrar I.")
+    scores = {
+        k: min(1.0, max(0.0, (rates[k] - baseline) / (maximum - baseline)))
+        if rates[k] is not None else None
+        for k in levels[:-1]
+    }
+    return {
+        "method": "Observed collaboration rate above baseline, normalized to shared group",
+        "formula": "I(c) = clip((p_c - p_none) / (p_group - p_none), 0, 1)",
+        "scope": "All unordered pairs in the complete observed cohort; mutually exclusive categories",
+        "interpretation": "Descriptive in-sample calibration; not a validated prediction or causal effect",
+        "counts": counts,
+        "rates": rates,
+        "scores": scores,
+    }
+
+
+def recalibrate_institutional(folder):
+    """Actualiza solo I y su método; conserva T, R y los embeddings preparados."""
+    network_path, analysis_path = folder / "network.json", folder / "analysis.json"
+    network = json.loads(network_path.read_text())
+    analysis = json.loads(analysis_path.read_text())
+    prepared = analysis["recommendations"]
+    if prepared["metadata"]["network_sha256"] != hashlib.sha256(network_path.read_bytes()).hexdigest():
+        raise ValueError("La red cambió: ejecuta --prepare para regenerar todas las señales.")
+    calibration = calibrate_institutional(network)
+    nodes = {n["id"]: n for n in network["nodes"]}
+    for pair in prepared["pairs"]:
+        pair["institutional"] = institutional(nodes[pair["source"]], nodes[pair["target"]], calibration["scores"])["score"]
+    prepared["metadata"]["institutional_levels"] = calibration["scores"]
+    prepared["metadata"]["institutional_calibration"] = calibration
+    temporary = analysis_path.with_suffix(".tmp")
+    temporary.write_text(json.dumps(analysis, ensure_ascii=False, indent=2, allow_nan=False) + "\n")
+    temporary.replace(analysis_path)
+    print(json.dumps(calibration, ensure_ascii=False, indent=2))
 
 
 def graph_from(network):
@@ -229,6 +284,7 @@ def prepare(folder):
     print("Calculando RWR, institución y evidencia de las parejas…", flush=True)
     graph = graph_from(network)
     rwr = rwr_scores(graph)
+    calibration = calibrate_institutional(network)
     phrase_similarities = embeddings @ embeddings.T
     pairs = []
     for a, b in combinations(nodes, 2):
@@ -237,7 +293,7 @@ def prepare(folder):
         thematic = (
             float(np.clip(va @ vb, 0, 1)) if va is not None and vb is not None else None
         )
-        institution = institutional(a, b)
+        institution = institutional(a, b, calibration["scores"])
         a_indices = list(
             dict.fromkeys(
                 ai["interest_indices"] + ai["concept_indices"] + ai["bio_indices"]
@@ -318,11 +374,8 @@ def prepare(folder):
             "max_concepts": 20,
             "duplicate_concept_labels": "Keep the highest salience per casefolded label within a profile",
             "generic_concepts_excluded": sorted(GENERIC_CONCEPTS),
-            "institutional_levels": {
-                "research_group": 1,
-                "research_center_or_institute": 0.7,
-                "department": 0.4,
-            },
+            "institutional_levels": calibration["scores"],
+            "institutional_calibration": calibration,
             "rwr_alpha": 0.9,
             "rwr_symmetry": "Mean of both personalized directions",
             "defaults": {
@@ -348,7 +401,12 @@ def prepare(folder):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--prepare", action="store_true", required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--prepare", action="store_true")
+    mode.add_argument("--recalibrate-institutional", action="store_true")
     parser.add_argument("--data", type=Path, default=ROOT / "data")
     args = parser.parse_args()
-    prepare(args.data.resolve())
+    if args.recalibrate_institutional:
+        recalibrate_institutional(args.data.resolve())
+    else:
+        prepare(args.data.resolve())
