@@ -532,6 +532,7 @@ input[type="range"] {
 }
 .color-legend {
   position: relative;
+  z-index: 6;
   margin: 8px 0;
 }
 .color-legend summary {
