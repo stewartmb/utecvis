@@ -76,6 +76,24 @@ detalles al seleccionar personas o conexiones. D3 reacomoda los nodos cuando cam
 sus radios o las conexiones visibles, para mantener la separación. El
 botón Restablecer recupera la vista y los parámetros iniciales.
 
+## Prueba reversible: treemap + fuerzas
+
+El botón **Treemap** agrupa la misma red por departamento principal. D3 treemap
+asigna áreas proporcionales al número de investigadores visibles. D3 force mantiene
+los círculos separados dentro del bloque; los vínculos entre departamentos siguen
+visibles. Incluye a los aislados en su departamento, sin crear aristas nuevas.
+Los tamaños y las métricas mantienen su significado. Los bloques no representan
+comunidades calculadas ni prueban colaboración. Los departamentos son el primer
+nivel de esta prueba; los grupos superpuestos requerirían otra regla de pertenencia.
+
+**Vista circular** vuelve al diseño anterior, conservando pesos, sugerencias,
+selección y filtros. El diseño circular sigue siendo el inicial; la prueba se
+activa explícitamente. El lienzo crece de manera uniforme si los radios necesitan
+más espacio, manteniendo la proporción de áreas. En escenarios densos puede
+reducirse el tamaño aparente al ajustar toda la vista: se puede ampliar con zoom.
+La agrupación institucional facilita localizar departamentos, pero puede alargar
+y acumular los enlaces entre ellos. Esta vista está pendiente de evaluación visual.
+
 ## Cómo interpretar la red
 
 - **Coautoría:** autores individuales identificados mediante URL CRIS u ORCID.

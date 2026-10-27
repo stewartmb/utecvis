@@ -1463,3 +1463,16 @@ g.node.dragging .node-halo {
 @media (max-width: 1099px) {
   .inspector-panel { bottom: 270px; }
 }
+
+/* Reversible D3 treemap + force experiment. Group backgrounds stay behind edges. */
+.layout-toggle { border-left: 1px solid var(--line); margin-left: 5px; border-radius: 0 7px 7px 0; }
+.layout-toggle[aria-pressed="true"] { background: #e9f2ed; color: var(--accent); }
+.department-box rect { fill-opacity: 0.055; stroke: #c7d3ce; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.department-box-label { font-size: 14px; font-weight: 650; fill: var(--ink); }
+.department-box-count { font-size: 11px; fill: var(--muted); }
+.department-box text { pointer-events: none; }
+.treemap-mode .observed-edge { opacity: 0.3; }
+.treemap-mode .observed-edge.edge-focused { opacity: 0.95; }
+.treemap-mode .observed-edge.edge-dimmed { opacity: 0.04; }
+
+.treemap-mode .observed-edge.category-edge-dimmed { opacity: 0.04; }

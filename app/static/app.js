@@ -8,6 +8,7 @@ import {
 } from "./scoring.mjs";
 
 import { createNetworkLayout } from "./layout.mjs";
+import { createTreemapLayout } from "./treemap-layout.mjs";
 
 const $ = (id) => document.getElementById(id);
 const d3 = window.d3;
@@ -72,6 +73,7 @@ const palette = [
 ];
 const state = {
   task: "collaborators",
+  layout: "circular",
   metric: "degree",
   department: "",
   predictions: false,
@@ -312,6 +314,45 @@ function tick() {
   layer?.selectAll(".prediction-hit").attr("d", predictedPath);
 }
 
+function renderTreemap() {
+  const groups = layer.select(".treemap-layer").selectAll("g.department-box")
+    .data(layout.cells || [], (b) => b.key)
+    .join((enter) => {
+      const group = enter.append("g").attr("class", "department-box");
+      group.append("rect");
+      group.append("text").attr("class", "department-box-label");
+      group.append("text").attr("class", "department-box-count");
+      group.append("title");
+      return group;
+    });
+  groups.select("rect").attr("x", (b) => b.x0).attr("y", (b) => b.y0)
+    .attr("width", (b) => b.x1 - b.x0).attr("height", (b) => b.y1 - b.y0)
+    .attr("fill", (b) => b.key === "Sin departamento" ? "#a3afa6" : colors(b.key));
+  updateTreemapLabels();
+  groups.select("title").text((b) => `${b.key}: ${b.count} investigadores. Área proporcional al número de personas visibles. Compartir bloque no prueba colaboración.`);
+}
+
+function updateTreemapLabels() {
+  const groups = layer?.select(".treemap-layer").selectAll("g.department-box");
+  if (!groups) return;
+  // Keep headings readable at overview scale; very small screens use color and
+  // the shared legend until zooming in. Labels never spill into the next box.
+  const font = Math.max(14, 9.5 / zoomLevel);
+  groups.select(".department-box-label")
+    .attr("x", (b) => b.x0 + 14)
+    .attr("y", (b) => b.y0 + Math.max(20, 13 / zoomLevel))
+    .style("font-size", `${font}px`)
+    .style("display", zoomLevel < 0.3 ? "none" : null)
+    .text((b) => {
+      const label = shortDepartment(b.key);
+      const limit = Math.max(3, Math.floor((b.x1 - b.x0 - 28) / (font * 0.55)));
+      return label.length > limit ? label.slice(0, limit - 1) + "…" : label;
+    });
+  groups.select(".department-box-count").attr("x", (b) => b.x0 + 14).attr("y", (b) => b.y0 + 35)
+    .style("display", zoomLevel < 0.65 ? "none" : null)
+    .text((b) => `${b.count} ${b.count === 1 ? "investigador" : "investigadores"}`);
+}
+
 function setupGraph() {
   svg = d3.select("#network-svg");
   const container = $("graph-container");
@@ -323,6 +364,7 @@ function setupGraph() {
     .attr("class", "isolate-ring")
     .attr("fill", "none")
     .attr("pointer-events", "none");
+  layer.append("g").attr("class", "treemap-layer");
   layer.append("g").attr("class", "observed-layer");
   layer.append("g").attr("class", "observed-hit-layer");
   layer.append("g").attr("class", "prediction-layer");
@@ -334,12 +376,13 @@ function setupGraph() {
     .on("zoom", (event) => {
       layer.attr("transform", event.transform);
       zoomLevel = event.transform.k;
+      updateTreemapLabels();
       if (nodeSelection) focusStyles();
       $("tooltip").hidden = true;
     });
   svg.call(zoom).on("dblclick.zoom", null);
   svg.on("click", (event) => {
-    if (event.target === svg.node()) clearSelection();
+    if (event.target === svg.node() || event.target.closest(".department-box")) clearSelection();
   });
   layout = createNetworkLayout(d3, radius, { onTick: tick, reducedMotion });
   new ResizeObserver(() => {
@@ -470,6 +513,7 @@ function renderGraph() {
     connectionCounts,
     predictionEdges,
   );
+  renderTreemap();
   layer
     .select(".isolate-ring")
     .attr("r", layout.ringRadius)
@@ -603,12 +647,12 @@ function renderGraph() {
 function fitGraph(animated = true) {
   const visible = nodes.filter((n) => visibleIds?.has(n.id));
   if (!visible.length) return;
-  const small = visible.length <= 3;
+  const small = visible.length <= 3 && state.layout !== "treemap";
   const extent = layout.outerRadius;
-  const x0 = small ? d3.min(visible, (n) => n.x - radius(n)) - 20 : -extent;
-  const x1 = small ? d3.max(visible, (n) => n.x + radius(n)) + 20 : extent;
-  const y0 = small ? d3.min(visible, (n) => n.y - radius(n)) - 20 : -extent;
-  const y1 = small ? d3.max(visible, (n) => n.y + radius(n)) + 20 : extent;
+  const x0 = layout.bounds?.x0 ?? (small ? d3.min(visible, (n) => n.x - radius(n)) - 20 : -extent);
+  const x1 = layout.bounds?.x1 ?? (small ? d3.max(visible, (n) => n.x + radius(n)) + 20 : extent);
+  const y0 = layout.bounds?.y0 ?? (small ? d3.min(visible, (n) => n.y - radius(n)) - 20 : -extent);
+  const y1 = layout.bounds?.y1 ?? (small ? d3.max(visible, (n) => n.y + radius(n)) + 20 : extent);
   // Keep the persistent suggestion controls in the left margin on wide screens.
   const wide = width >= 1100;
   const leftSpace = wide ? 310 : 24;
@@ -956,6 +1000,19 @@ function updateMetricKey() {
 }
 
 function wireControls() {
+  $("layout-toggle").addEventListener("click", () => {
+    layout.reset(nodes);
+    state.layout = state.layout === "circular" ? "treemap" : "circular";
+    const factory = state.layout === "treemap" ? createTreemapLayout : createNetworkLayout;
+    layout = factory(d3, radius, { onTick: tick, reducedMotion });
+    $("layout-toggle").textContent = state.layout === "treemap" ? "Vista circular" : "Treemap";
+    $("layout-toggle").setAttribute("aria-pressed", String(state.layout === "treemap"));
+    $("layout-toggle").title = state.layout === "treemap" ? "Volver a la disposición circular" : "Probar treemap y fuerzas por departamento";
+    document.querySelector(".network-panel").classList.toggle("treemap-mode", state.layout === "treemap");
+    lastFitRadius = null;
+    renderGraph();
+    fitGraph(false);
+  });
   $("rankings-toggle").addEventListener("click", () => {
     const open = $("inspector-panel").hidden;
     if (open) clearSelection();

@@ -24,6 +24,13 @@ def verify_layout(page):
     assert page.evaluate("""() => {
       const layout=window.utecvis.layout;
       if(layout.maxOverlap>0.06) return false;
+      if(window.utecvis.state.layout === 'treemap') {
+        return layout.nodes.every(n => {
+          const b=layout.boxFor(n), el=document.querySelector(`g.node[data-id="${n.id}"] .node-core`);
+          const r=el.r.baseVal.value;
+          return n.x-r>=b.x0+15.99 && n.x+r<=b.x1-15.99 && n.y-r>=b.y0+43.99 && n.y+r<=b.y1-15.99;
+        });
+      }
       const dots=[...document.querySelectorAll('g.node .node-core')].map(el=>el.getBoundingClientRect());
       for(let i=0;i<dots.length;i++)for(let j=i+1;j<dots.length;j++){
         const a=dots[i],b=dots[j];
@@ -420,6 +427,64 @@ def run(url, channel):
             }""")
             verify_layout(page)
             page.screenshot(path=f"/tmp/utecvis-{viewport['width']}.png")
+        # The experimental treemap is an alternate physical layout, not a new
+        # analytic network. Its data, metrics and recommendations stay identical.
+        page.set_viewport_size({"width": 1440, "height": 900})
+        page.locator("#reset").click()
+        observed_before = page.evaluate("JSON.stringify(window.utecvis.observed)")
+        metrics_before = page.evaluate(
+            "JSON.stringify(window.utecvis.nodes.map(n=>n.network_metrics))"
+        )
+        page.locator("#layout-toggle").click()
+        assert page.evaluate("window.utecvis.state.layout") == "treemap"
+        assert page.locator("#layout-toggle").inner_text() == "Vista circular"
+        assert page.locator("g.node").count() == 104
+        assert page.locator(".observed-edge").count() == 73
+        assert page.locator(".department-box").count() > 1
+        assert page.locator(".isolate-ring").is_hidden()
+        verify_layout(page)
+        page.locator("#prediction-toggle").click()
+        assert page.locator(".predicted-edge").count() == 53
+        page.wait_for_timeout(350)
+        verify_layout(page)
+        page.locator('[data-task="bridges"]').click()
+        page.wait_for_timeout(350)
+        verify_layout(page)
+        page.locator('[data-task="collaborators"]').click()
+        for viewport in [
+            {"width": 1440, "height": 900},
+            {"width": 740, "height": 1034},
+            {"width": 390, "height": 844},
+        ]:
+            page.set_viewport_size(viewport)
+            page.wait_for_timeout(350)
+            verify_layout(page)
+            assert (
+                page.evaluate("document.documentElement.scrollWidth")
+                <= viewport["width"]
+            )
+            assert page.evaluate("""() => {
+                const svg=document.querySelector('#network-svg').getBoundingClientRect();
+                return [...document.querySelectorAll('.department-box rect')].every(el=>{
+                    const r=el.getBoundingClientRect();
+                    return r.left>=svg.left && r.right<=svg.right && r.top>=svg.top && r.bottom<=svg.bottom;
+                });
+            }""")
+            page.screenshot(path=f"/tmp/utecvis-treemap-{viewport['width']}.png")
+        assert (
+            page.evaluate("JSON.stringify(window.utecvis.observed)") == observed_before
+        )
+        assert (
+            page.evaluate(
+                "JSON.stringify(window.utecvis.nodes.map(n=>n.network_metrics))"
+            )
+            == metrics_before
+        )
+        page.locator("#layout-toggle").click()
+        page.wait_for_timeout(350)
+        assert page.evaluate("window.utecvis.state.layout") == "circular"
+        assert page.locator(".department-box").count() == 0
+        verify_layout(page)
         assert not errors, errors
         assert not external_requests, external_requests
         reduced = browser.new_page(reduced_motion="reduce")
@@ -448,6 +513,7 @@ def run(url, channel):
                     "viewports": [1920, 1440, 1280, 740, 390],
                     "collision_and_boundary": "PASS",
                     "persistent_suggestion_controls_and_legend": "PASS",
+                    "treemap_and_return_to_circular": "PASS",
                     "errors": errors,
                 },
                 ensure_ascii=False,
