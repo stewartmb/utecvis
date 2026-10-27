@@ -4,6 +4,11 @@ Este registro reúne casos académicos comparables, fundamentos del método y
 referencias técnicas. Explica qué aporta cada fuente y qué no permite afirmar.
 No se atribuye toda la aplicación a una sola universidad o investigación.
 
+Las tres referencias del documento original
+`README_UTECVis_red_colaboracion.md`, sección 16, son **CollaborationViz, Duke —
+Understanding Duke Research y Harvard Catalyst Profiles**. La presencia de un proyecto en el documento no confirma cuál de sus
+visualizaciones recuerda el usuario.
+
 ## Casos similares: investigadores y colaboración académica
 
 ### 1. CollaborationViz — University of Arkansas for Medical Sciences (2014)
@@ -24,23 +29,27 @@ with Restart; muestra recomendaciones como enlaces punteados.
 y participación compartida en proyectos; su recomendador combina tres señales.
 Los resultados de evaluación del artículo no son resultados de UTECVis.
 
-### 2. Harvard SEAS Faculty Explorer
+### 2. Duke — Understanding Duke Research
 
-**Caso comparable identificado durante esta revisión; no está confirmado que sea
-el sitio que el usuario recuerda como inspiración inicial.**
+**Antecedente documentado en la sección 16 del Markdown original del usuario.**
 
-- [Explorador de profesores de Harvard SEAS](https://facultyexplorer.seas.harvard.edu/)
-- [Faculty Teaching & Research Connections](https://facultyexplorer.seas.harvard.edu/faculty-connections/)
+- [Enlace exacto incluido en ese documento](https://bigdata.duke.edu/projects/understanding-duke-research-based-on-large-scale-faculty-publication-records/)
 
-**Qué respalda:** explorar profesores, intereses, áreas académicas y conexiones
-institucionales mediante visualización interactiva. Es un antecedente del problema
-y de la interacción, no una fuente verificada para nuestra fórmula de sugerencias.
-No todas sus vistas representan exclusivamente parejas de profesores: la página
-Faculty Connections incluye otras entidades del ecosistema académico.
+El documento original y la presentación oficial del proyecto describen una red
+de similitud entre investigadores, con aristas ponderadas derivadas del análisis
+textual de títulos de publicaciones. También explora coautores y co-investigadores.
+Es la referencia del plan para similitud académica. El enlace antiguo redirige; se
+pudo consultar su contenido indexado, pero no se verificó una demo en funcionamiento.
+
+**Diferencia:** en UTECVis la semejanza temática alimenta las sugerencias y se
+mantiene separada de las conexiones registradas. No implementamos una copia del
+modelo de Duke ni atribuimos a ese proyecto nuestros pesos o embeddings.
 
 ### 3. Harvard Catalyst Profiles / Profiles Research Networking Software
 
-- [Descripción de perfiles, redes y explicación de conexiones](https://connects.catalyst.harvard.edu/Profiles/about/default.aspx)
+**Antecedente documentado en la sección 16 del Markdown original del usuario.**
+
+- [Descripción de perfiles, redes y explicación de conexiones](https://connects.catalyst.harvard.edu/profiles/about/default.aspx?type=About)
 - [Galería de visualizaciones de redes académicas](https://profiles.catalyst.harvard.edu/?pg=visualizations)
 
 **Qué respalda:** redes de coautores, conceptos de investigación, visualizaciones
@@ -109,7 +118,7 @@ rectangulares rígidos; no es una reproducción exacta de ese plugin.
 |---|---|---|
 | Red académica y evidencias | CollaborationViz; casos de Harvard | Cohorte y reglas de aristas de CRIS UTEC. |
 | Sugerencias estructurales R | CollaborationViz; NetworkX | Parámetros, simetrización, normalización y evaluación sobre nuestra cohorte. |
-| Afinidad temática T | Sentence-BERT; modelo multilingüe | Fuentes textuales, ponderación de huellas y cobertura de perfiles. |
+| Afinidad temática T | Duke como antecedente del caso; Sentence-BERT y modelo multilingüe como componentes | Fuentes textuales, ponderación de huellas y cobertura de perfiles. |
 | Cercanía institucional I | Afiliaciones publicadas por CRIS | Jerarquía y valores 1 / 0,70 / 0,40: heurística, no coeficientes aprendidos. |
 | Combinación de señales | Antecedentes híbridos como DRACoR | 60/30/10 ajustable: escenario exploratorio sin validación predictiva. |
 | Treemap + fuerzas | Group-in-a-Box; Force in a Box | Departamentos, paredes rígidas y evaluación de legibilidad. |
