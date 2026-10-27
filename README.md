@@ -58,6 +58,8 @@ requirements.txt     Dependencias para ejecutar la aplicación
 2. **Encontrar puentes.** En “Puentes”, localizar nodos grandes por intermediación
    y consultar su valor exacto al seleccionarlos. Revisar vecinos, departamentos y conexiones.
    La intermediación alta por sí sola no prueba una conexión entre departamentos.
+   Con Sugerencias activadas, el tamaño pasa a intermediación **simulada**;
+   desactivarlas recupera la red observada.
 3. **Descubrir afinidades.** Activar “Sugerencias” arriba a la izquierda, debajo de la leyenda, ampliar
    Top % y, si se desea, abrir «Ajustar criterios» para modificar las tres importancias. Seleccionar una línea sugerida
    para revisar las señales. Buscar a Luz Adanaque para observar que un perfil sin
@@ -146,6 +148,7 @@ por persona no equivale a contar su producción única.
 | Grado ponderado `W(v)` | `Σ w_vu` sobre sus vecinos | Intensidad de trabajos compartidos por pareja; máximo 20. Un trabajo con varios vecinos puede aportar varias veces. |
 | Centralidad de grado | `k(v)/(N−1) = k(v)/103` | Grado normalizado; guardado en los datos, sin selector visual adicional. |
 | Intermediación `B(v)` | Fracciones de caminos mínimos entre otras parejas que pasan por v, normalizadas | Identifica posiciones de paso en la red; determina el tamaño en Puentes. |
+| Intermediación simulada `B_sim(v)` | Misma fórmula de B aplicada a las 73 aristas registradas más las sugerencias mostradas, con los 104 nodos | Tamaño de Puentes con Sugerencias activadas; representa un escenario hipotético. |
 | Componente | Conjunto conectado mediante algún camino | 62 componentes, incluidos 57 aislados. No es un departamento. |
 | Comunidad | Modularidad ponderada con `greedy_modularity_communities` de NetworkX | Agrupación calculada por conexiones, distinta de afiliaciones publicadas. Se conserva en datos; se retiró su vista. Hay 10 comunidades de más de una persona y 57 unitarias. |
 | Nodo de articulación | Retirarlo aumenta el número de componentes | 9 investigadores. No equivale a todo nodo con B alta. |
@@ -181,8 +184,10 @@ la existencia de grupos oficiales ni una solución única del problema.
 
 **Python y D3 cumplen funciones diferentes:** NetworkX prepara estas métricas y
 RWR en Python; D3 dibuja y gestiona fuerzas, treemap, zoom e interacción en el
-navegador. NetworkX no forma parte de D3. Las métricas corresponden a **toda la
-red registrada**, aunque se filtre la vista o se activen sugerencias.
+navegador. NetworkX no forma parte de D3. Las métricas guardadas corresponden a
+**toda la red registrada**, aunque se filtre la vista o se activen sugerencias.
+La intermediación simulada es un cálculo adicional en JavaScript, separado de
+esos datos y contrastado con NetworkX; no sustituye la intermediación observada.
 
 
 **Tamaño dinámico:** por defecto cuenta vecinos por las aristas visibles, tanto
@@ -197,14 +202,27 @@ conexiones, el radio mínimo es 7. Las sugerencias pueden superar el radio 51.
 Los filtros cuentan solo aristas con ambos extremos visibles. Las sugerencias se
 distinguen en el tooltip y con líneas violetas discontinuas. Esta medida de la
 vista es independiente del grado observado que muestran los detalles.
-En Puentes, `radio = 7 + 44 × sqrt(B/B_max)`, con B y B_max de la red observada
-completa. Su tamaño no cambia con sugerencias, porque estas no son evidencia
-registrada. El máximo B actual es aproximadamente 0,06797. El radio es una unidad
+En Puentes, `radio = 7 + 44 × sqrt(B/B_max)`:
+
+- **Sugerencias desactivadas:** B y B_max de la red observada completa; su máximo
+  actual es aproximadamente 0,06797.
+- **Sugerencias activadas:** B_sim y su máximo en el escenario, calculados con
+  todos los nodos, las aristas registradas y las sugerencias mostradas. La leyenda
+  cambia a “Intermediación simulada”. Al cambiar Top %, pesos o filtros, el tamaño
+  se actualiza si cambia el conjunto de aristas sugeridas.
+
+El máximo se ajusta a cada escenario para mantener radios entre 7 y 51. Por eso
+los tamaños expresan importancia relativa dentro del escenario: no permiten
+comparar magnitudes absolutas entre escenarios sin consultar sus valores.
+Una nueva conexión puede reducir B al crear caminos alternativos; más aristas
+no implica necesariamente un nodo mayor en Puentes.
+
+ El radio es una unidad
 del espacio SVG y el diámetro es su doble; el zoom cambia su tamaño en pantalla.
 7 conserva visibles los aislados y 44 fija el contraste: son parámetros visuales.
 
 Los trabajos se representan mediante el grosor de las aristas y se consultan
-en tooltips y detalles; «Puentes» utiliza la intermediación observada. No hay selectores globales de tamaño o color.
+en tooltips y detalles; «Puentes» utiliza intermediación observada o simulada según la capa de sugerencias. No hay selectores globales de tamaño o color.
 
 **Diseño:** color por departamento principal; tamaño de nodo en escala
 lineal para el grado visible y de raíz cuadrada para intermediación,
@@ -216,7 +234,8 @@ Todos los nodos, incluidos los aislados, permanecen dentro del bloque de su depa
 D3 combina fuerzas de enlaces observados, repulsión y colisión. Los límites
 rectangulares y la corrección geométrica evitan solapamientos y salidas del bloque.
 Al arrastrar un nodo, sus vecinos directos del mismo bloque acompañan parte del
-movimiento. Las sugerencias no modifican las fuerzas de enlace ni las métricas.
+movimiento. Las sugerencias no modifican las fuerzas de enlace ni las métricas guardadas;
+sí intervienen en el cálculo separado de intermediación simulada.
 Los escenarios densos amplían el espacio de cálculo y se encuadran
 automáticamente. El ajuste usa toda la altura disponible; en pantallas amplias los
 controles de sugerencias ocupan el margen izquierdo. El grosor de las aristas va de
@@ -433,8 +452,10 @@ R está en 0–1: **cero entre componentes desconectados o desde un aislado haci
 otro nodo**. Una pareja puede compartir temas o institución y tener R = 0.
 El cálculo utiliza hasta 1.000 iteraciones y tolerancia `1e-12`.
 El reinicio del 10 % es un parámetro exploratorio, distinto del peso global de
-Red. Las sugerencias nunca se añaden al grafo que calcula R o intermediación:
-una hipótesis no genera nueva evidencia para sí misma.
+Red. Las sugerencias nunca se añaden al grafo que calcula R o la intermediación
+observada. Se usan únicamente en el escenario separado de intermediación
+simulada; este resultado no alimenta R ni S, evitando que una hipótesis genere
+nueva evidencia para su propia puntuación.
 
 ### 4. Combinación S, pesos y cobertura
 
@@ -495,6 +516,40 @@ nodo–enlace aporta una referencia de escala: aquí `338 < 4 × 104 = 416`, sin
 asegurar legibilidad. El límite no demuestra precisión predictiva.
 Véanse las fuentes y sus alcances en [REFERENCIAS.md](REFERENCIAS.md).
 
+### Intermediación simulada al ajustar sugerencias
+
+En Puentes con Sugerencias activadas, calculamos B para **cada uno de los 104
+investigadores**, sobre una copia de la red registrada más todas las sugerencias
+que se dibujan. Una pareja seleccionada que se conserve fuera del Top también
+forma parte del escenario si su línea sigue visible. Cada arista cuesta un paso,
+sin usar su cantidad de trabajos ni su puntuación como distancia. Se mantiene la
+normalización de B para 104 nodos, con divisor 5.253.
+
+Los filtros afectan a las sugerencias que se incorporan al escenario; **no
+eliminan las aristas registradas ocultas** de este cálculo. Así se conserva la
+misma cohorte y no se mezcla el efecto de añadir una hipótesis con el de retirar
+investigadores. Los nodos ocultos se calculan, aunque no se dibujen.
+
+Se aplica el algoritmo exacto de Brandes en un **Web Worker local**, fuera del
+hilo de la interfaz. Tras 45 ms sin un nuevo cambio del conjunto de aristas se
+solicita el cálculo; si cambian solo las puntuaciones y las parejas siguen siendo
+las mismas, se reutiliza el resultado. Los resultados de solicitudes anteriores
+se descartan si ya cambió el escenario o se desactivó la capa. D3 actualiza radios,
+colisiones y posiciones cuando llega el resultado. Mientras espera, la leyenda
+indica “calculando…”, conservando transitoriamente el tamaño anterior.
+
+El tooltip indica el valor usado por el tamaño. El perfil conserva B observada
+y añade B simulada cuando corresponde. Al desactivar Sugerencias se recuperan
+inmediatamente los valores observados. Con Top 0 %, ambas redes coinciden.
+El escenario no altera `network.json`, los embeddings, I, RWR ni las puntuaciones
+S: **simular un puente no lo convierte en colaboración registrada**.
+
+Código: [betweenness.mjs](app/static/betweenness.mjs) y
+[betweenness-worker.mjs](app/static/betweenness-worker.mjs).
+Se compara con NetworkX en la red original y en escenarios de Top 1 %, Top 5 %
+y peso institucional extremo. También se comprueban caminos empatados,
+componentes, aislados, duplicados y cambios rápidos en navegador.
+
 ### 6. Qué está calculado y qué hemos elegido
 
 | Calculado a partir de los datos | Decisiones del método o de presentación |
@@ -552,7 +607,7 @@ ranking interactivo, en [app/static/scoring.mjs](app/static/scoring.mjs).
 
 ```bash
 python -m pytest -q
-node --test tests/scoring.test.mjs tests/treemap-layout.test.mjs
+node --test tests/scoring.test.mjs tests/treemap-layout.test.mjs tests/betweenness.test.mjs
 ```
 
 Las pruebas no visitan CRIS ni descargan el modelo. La prueba del preparador RWR

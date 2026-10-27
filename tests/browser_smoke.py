@@ -4,6 +4,7 @@ import argparse
 import json
 import math
 
+import networkx as nx
 from playwright.sync_api import sync_playwright
 
 
@@ -24,6 +25,33 @@ def verify_layout(page):
         return n.x-r>=b.x0+15.99 && n.x+r<=b.x1-15.99 && n.y-r>=b.y0+43.99 && n.y+r<=b.y1-15.99;
       });
     }""")
+
+
+def verify_simulated_bridges(page):
+    page.wait_for_function(
+        "window.utecvis.simulatedBridges.values && !window.utecvis.simulatedBridges.pending"
+    )
+    scenario = page.evaluate("""() => ({
+      ids: window.utecvis.nodes.map(n=>n.id),
+      edges: [...window.utecvis.observed, ...document.querySelectorAll('.prediction-hit')].map(e=>e.__data__||e).map(e=>[e.source,e.target]),
+      values: [...window.utecvis.simulatedBridges.values],
+      error: window.utecvis.simulatedBridges.error,
+      elapsed: window.utecvis.simulatedBridges.elapsed
+    })""")
+    assert not scenario["error"]
+    graph = nx.Graph()
+    graph.add_nodes_from(scenario["ids"])
+    graph.add_edges_from(scenario["edges"])
+    expected = nx.betweenness_centrality(graph, weight=None)
+    assert all(
+        math.isclose(value, expected[id], abs_tol=1e-12)
+        for id, value in scenario["values"]
+    )
+    assert "Intermediación simulada" in page.locator("#metric-key").inner_text()
+    assert scenario["elapsed"] < 1000
+    page.wait_for_timeout(400)
+    verify_layout(page)
+    return dict(scenario["values"])
 
 
 def verify_edge_hover(page, kind):
@@ -337,6 +365,42 @@ def run(url, channel):
         page.wait_for_timeout(350)
         assert math.isclose(max(n["radius"] for n in snapshot(page).values()), 51)
         verify_layout(page)
+        observed_bridges = snapshot(page)
+        recorded_metrics = page.evaluate(
+            "JSON.stringify(window.utecvis.nodes.map(n=>n.network_metrics))"
+        )
+        toggle_suggestions(page)
+        verify_simulated_bridges(page)
+        assert any(
+            n["radius"] != observed_bridges[id]["radius"]
+            for id, n in snapshot(page).items()
+        )
+        page.locator("#top-percent").evaluate(
+            "el=>{el.value=5;el.dispatchEvent(new Event('input'));}"
+        )
+        page.wait_for_function(
+            "window.utecvis.top.requested===265 && !window.utecvis.simulatedBridges.pending"
+        )
+        verify_simulated_bridges(page)
+        page.locator("#weight-institutional").evaluate(
+            "el=>{el.value=100;el.dispatchEvent(new Event('input'));}"
+        )
+        page.wait_for_function(
+            "window.utecvis.state.weights.institutional===100 && !window.utecvis.simulatedBridges.pending"
+        )
+        verify_simulated_bridges(page)
+        # Rapid changes followed by disabling cannot apply a stale worker result.
+        page.locator("#top-percent").evaluate("""el=>{
+          el.value=2;el.dispatchEvent(new Event('input'));
+          document.querySelector('#prediction-toggle').click();
+        }""")
+        page.wait_for_timeout(500)
+        assert "Intermediación observada" == page.locator("#metric-key").inner_text()
+        assert snapshot(page) == observed_bridges
+        assert recorded_metrics == page.evaluate(
+            "JSON.stringify(window.utecvis.nodes.map(n=>n.network_metrics))"
+        )
+        page.locator("#reset").click()
         page.locator('[data-task="collaborators"]').click()
         page.wait_for_timeout(350)
         assert snapshot(page) == baseline
@@ -593,6 +657,7 @@ def run(url, channel):
                     "slider_coalescing": timing,
                     "portraits_offline": "PASS",
                     "pair_coincidences_and_help": "PASS",
+                    "simulated_bridges_match_networkx": "PASS",
                     "errors": errors,
                 },
                 ensure_ascii=False,

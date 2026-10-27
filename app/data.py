@@ -169,7 +169,8 @@ class Dataset:
             else None,
             "signals": signals,
             "institution": institutional(
-                self.nodes[a], self.nodes[b],
+                self.nodes[a],
+                self.nodes[b],
                 self.prepared.get("metadata", {}).get("institutional_levels", {}),
             ),
             "common_neighbors": shared,

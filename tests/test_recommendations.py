@@ -11,8 +11,12 @@ import pytest
 
 from app import create_app
 from app.recommendations import (
-    calibrate_institutional, graph_from, institutional,
-    recalibrate_institutional, rwr_scores, selected_inputs,
+    calibrate_institutional,
+    graph_from,
+    institutional,
+    recalibrate_institutional,
+    rwr_scores,
+    selected_inputs,
 )
 
 DATA = Path(__file__).resolve().parents[1] / "data"
@@ -23,7 +27,9 @@ def affiliation(id, kind):
 
 
 def test_institutional_specificity_does_not_add_nested_memberships():
-    scores = calibrate_institutional(json.loads((DATA / "network.json").read_text()))["scores"]
+    scores = calibrate_institutional(json.loads((DATA / "network.json").read_text()))[
+        "scores"
+    ]
     a = {
         "affiliations": [
             affiliation("g", "research_group"),
@@ -40,17 +46,21 @@ def test_institutional_specificity_does_not_add_nested_memberships():
     assert institutional(a, b, scores)["level"] == "research_group"
     assert len(institutional(a, b, scores)["shared"]) == 1
     assert (
-        institutional(a, {"affiliations": [affiliation("d", "department")]}, scores)["score"]
+        institutional(a, {"affiliations": [affiliation("d", "department")]}, scores)[
+            "score"
+        ]
         == scores["department"]
     )
     assert (
-        institutional(a, {"affiliations": [affiliation("other", "department")]}, scores)[
-            "score"
-        ]
+        institutional(
+            a, {"affiliations": [affiliation("other", "department")]}, scores
+        )["score"]
         == 0
     )
     assert (
-        institutional(a, {"affiliations": [affiliation("UTEC", "university")]}, scores)["score"]
+        institutional(a, {"affiliations": [affiliation("UTEC", "university")]}, scores)[
+            "score"
+        ]
         is None
     )
     center = {
@@ -59,7 +69,10 @@ def test_institutional_specificity_does_not_add_nested_memberships():
             affiliation("d", "department"),
         ]
     }
-    assert institutional(center, center, scores)["score"] == scores["research_center_or_institute"]
+    assert (
+        institutional(center, center, scores)["score"]
+        == scores["research_center_or_institute"]
+    )
 
 
 def test_rwr_respects_paths_components_and_isolated_nodes():
@@ -214,7 +227,9 @@ def test_api_excludes_observed_pairs_and_provides_evidence(bundle):
     assert client.get(f"/api/professors/{a}?kind=invalid").status_code == 400
 
 
-def test_institutional_calibration_matches_counts_formula_prepared_pairs_and_api(bundle):
+def test_institutional_calibration_matches_counts_formula_prepared_pairs_and_api(
+    bundle,
+):
     network, analysis = bundle
     calibrated = calibrate_institutional(network)
     assert calibrated["counts"] == {
@@ -228,8 +243,12 @@ def test_institutional_calibration_matches_counts_formula_prepared_pairs_and_api
     assert sum(c["observed"] for c in calibrated["counts"].values()) == 73
     base, group = 32 / 4594, 18 / 94
     assert calibrated["scores"]["research_group"] == 1
-    assert calibrated["scores"]["research_center_or_institute"] == pytest.approx((6 / 85 - base) / (group - base))
-    assert calibrated["scores"]["department"] == pytest.approx((17 / 378 - base) / (group - base))
+    assert calibrated["scores"]["research_center_or_institute"] == pytest.approx(
+        (6 / 85 - base) / (group - base)
+    )
+    assert calibrated["scores"]["department"] == pytest.approx(
+        (17 / 378 - base) / (group - base)
+    )
     assert calibrated["rates"]["unavailable"] is None
     metadata = analysis["recommendations"]["metadata"]
     assert metadata["institutional_calibration"] == calibrated
@@ -243,14 +262,22 @@ def test_institutional_calibration_matches_counts_formula_prepared_pairs_and_api
         assert pair["institutional"] == match["score"]
         reverse = institutional(nodes[b], nodes[a], calibrated["scores"])
         assert (match["score"], match["level"]) == (reverse["score"], reverse["level"])
-        assert [o["organisation_id"] for o in match["shared"]] == [o["organisation_id"] for o in reverse["shared"]]
+        assert [o["organisation_id"] for o in match["shared"]] == [
+            o["organisation_id"] for o in reverse["shared"]
+        ]
         if match["level"] not in checked:
             response = client.get(f"/api/pairs/{a}/{b}").json
-            assert response["institution"]["score"] == response["signals"]["institutional"] == match["score"]
+            assert (
+                response["institution"]["score"]
+                == response["signals"]["institutional"]
+                == match["score"]
+            )
             checked.add(match["level"])
 
 
-def test_institutional_recalibration_preserves_other_signals_and_rejects_stale_network(bundle, tmp_path):
+def test_institutional_recalibration_preserves_other_signals_and_rejects_stale_network(
+    bundle, tmp_path
+):
     network, analysis = bundle
     for name in ("network", "analysis"):
         (tmp_path / f"{name}.json").write_bytes((DATA / f"{name}.json").read_bytes())

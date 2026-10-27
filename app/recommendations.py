@@ -71,14 +71,19 @@ def calibrate_institutional(network):
             level = "unavailable" if match["score"] is None else "none"
         counts[level]["pairs"] += 1
         counts[level]["observed"] += int((a["id"], b["id"]) in observed)
-    rates = {k: v["observed"] / v["pairs"] if v["pairs"] else None for k, v in counts.items()}
+    rates = {
+        k: v["observed"] / v["pairs"] if v["pairs"] else None for k, v in counts.items()
+    }
     rates["unavailable"] = None
     baseline, maximum = rates["none"], rates["research_group"]
     if baseline is None or maximum is None or maximum <= baseline:
-        raise ValueError("No hay contraste suficiente entre grupo y ninguna coincidencia para calibrar I.")
+        raise ValueError(
+            "No hay contraste suficiente entre grupo y ninguna coincidencia para calibrar I."
+        )
     scores = {
         k: min(1.0, max(0.0, (rates[k] - baseline) / (maximum - baseline)))
-        if rates[k] is not None else None
+        if rates[k] is not None
+        else None
         for k in levels[:-1]
     }
     return {
@@ -98,16 +103,25 @@ def recalibrate_institutional(folder):
     network = json.loads(network_path.read_text())
     analysis = json.loads(analysis_path.read_text())
     prepared = analysis["recommendations"]
-    if prepared["metadata"]["network_sha256"] != hashlib.sha256(network_path.read_bytes()).hexdigest():
-        raise ValueError("La red cambió: ejecuta --prepare para regenerar todas las señales.")
+    if (
+        prepared["metadata"]["network_sha256"]
+        != hashlib.sha256(network_path.read_bytes()).hexdigest()
+    ):
+        raise ValueError(
+            "La red cambió: ejecuta --prepare para regenerar todas las señales."
+        )
     calibration = calibrate_institutional(network)
     nodes = {n["id"]: n for n in network["nodes"]}
     for pair in prepared["pairs"]:
-        pair["institutional"] = institutional(nodes[pair["source"]], nodes[pair["target"]], calibration["scores"])["score"]
+        pair["institutional"] = institutional(
+            nodes[pair["source"]], nodes[pair["target"]], calibration["scores"]
+        )["score"]
     prepared["metadata"]["institutional_levels"] = calibration["scores"]
     prepared["metadata"]["institutional_calibration"] = calibration
     temporary = analysis_path.with_suffix(".tmp")
-    temporary.write_text(json.dumps(analysis, ensure_ascii=False, indent=2, allow_nan=False) + "\n")
+    temporary.write_text(
+        json.dumps(analysis, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
+    )
     temporary.replace(analysis_path)
     print(json.dumps(calibration, ensure_ascii=False, indent=2))
 

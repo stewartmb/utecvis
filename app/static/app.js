@@ -124,6 +124,9 @@ let metricMaxima = {};
 let rankingSignature = "";
 let suggestionFrame = null;
 let displayedPredictions = [];
+let bridgeWorker, bridgeTimer;
+let bridgeToken = 0, bridgeSignature = "", bridgePending = false;
+let bridgeValues = null, bridgeMaximum = 0, bridgeElapsed = 0, bridgeError = false;
 let tooltipHTML = "";
 const pairCache = new Map();
 const personCache = new Map();
@@ -145,12 +148,88 @@ function radius(node) {
 
 function updateNodeRadii() {
   for (const n of nodes) {
+    const simulated = state.metric === "betweenness" && state.predictions && bridgeValues;
     const value = state.metric === "degree"
       ? connectionCounts.get(n.id)?.total ?? n.network_metrics.degree
-      : n.network_metrics[state.metric];
-    const ratio = Math.max(0, value) / (metricMaxima[state.metric] || 1);
+      : simulated ? bridgeValues.get(n.id) : n.network_metrics.betweenness;
+    const maximum = simulated ? bridgeMaximum : metricMaxima[state.metric];
+    const ratio = Math.max(0, value) / (maximum || 1);
     nodeRadii.set(n.id, 7 + 44 * (state.metric === "degree" ? ratio : Math.sqrt(ratio)));
   }
+}
+
+
+function simulatedBridgeText(id) {
+  if (bridgeError) return "Simulación no disponible";
+  if (bridgePending) return "Calculando…";
+  return decimal(bridgeValues?.get(id) ?? nodeById.get(id).network_metrics.betweenness, 4);
+}
+
+function simulatedBridgeDetail(id) {
+  return state.metric === "betweenness" && state.predictions
+    ? `<p id="simulated-bridge-detail" class="scope-note"><strong>Intermediación simulada:</strong> ${simulatedBridgeText(id)} · red registrada + sugerencias visibles.</p>` : "";
+}
+
+function updateBridgeReadouts() {
+  const detail = $("simulated-bridge-detail");
+  if (detail && state.selected) detail.outerHTML = simulatedBridgeDetail(state.selected);
+  const tooltipValue = document.querySelector("[data-bridge-tooltip]");
+  if (tooltipValue && state.hovered)
+    tooltipValue.textContent = simulatedBridgeText(state.hovered);
+}
+
+function requestBridgeMetrics(predictionEdges) {
+  if (state.metric !== "betweenness" || !state.predictions) {
+    clearTimeout(bridgeTimer);
+    if (bridgeSignature) bridgeToken++;
+    bridgeSignature = "";
+    bridgePending = false;
+    return;
+  }
+  const signature = predictionEdges.map((e) => pairKey(e.source, e.target)).sort().join(";");
+  // Scores and weights can change without changing the actual scenario graph.
+  const key = `scenario:${signature}`;
+  if (bridgeSignature === key) return;
+  bridgeSignature = key;
+  const token = ++bridgeToken;
+  bridgeError = false;
+  clearTimeout(bridgeTimer);
+  if (!predictionEdges.length) {
+    bridgeValues = new Map(nodes.map((n) => [n.id, n.network_metrics.betweenness]));
+    bridgeMaximum = metricMaxima.betweenness;
+    bridgePending = false;
+    return;
+  }
+  bridgePending = true;
+  bridgeTimer = setTimeout(() => {
+    const fail = () => {
+      if (token !== bridgeToken) return;
+      bridgePending = false;
+      bridgeError = true;
+      bridgeValues = null;
+      renderGraph({ live: true });
+      updateBridgeReadouts();
+    };
+    try {
+      if (!bridgeWorker) {
+        bridgeWorker = new Worker(new URL("./betweenness-worker.mjs", import.meta.url), { type: "module" });
+        bridgeWorker.onmessage = ({ data }) => {
+          if (data.token !== bridgeToken || state.metric !== "betweenness" || !state.predictions) return;
+          bridgeValues = new Map(data.values);
+          bridgeMaximum = d3.max(data.values, ([, value]) => value) || 0;
+          bridgeElapsed = data.elapsed;
+          bridgePending = false;
+          renderGraph({ live: true });
+          updateBridgeReadouts();
+        };
+      }
+      bridgeWorker.onerror = (event) => { event.preventDefault(); fail(); bridgeWorker.terminate(); bridgeWorker = null; };
+      bridgeWorker.postMessage({
+        token, ids: nodes.map((n) => n.id),
+        edges: [...observed, ...predictionEdges].map(({ source, target }) => ({ source, target })),
+      });
+    } catch { fail(); }
+  }, 45);
 }
 
 function scheduleSuggestions() {
@@ -186,6 +265,7 @@ function nodeTooltip(node) {
       <div><b>${nf.format(works)}</b><span>Trabajos compartidos</span></div>
     </div>
     ${state.predictions ? `<div class="tooltip-suggestions">${nf.format(counts.suggested)} conexiones sugeridas</div>` : ""}
+    ${state.metric === "betweenness" ? `<div class="tooltip-suggestions">Intermediación ${state.predictions ? `simulada: <span data-bridge-tooltip>${simulatedBridgeText(node.id)}</span>` : `observada: ${decimal(node.network_metrics.betweenness, 4)}`}</div>` : ""}
   </div>`;
 }
 
@@ -555,6 +635,7 @@ function renderGraph({ live = false } = {}) {
     for (const id of [edge.source, edge.target])
       visibleWorkCounts.set(id, visibleWorkCounts.get(id) + edge.weight);
   }
+  requestBridgeMetrics(predictionEdges);
   updateNodeRadii();
   predictionSelection = layer
     .select(".prediction-layer")
@@ -627,6 +708,7 @@ function renderGraph({ live = false } = {}) {
     )
     .attr("data-id", (n) => n.id)
     .attr("data-visible-degree", (n) => connectionCounts.get(n.id).total)
+    .attr("data-betweenness", (n) => state.metric === "betweenness" && state.predictions && bridgeValues ? bridgeValues.get(n.id) : n.network_metrics.betweenness)
     .attr(
       "aria-label",
       (n) =>
@@ -728,6 +810,7 @@ function renderGraph({ live = false } = {}) {
   tick();
   focusStyles();
   updateStats();
+  updateMetricKey();
   renderLegend();
   previewCategory();
   if (layoutChanged && lastFitRadius !== layout.outerRadius) fitGraph(false);
@@ -828,7 +911,7 @@ function renderPerson(data) {
   const n = data.node,
     m = n.network_metrics;
   $("inspector").innerHTML =
-    `<button class="back-button" data-back>← Volver al panorama</button><div class="avatar" style="color:${nodeColor(n)};background:${nodeColor(n)}18;border-color:${nodeColor(n)}55">${escape(initials(n.name))}</div><div class="eyebrow">INVESTIGADOR / UTEC</div><h2>${escape(n.name)}</h2><p class="department-name">${escape(n.department || "Sin departamento publicado")}</p><a class="text-link" href="${escape(n.source_url)}" target="_blank" rel="noreferrer">Ver perfil en CRIS ↗</a><div class="metric-grid"><div><strong>${m.degree}</strong><span>colaboradores en la cohorte</span></div><div><strong>${nf.format(m.weighted_degree)}</strong><span>registros compartidos</span></div><div><strong>${decimal(m.betweenness, 4)}</strong><span>intermediación</span></div><div><strong>${data.cross_department_neighbors}</strong><span>vecinos de otros departamentos</span></div></div><p class="scope-note">Métricas de la red observada completa.</p><button id="neighbors-only" class="button neighbor-button${state.neighborsOnly ? " active" : ""}" aria-pressed="${state.neighborsOnly}">${state.neighborsOnly ? "Volver a toda la selección" : "Ver solo sus conexiones"}</button>${!m.degree ? '<div class="insight-note"><strong>Sin conexiones dentro de estos 104 perfiles.</strong> Sus trabajos pueden tener coautores externos; no equivale a investigar en solitario.</div>' : ""}<section class="detail-section"><h3>Intereses de investigación</h3>${n.research_areas.length ? tags(n.research_areas) : '<p class="scope-note">No publicados en el perfil.</p>'}${data.preparation?.biography_fallback ? '<p class="scope-note">Temática estimada desde la biografía: información limitada.</p>' : ""}</section><section class="detail-section"><h3>Pertenencias</h3>${
+    `<button class="back-button" data-back>← Volver al panorama</button><div class="avatar" style="color:${nodeColor(n)};background:${nodeColor(n)}18;border-color:${nodeColor(n)}55">${escape(initials(n.name))}</div><div class="eyebrow">INVESTIGADOR / UTEC</div><h2>${escape(n.name)}</h2><p class="department-name">${escape(n.department || "Sin departamento publicado")}</p><a class="text-link" href="${escape(n.source_url)}" target="_blank" rel="noreferrer">Ver perfil en CRIS ↗</a><div class="metric-grid"><div><strong>${m.degree}</strong><span>colaboradores en la cohorte</span></div><div><strong>${nf.format(m.weighted_degree)}</strong><span>registros compartidos</span></div><div><strong>${decimal(m.betweenness, 4)}</strong><span>intermediación observada</span></div><div><strong>${data.cross_department_neighbors}</strong><span>vecinos de otros departamentos</span></div></div><p class="scope-note">Métricas de la red observada completa.</p>${simulatedBridgeDetail(n.id)}<button id="neighbors-only" class="button neighbor-button${state.neighborsOnly ? " active" : ""}" aria-pressed="${state.neighborsOnly}">${state.neighborsOnly ? "Volver a toda la selección" : "Ver solo sus conexiones"}</button>${!m.degree ? '<div class="insight-note"><strong>Sin conexiones dentro de estos 104 perfiles.</strong> Sus trabajos pueden tener coautores externos; no equivale a investigar en solitario.</div>' : ""}<section class="detail-section"><h3>Intereses de investigación</h3>${n.research_areas.length ? tags(n.research_areas) : '<p class="scope-note">No publicados en el perfil.</p>'}${data.preparation?.biography_fallback ? '<p class="scope-note">Temática estimada desde la biografía: información limitada.</p>' : ""}</section><section class="detail-section"><h3>Pertenencias</h3>${
       n.affiliations
         .filter((a) => a.type !== "university")
         .map(
@@ -1067,12 +1150,16 @@ function syncSuggestionControls() {
 function updateMetricKey() {
   $("metric-key").textContent = {
     degree: "Conexiones visibles",
-    betweenness: "Intermediación observada",
+    betweenness: state.predictions
+      ? bridgeError ? "Intermediación observada · sin simulación" : `Intermediación simulada${bridgePending ? " · calculando…" : ""}`
+      : "Intermediación observada",
   }[state.metric];
   $("metric-key").title =
     state.metric === "degree"
       ? "Vecinos por conexiones registradas y sugeridas que aparecen en pantalla. Las sugerencias no modifican las métricas observadas."
-      : "Métrica de la red observada completa.";
+      : state.predictions && !bridgeError
+        ? "Escenario con los 104 perfiles, todas las aristas registradas y las sugerencias mostradas. Tamaños relativos al máximo del escenario; no prueba colaboraciones futuras."
+        : "Métrica de la red observada completa.";
 }
 
 function wireCriterionHelp() {
@@ -1345,6 +1432,9 @@ async function start() {
       },
       get connectionCounts() {
         return connectionCounts;
+      },
+      get simulatedBridges() {
+        return { pending: bridgePending, values: bridgeValues, maximum: bridgeMaximum, elapsed: bridgeElapsed, error: bridgeError, token: bridgeToken };
       },
     };
   } catch (error) {

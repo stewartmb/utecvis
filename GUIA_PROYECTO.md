@@ -147,7 +147,7 @@ La cobertura es la fracción del peso solicitado que tiene datos disponibles. En
 
 Los tres controles conservan una suma de 100 %: al modificar uno, los otros se redistribuyen proporcionalmente; si ambos estaban en cero, se reparte entre ellos por igual, ajustando el redondeo.
 
-Nunca se añaden sugerencias a la red usada para recalcular B, comunidades o R. Así evitamos que una hipótesis refuerce artificialmente su propia puntuación.
+Nunca se añaden sugerencias a la red usada para calcular B observada, comunidades o R; solo se añaden a una copia para B simulada. Así evitamos que una hipótesis refuerce artificialmente su propia puntuación.
 
 ## 9. Parejas candidatas, Top % y rankings
 
@@ -157,7 +157,7 @@ Top % selecciona una fracción del ranking de candidatas con ambos extremos visi
 
 El orden es puntuación descendente y, ante empate, identificadores estables. Un porcentaje del ranking no es probabilidad de colaboración. Las candidatas se exploran mediante las líneas del Top visible. Al desactivar la capa desaparecen las aristas sugeridas.
 
-Colaboradores dimensiona por grado visible; Puentes utiliza B observado. No hay un listado global de ranking. Las parejas candidatas se ordenan por puntuación con los pesos actuales y se exploran al activar Sugerencias, sin cambiar de vista. Los filtros afectan a los candidatos y a qué investigadores aparecen, pero no recalculan las métricas globales sobre una subred filtrada.
+Colaboradores dimensiona por grado visible; Puentes utiliza B observada sin sugerencias y B simulada con la capa activada. No hay un listado global de ranking. Las parejas candidatas se ordenan por puntuación con los pesos actuales y se exploran al activar Sugerencias, sin cambiar de vista. Los filtros afectan a los candidatos y a qué investigadores aparecen, pero no recalculan las métricas globales sobre una subred filtrada.
 
 ## 10. Tamaño de los nodos
 
@@ -169,7 +169,14 @@ En Colaboradores, tanto con sugerencias activadas como desactivadas:
 
 Con 0, 1, 4 y 9 conexiones: radios aproximados 7; 11,9; 26,6; 51. Las sugerencias pueden producir radios mayores que 51. Esto es una escala lineal del radio, no del área; es una decisión explícita para dar más contraste a los nodos más conectados.
 
-En Puentes: `radio = 7 + 44 × sqrt(B / B_máx)`. El máximo se toma de toda la cohorte y el radio máximo es 51. El grado ponderado W se conserva en los detalles, sin un selector adicional de tamaño.
+En Puentes: `radio = 7 + 44 × sqrt(B / B_máx)`. Sin sugerencias se usa B
+observada; con sugerencias, B simulada sobre los 104 nodos y todas las aristas
+registradas más las sugerencias dibujadas. El máximo se toma de esa misma red y
+el radio máximo es 51. Los tamaños son relativos al escenario; una arista nueva
+puede reducir B al crear rutas alternativas. Un Web Worker calcula el escenario
+sin bloquear los controles, con agrupación de cambios de 45 ms, reutilización si
+las parejas no cambian y descarte de resultados antiguos. La leyenda y el tooltip
+identifican la simulación; el perfil conserva el valor observado. El grado ponderado W se conserva en los detalles, sin un selector adicional de tamaño.
 
 7 es el mínimo visual; 44 determina la amplitud de tamaños. No son variables académicas. El radio es una unidad del espacio SVG; el zoom de la cámara afecta al tamaño observado en pantalla. El diámetro es dos veces el radio.
 
