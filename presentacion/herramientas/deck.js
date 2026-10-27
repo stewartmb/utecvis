@@ -164,46 +164,55 @@ pres.addSection({ title: "Apertura" });
     Límite de la cohorte: la red representa solo las conexiones identificadas dentro de estos 104 perfiles; no es toda la actividad de UTEC ni su colaboración mundial.
     No explicamos arquitectura aquí. Completar integrantes y fecha antes de exponer.`);
 }
-// 02 Problema y cohorte
+// 02 Problema, audiencia y cohorte
 {
-  const s = slide("CONTENT", "Apertura", "El problema y la cohorte");
+  const s = slide("CONTENT", "Apertura", "El problema, la audiencia y la cohorte");
   stat(s, M, 1.4, 2.6, "104", "investigadores: una persona de la cohorte por nodo");
   stat(s, M, 3.0, 2.6, "73", "vínculos registrados: parejas únicas, no 73 publicaciones");
   stat(s, M, 4.6, 2.6, "2.474", "publicaciones del catálogo; no todas crean aristas internas", C.text2);
+  text(s, "Problema", { x: 3.5, y: 1.3, w: 4.2, h: 0.35, fontSize: 12, bold: true, color: C.accent1 });
   bullets(s, [
     "Las colaboraciones están dispersas en perfiles individuales de CRIS: nadie las ve juntas.",
-    "Queremos localizar colaboradores destacados, puentes, integración por departamento y parejas afines sin vínculo.",
-    "La red es una representación de la evidencia publicada, no de toda la actividad real de UTEC.",
-  ], { x: 3.5, y: 1.4, w: 4.2, h: 4.8, fontSize: 14 });
+    "La red representa la evidencia publicada dentro de la cohorte, no toda la actividad de UTEC.",
+  ], { x: 3.5, y: 1.65, w: 4.2, h: 1.9, fontSize: 13 });
+  text(s, "Audiencia", { x: 3.5, y: 3.6, w: 4.2, h: 0.35, fontSize: 12, bold: true, color: C.accent1 });
+  bullets(s, [
+    "Investigadores de UTEC que buscan coautores o quieren ubicar su posición en la red.",
+    "Responsables de departamentos y de gestión de la investigación que evalúan la integración entre áreas.",
+    "No requiere conocer teoría de redes: cada métrica se lee con su leyenda y su detalle.",
+  ], { x: 3.5, y: 3.95, w: 4.2, h: 2.5, fontSize: 13 });
   image(s, APP("C09-panorama-colaboradores.png"), 7.9, 1.3, 4.9, 5.3, "C09 · Panorama de colaboraciones registradas: 104 personas, 73 registradas, sin sugerencias");
   notes(s, `
     Diferenciar 73 parejas de 2.474 publicaciones: una publicación con tres profesores internos genera tres parejas; muchas publicaciones solo tienen un autor de la cohorte y no generan aristas.
     57 de los 104 perfiles no tienen conexiones registradas dentro de la cohorte; eso no significa que no colaboren fuera.
+    Audiencia: la herramienta está pensada para quien quiere encontrar colaboradores o evaluar la integración entre departamentos; el público de la exposición es el curso, y la demo no presupone teoría de redes.
     Fuente: directorio de personas de CRIS UTEC, instantánea local incluida en el repositorio.`);
 }
 // 03 Cuatro tareas
 {
-  const s = slide("CONTENT", "Apertura", "Cuatro tareas analíticas (por qué / qué / cómo)");
+  const s = slide("CONTENT", "Apertura", "Cuatro tareas analíticas: qué queremos descubrir");
   const tasks = [
-    ["T1", "Identificar a los investigadores con más colaboradores registrados", "Comparar grado k y consultar trabajos compartidos W", "Tamaño en Colaboradores, foco y detalle", APP("C11c-jimmy-recorte.png")],
-    ["T2", "Identificar quién conecta partes de la red y si enlaza departamentos", "Localizar intermediación alta; revisar vecinos y afiliaciones", "Vista Puentes, tamaño por B, resaltado de vecinos", APP("C14b-puentes-jimmy-recorte.png")],
-    ["T3", "Caracterizar integración y aislamiento de los departamentos", "Reconocer pertenencias; explorar conexiones internas y externas al bloque", "Treemap por departamento, color y filtro desde la leyenda", APP("C21-bioingenieria.png")],
-    ["T4", "Explorar parejas sin colaboración registrada con afinidad y su efecto estructural", "Buscar candidatas, comparar señales y escenarios", "Sugerencias, Top %, pesos, coincidencias y B simulada", APP("C22e-luz-luciano-recorte.png")],
+    ["T1", "¿Qué investigadores tienen más colaboradores?", "El tamaño en Colaboradores localiza a los más conectados; el detalle confirma cuántas personas y trabajos comparten.", "Grado k, trabajos compartidos W; foco y detalle", APP("C11c-jimmy-recorte.png")],
+    ["T2", "¿Qué investigadores actúan como puentes y cuáles conectan distintos departamentos?", "Puentes dimensiona por intermediación; el resaltado de vecinos comprueba si además enlazan departamentos.", "Intermediación B; vecinos y afiliaciones", APP("C14b-puentes-jimmy-recorte.png")],
+    ["T3", "¿Cómo se distribuyen las colaboraciones dentro y entre departamentos, y cuáles no presentan conexiones registradas?", "El treemap identifica cada departamento; el filtro de la leyenda sigue sus conexiones internas y externas.", "Treemap, color y filtro; tamaño del departamento", APP("C21-bioingenieria.png")],
+    ["T4", "¿Qué parejas sin colaboración registrada destacan como posibles colaboradoras según los criterios seleccionados?", "Las sugerencias muestran candidatas y permiten compararlas por sus señales.", "Top %, pesos T/I/R, coincidencias; B simulada como análisis complementario", APP("C22e-luz-luciano-recorte.png")],
   ];
   tasks.forEach((t, i) => {
     const x = M + i * 3.07, y = 1.3, w = 2.9;
     card(s, x, y, w, 5.5);
     tag(s, x + 0.15, y + 0.15, 0.6, t[0], i % 2 ? C.accent2 : C.accent1);
-    text(s, t[1], { x: x + 0.15, y: y + 0.55, w: w - 0.3, h: 1.1, fontSize: 13, bold: true });
-    text(s, "Qué: " + t[2], { x: x + 0.15, y: y + 1.5, w: w - 0.3, h: 0.75, fontSize: 11, color: C.text2 });
-    text(s, "Cómo: " + t[3], { x: x + 0.15, y: y + 2.2, w: w - 0.3, h: 0.75, fontSize: 11, color: C.text2 });
-    image(s, t[4], x + 0.15, y + 2.95, w - 0.3, 2.4, null);
+    text(s, t[1], { x: x + 0.15, y: y + 0.5, w: w - 0.3, h: 1.3, fontSize: 12.5, bold: true, valign: "top" });
+    text(s, t[2], { x: x + 0.15, y: y + 1.8, w: w - 0.3, h: 0.85, fontSize: 10, color: C.text2, valign: "top" });
+    text(s, "Recursos: " + t[3], { x: x + 0.15, y: y + 2.65, w: w - 0.3, h: 0.55, fontSize: 9.5, italic: true, color: C.accent1, valign: "top" });
+    image(s, t[4], x + 0.15, y + 3.2, w - 0.3, 2.15, null);
   });
   notes(s, `
-    Seguimos la separación de Brehmer y Munzner: propósito analítico (por qué), datos y acciones (qué) y representación e interacción (cómo).
-    Un botón no es una tarea: pasar el cursor es una operación; la finalidad es consultar o comparar una relación.
+    Las tareas expresan qué queremos descubrir; debajo va cómo la vista ayuda y qué recursos (Top %, pesos, B simulada) sirven para resolverlas. Un control no es una tarea.
+    Seguimos la separación de Brehmer y Munzner: propósito analítico, datos y acciones, representación e interacción.
+    T2: mantener ambas evidencias; una intermediación alta no garantiza que la persona conecte departamentos distintos.
+    T3: no concluir que un departamento colabora "mejor" solo por tener más aristas; influye cuántos investigadores contiene.
+    T4: el cambio de intermediación al añadir sugerencias es un análisis complementario, no parte del enunciado.
     Las subpreguntas sobre un departamento, un aislado o un puente particular pertenecen a estas cuatro tareas.
-    La vista facilita exploración y localización de extremos; no fingimos que el tamaño circular ordene exactamente 104 valores.
     Los cuatro recortes son de la app actual: C11c, C14b, C21 y C22e.`);
 }
 

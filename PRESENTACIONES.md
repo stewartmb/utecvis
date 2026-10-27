@@ -91,11 +91,14 @@ puede ser consultar o comparar una relación.
 
 | Tarea de dominio | Acción y datos | Cómo la vista ayuda | Resultado que se debe demostrar |
 |---|---|---|---|
-| **T1. Identificar a los investigadores con más colaboradores registrados** | Localizar extremos y comparar grado; consultar trabajos compartidos como contexto | Tamaño en Colaboradores, foco y detalle | Jimmy tiene 9 colaboradores; distinguirlo de quien concentra más trabajos por pareja |
-| **T2. Identificar investigadores que conectan partes de la red y examinar si enlazan departamentos** | Localizar intermediación alta y consultar conexiones/afiliaciones | Puentes, tamaño por B y resaltado de vecinos | Mostrar una persona con B alta y conexiones a otros departamentos; B por sí sola no demuestra esa condición institucional |
-| **T3. Caracterizar la integración y el aislamiento de los departamentos en la cohorte** | Reconocer pertenencias y explorar conexiones internas y externas al bloque | Treemap por departamento, color y foco | Comparar un bloque integrado con Humanidades, Física o Negocios Digitales bajo las reglas de la red |
-| **T4. Explorar parejas sin colaboración registrada con afinidad y cómo cambiaría la estructura si se conectaran** | Buscar candidatas, comparar señales y escenarios | Sugerencias, Top %, pesos, coincidencias y B simulada | Mostrar una pareja concreta, explicar su puntuación y separar hipótesis de evidencia registrada |
+| **T1. ¿Qué investigadores tienen más colaboradores?** | Localizar extremos y comparar grado; consultar trabajos compartidos como contexto | Tamaño en Colaboradores, foco y detalle | Jimmy tiene 9 colaboradores; distinguirlo de quien concentra más trabajos por pareja |
+| **T2. ¿Qué investigadores actúan como puentes en la red y cuáles conectan distintos departamentos?** | Localizar intermediación alta y consultar conexiones/afiliaciones | Puentes, tamaño por B y resaltado de vecinos | Mostrar una persona con B alta y conexiones a otros departamentos; B por sí sola no demuestra esa condición institucional |
+| **T3. ¿Cómo se distribuyen las colaboraciones dentro y entre departamentos, y cuáles no presentan conexiones registradas?** | Reconocer pertenencias y explorar conexiones internas y externas al bloque | Treemap por departamento, color y foco | Comparar un bloque integrado con Humanidades, Física o Negocios Digitales bajo las reglas de la red |
+| **T4. ¿Qué parejas sin colaboración registrada destacan como posibles colaboradoras según los criterios seleccionados?** | Buscar candidatas, comparar señales y escenarios | Sugerencias, Top %, pesos, coincidencias y B simulada | Mostrar una pareja concreta, explicar su puntuación y separar hipótesis de evidencia registrada |
 
+Las tareas se formulan como preguntas sobre lo que queremos descubrir; Top %,
+pesos y B simulada se presentan debajo como recursos para resolverlas, y el cambio
+de intermediación al añadir sugerencias es un análisis complementario de T4.
 No convertir las tareas en cuatro preguntas sobre menús. Las subpreguntas sobre
 un departamento, un aislado o un puente particular pertenecen a estas tareas.
 La vista facilita exploración y localización de extremos; no fingir que el tamaño
@@ -578,7 +581,7 @@ Las fichas son contenido obligatorio, aunque se fusionen o redistribuyan lámina
 - Evidencia: C09; no usar un screenshot histórico como interfaz vigente.
 - Notas: qué permite explorar y cuál es el límite de la cohorte. Sin arquitectura.
 
-### 02 · El problema y la cohorte
+### 02 · El problema, la audiencia y la cohorte
 
 - Visible: 104 investigadores, 73 vínculos registrados; colaboraciones dispersas
   en perfiles que queremos explorar conjuntamente.
