@@ -4,6 +4,20 @@ Aplicación **Flask + D3** para explorar colaboración académica y afinidades e
 **104 investigadores de UTEC**. Incluye 73 conexiones registradas, sus evidencias
 y sugerencias explicadas mediante temática, institución y estructura de la red.
 
+La [guía del proyecto](GUIA_PROYECTO.md) explica los datos, todas las métricas,
+las fórmulas, los parámetros visuales y los límites de las sugerencias.
+
+## Clonar el proyecto completo
+
+```bash
+git clone https://github.com/stewartmb/utecvis.git
+cd utecvis
+```
+
+El repositorio incluye el código, los cinco JSON con los datos y resultados
+preparados, D3 local y las instrucciones. Puedes leer los archivos de `data/`
+directamente; para abrir la app, sigue los pasos siguientes.
+
 ## Abrir la aplicación
 
 Python 3.12 o superior. Desde la raíz del proyecto:
