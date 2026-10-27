@@ -57,7 +57,7 @@ requirements.txt     Dependencias para ejecutar la aplicación
 2. **Encontrar puentes.** En “Puentes”, localizar nodos grandes por intermediación
    y consultar su valor exacto al seleccionarlos. Revisar vecinos, departamentos y conexiones.
    La intermediación alta por sí sola no prueba una conexión entre departamentos.
-3. **Descubrir afinidades.** Activar “Sugerencias” abajo a la izquierda, ampliar
+3. **Descubrir afinidades.** Activar “Sugerencias” arriba a la izquierda, debajo de la leyenda, ampliar
    Top % y, si se desea, abrir «Ajustar criterios» para modificar las tres importancias. Seleccionar una línea sugerida
    para revisar las señales. Buscar a Luz Adanaque para observar que un perfil sin
    conexiones internas puede tener publicaciones y candidatos por afinidad temática.
@@ -70,7 +70,7 @@ requirements.txt     Dependencias para ejecutar la aplicación
 solo al seleccionar un investigador o una conexión. Hay dos vistas: Colaboradores y Puentes. La leyenda es el
 único selector de departamentos; el vecindario se limita desde el perfil. Las
 selecciones activas se quitan con ×. Las sugerencias son una capa independiente
-que se conserva al cambiar de vista. Su interruptor permanece abajo a la izquierda. Top % aparece al activarlas;
+que se conserva al cambiar de vista. Su interruptor permanece arriba a la izquierda, debajo de la leyenda. Top % aparece al activarlas;
 los tres pesos se despliegan en «Ajustar criterios». Al desactivarlas se ocultan
 las opciones. Panorama de los 104 perfiles → zoom, búsqueda y filtros →
 detalles al seleccionar personas o conexiones. D3 reacomoda los nodos cuando cambian
@@ -114,7 +114,7 @@ El lienzo crece de manera uniforme si los radios necesitan
 más espacio, manteniendo la proporción de áreas. En escenarios densos puede
 reducirse el tamaño aparente al ajustar toda la vista: se puede ampliar con zoom.
 La agrupación institucional facilita localizar departamentos, pero puede alargar
-y acumular los enlaces entre ellos. Los modos **Colaboradores** y **Puentes** están abajo, junto a los círculos de tamaño. No hay un segundo selector de tamaño.
+y acumular los enlaces entre ellos. Los modos **Colaboradores** y **Puentes** están arriba a la izquierda, junto a los círculos de tamaño. No hay un segundo selector de tamaño.
 
 ## Cómo interpretar la red
 

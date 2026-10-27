@@ -739,10 +739,9 @@ function fitGraph(animated = true) {
   const leftSpace = wide ? 310 : 24;
   const rightSpace = 24;
   const selectionSpace = $("active-filters").hidden ? 0 : $("active-filters").offsetHeight + 15;
-  const topSpace = (width <= 720 ? 65 : 55) + selectionSpace;
-  // Keep the camera reserve unchanged when suggestions are toggled.
   const controls = document.querySelector(".prediction-controls").getBoundingClientRect();
-  const bottomSpace = wide ? 28 : height - (controls.top - $("graph-container").getBoundingClientRect().top) + 18;
+  const topSpace = (wide ? 55 : controls.bottom - $("graph-container").getBoundingClientRect().top + 24) + selectionSpace;
+  const bottomSpace = width <= 720 ? 65 : 28;
   const availableHeight = Math.max(120, height - topSpace - bottomSpace);
   const availableWidth = Math.max(150, width - rightSpace - leftSpace);
   const scale =
@@ -1104,7 +1103,9 @@ function wireControls() {
   const legend = document.querySelector(".map-legend");
   const controls = document.querySelector(".prediction-controls");
   const reserveControls = new ResizeObserver(() => {
-    document.querySelector(".network-panel").style.setProperty("--legend-height", `${legend.offsetHeight}px`);
+    const panel = document.querySelector(".network-panel");
+    panel.style.setProperty("--legend-height", `${legend.offsetHeight}px`);
+    panel.style.setProperty("--prediction-height", `${controls.offsetHeight}px`);
     fitGraph(false);
   });
   reserveControls.observe(legend);

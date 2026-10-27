@@ -1566,3 +1566,24 @@ g.node.dragging .node-halo {
 
 .tooltip-inline-stat { margin-top: 8px; font-size: 10px; color: #607679; }
 .tooltip-inline-stat b { font-size: 16px; color: #243c40; margin-right: 3px; }
+
+/* Legend first, suggestions directly below it in the upper left corner. */
+.map-legend { top: 24px; bottom: auto; left: 24px; width: 270px; max-width: calc(100% - 48px); display: block; }
+.prediction-controls { top: calc(var(--legend-height, 120px) + 40px); bottom: auto; }
+.color-legend > div { top: 24px; bottom: auto; max-height: min(350px, calc(100dvh - 180px)); }
+.map-legend:has(.color-legend[open]) { z-index: 12; }
+.active-filters { left: 330px; right: 210px; }
+@media (max-width: 1099px) {
+  .active-filters { top: calc(var(--legend-height, 120px) + var(--prediction-height, 45px) + 52px); left: 24px; right: 24px; }
+  .inspector-panel { bottom: 24px; }
+}
+@media (max-width: 720px) {
+  .map-legend { top: 14px; left: 14px; max-width: calc(100% - 28px); }
+  .map-legend .size-controls { margin: 12px 0; }
+  .graph-key { margin-bottom: 12px; }
+  .color-legend { margin: 8px 0; }
+  .prediction-controls { top: calc(var(--legend-height, 120px) + 30px); bottom: auto; }
+  .network-stats { top: auto; bottom: 24px; left: auto; right: 64px; }
+  .active-filters { top: calc(var(--legend-height, 120px) + var(--prediction-height, 45px) + 42px); left: 14px; right: 14px; }
+  .inspector-panel { top: calc(var(--legend-height, 120px) + var(--prediction-height, 45px) + 52px); bottom: 65px; }
+}

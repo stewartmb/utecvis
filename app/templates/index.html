@@ -69,6 +69,47 @@
         </div>
         <div id="active-filters" class="active-filters" aria-label="Selección activa" hidden></div>
         <div class="network-stats" id="network-stats" aria-live="polite"></div>
+        <div class="map-legend">
+          <div class="graph-key">
+            <span><i class="key-line observed"></i>Registrada</span
+            ><span><i class="key-line predicted"></i>Sugerida</span>
+          </div>
+          <details class="color-legend">
+            <summary id="legend-title">Departamento</summary>
+            <div id="color-legend"></div>
+          </details>
+          <div class="size-controls">
+            <div class="size-mode">
+              <span class="size-circles" aria-hidden="true"><i></i><i></i><i></i></span>
+              <nav class="task-nav" aria-label="Tareas analíticas">
+                <button
+                  data-task="collaborators"
+                  class="task active"
+                  title="Tamaño por número de colaboradores"
+                >
+                  Colaboradores
+                </button>
+                <button
+                  data-task="bridges"
+                  class="task"
+                  title="Intermediación y puentes"
+                >
+                  Puentes
+                </button>
+              </nav>
+            </div>
+            <span id="metric-key">Conexiones visibles</span>
+          </div>
+          <div
+            class="width-key"
+            title="Grosor logarítmico de las conexiones registradas"
+          >
+            <span class="width-samples" aria-hidden="true"
+              ><i></i><i></i><i></i
+            ></span>
+            <span>Trabajos compartidos</span>
+          </div>
+        </div>
         <section
           class="prediction-controls"
           aria-label="Sugerencias de colaboración"
@@ -179,47 +220,6 @@
             ↺
           </button>
         </div>
-        <div class="map-legend">
-          <div class="graph-key">
-            <span><i class="key-line observed"></i>Registrada</span
-            ><span><i class="key-line predicted"></i>Sugerida</span>
-          </div>
-          <details class="color-legend">
-            <summary id="legend-title">Departamento</summary>
-            <div id="color-legend"></div>
-          </details>
-          <div class="size-controls">
-            <div class="size-mode">
-              <span class="size-circles" aria-hidden="true"><i></i><i></i><i></i></span>
-              <nav class="task-nav" aria-label="Tareas analíticas">
-                <button
-                  data-task="collaborators"
-                  class="task active"
-                  title="Tamaño por número de colaboradores"
-                >
-                  Colaboradores
-                </button>
-                <button
-                  data-task="bridges"
-                  class="task"
-                  title="Intermediación y puentes"
-                >
-                  Puentes
-                </button>
-              </nav>
-            </div>
-            <span id="metric-key">Conexiones visibles</span>
-          </div>
-          <div
-            class="width-key"
-            title="Grosor logarítmico de las conexiones registradas"
-          >
-            <span class="width-samples" aria-hidden="true"
-              ><i></i><i></i><i></i
-            ></span>
-            <span>Trabajos compartidos</span>
-          </div>
-        </div>
         <aside
           id="inspector-panel"
           class="floating-panel inspector-panel"
@@ -283,7 +283,7 @@
             Los aislados también se pueden mover dentro de su departamento.
           </p>
           <p>
-            Las sugerencias se activan en la esquina inferior izquierda. Top %
+            Las sugerencias se activan en la esquina superior izquierda, debajo de la leyenda. Top %
             aparece al activarlas; los tres pesos están en «Ajustar criterios».
           </p>
           <p>

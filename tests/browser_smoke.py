@@ -468,10 +468,10 @@ def run(url, channel):
             page.wait_for_timeout(350)
             verify_layout(page)
             assert page.locator(".size-mode").evaluate(
-                "el => el.getBoundingClientRect().top > window.innerHeight/2"
+                "el => el.getBoundingClientRect().top < window.innerHeight/2"
             )
             assert page.locator(".prediction-controls").evaluate(
-                "el => {const a=el.getBoundingClientRect(),b=document.querySelector('.map-legend').getBoundingClientRect();return a.bottom<=b.top || a.top>=b.bottom || a.right<=b.left || a.left>=b.right;}"
+                "el => {const a=el.getBoundingClientRect(),b=document.querySelector('.map-legend').getBoundingClientRect();return b.top<100 && a.top>=b.bottom+10;}"
             )
             assert (
                 page.evaluate("document.documentElement.scrollWidth")
