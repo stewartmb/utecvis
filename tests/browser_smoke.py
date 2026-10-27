@@ -79,12 +79,12 @@ def verify_edge_hover(page, kind):
 def toggle_suggestions(page):
     page.locator("#prediction-toggle").click()
     enabled = page.locator("#prediction-toggle").get_attribute("aria-checked") == "true"
+    assert page.locator("#prediction-options").is_visible()
+    assert page.locator("#weight-thematic").is_visible()
     if enabled:
-        assert page.locator("#prediction-options").is_visible()
-        assert page.locator("#weight-thematic").is_hidden()
-        page.locator("#criteria-options > summary").click()
+        assert page.locator("#prediction-options input:disabled").count() == 0
     else:
-        assert page.locator("#prediction-options").is_hidden()
+        assert page.locator("#top-percent-value").inner_text().startswith("0")
 
 
 def run(url, channel):
@@ -121,10 +121,12 @@ def run(url, channel):
             page.locator("#prediction-toggle").get_attribute("aria-checked") == "false"
         )
         assert page.locator("#prediction-options input:disabled").count() == 4
-        assert page.locator("#prediction-options").is_hidden()
+        assert page.locator("#prediction-options").is_visible()
+        assert page.locator("#top-percent-value").inner_text().startswith("0")
         assert page.locator("[data-weight]").count() == 3
         assert all(
-            page.locator(f"#weight-{key}").is_hidden()
+            page.locator(f"#weight-{key}").is_visible()
+            and page.locator(f"#weight-{key}").is_disabled()
             for key in ["thematic", "institutional", "structural"]
         )
         assert page.locator(".prediction-controls").evaluate(
@@ -483,7 +485,7 @@ def run(url, channel):
             assert page.locator("#weight-structural").is_visible()
             assert page.locator("#prediction-options input:disabled").count() == 0
             toggle_suggestions(page)
-            assert page.locator("#weight-structural").is_hidden()
+            assert page.locator("#weight-structural").is_disabled()
             assert page.locator("#prediction-options input:disabled").count() == 4
             assert page.locator(".predicted-edge").count() == 0
             toggle_suggestions(page)

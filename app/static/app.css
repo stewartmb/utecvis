@@ -605,11 +605,11 @@ input[type="range"] {
   height: 18px;
 }
 .inspector-panel {
-  top: 110px;
-  right: 24px;
-  bottom: 185px;
-  width: 325px;
-  max-height: calc(100% - 100px);
+  top: calc(var(--legend-height, 120px) + var(--prediction-height, 45px) + 56px);
+  left: 24px;
+  bottom: 24px;
+  width: 302px;
+  max-width: calc(100% - 48px);
   overflow: hidden;
 }
 .panel-close {
@@ -639,7 +639,7 @@ input[type="range"] {
   margin: 0 0 12px;
 }
 .inspector-panel:not([hidden]) ~ .view-tools {
-  right: 360px;
+  right: 24px;
 }
 
 .inspector h2 {
@@ -756,17 +756,38 @@ input[type="range"] {
   align-items: center;
 }
 .avatar {
-  height: 48px;
-  width: 48px;
+  position: relative;
+  height: 56px;
+  width: 56px;
+  flex: 0 0 56px;
   border-radius: 50%;
   display: grid;
   place-items: center;
+  overflow: hidden;
   font-size: 17px;
   letter-spacing: -0.5px;
   font-weight: 550;
-  margin: 20px 0 14px;
   border: 1px solid;
 }
+.avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Researcher header: name and department on the left, photo on the right. */
+.person-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 18px 0 12px;
+}
+.person-head-info { min-width: 0; }
+.person-head .eyebrow { margin-bottom: 6px; padding-right: 0; }
+.person-head h2 { margin: 0 0 6px; }
+.person-head .department-name { margin: 0; }
 .department-name {
   font-size: 10px;
   line-height: 1.6;
@@ -802,25 +823,26 @@ input[type="range"] {
 .metric-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 17px 0;
+  gap: 8px;
+  margin: 14px 0;
 }
 .metric-grid > div {
   border: 1px solid #e5ebe5;
-  padding: 11px;
+  padding: 8px 9px;
   border-radius: 5px;
 }
 .metric-grid strong {
   display: block;
-  font-size: 21px;
+  font-size: 16px;
   font-weight: 550;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.4px;
 }
 .metric-grid span {
-  font-size: 9px;
+  font-size: 8.5px;
+  line-height: 1.35;
   color: var(--muted);
   display: block;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 .scope-note {
   font-size: 9px;
@@ -1215,7 +1237,7 @@ dialog::backdrop {
     font-size: 16px;
   }
   .inspector-panel {
-    width: 300px;
+    width: 290px;
   }
   .masthead {
     gap: 24px;
@@ -1349,12 +1371,11 @@ dialog::backdrop {
     display: none;
   }
   .inspector-panel {
-    top: 145px;
     right: 12px;
     left: 12px;
     width: auto;
+    max-width: none;
     bottom: 80px;
-    max-height: none;
     min-height: 190px;
   }
   .inspector {
@@ -1459,7 +1480,7 @@ g.node.dragging .node-halo {
   .map-legend { bottom: 14px; max-width: 400px; }
 }
 @media (max-width: 1099px) {
-  .inspector-panel { bottom: 270px; }
+  .inspector-panel { bottom: 24px; }
 }
 
 /* D3 treemap + forces. Group backgrounds stay behind edges. */
@@ -1530,7 +1551,7 @@ g.node.dragging .node-halo {
 .map-legend { bottom: 24px; }
 .prediction-controls { bottom: calc(var(--legend-height, 110px) + 40px); }
 .criteria-options { margin-top: 10px; }
-.criteria-options > summary { width: fit-content; cursor: pointer; font-size: 11px; color: var(--muted); }
+.criteria-options > summary { width: fit-content; pointer-events: none; font-size: 11px; color: var(--muted); }
 .criteria-options .weights-grid { margin-top: 10px; }
 .production-details > summary { cursor: pointer; font-size: 13px; font-weight: 600; }
 .production-details[open] > summary { margin-bottom: 12px; }

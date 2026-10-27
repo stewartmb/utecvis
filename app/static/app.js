@@ -907,11 +907,17 @@ async function selectPerson(id, options = {}) {
   }
 }
 
+function personPhoto(id) {
+  const node = nodeById.get(id);
+  return node?.photo_url && !node.photoFailed
+    ? `<img src="${escape(node.photo_url)}" alt="" width="56" height="56">` : "";
+}
+
 function renderPerson(data) {
   const n = data.node,
     m = n.network_metrics;
   $("inspector").innerHTML =
-    `<button class="back-button" data-back>← Volver al panorama</button><div class="avatar" style="color:${nodeColor(n)};background:${nodeColor(n)}18;border-color:${nodeColor(n)}55">${escape(initials(n.name))}</div><div class="eyebrow">INVESTIGADOR / UTEC</div><h2>${escape(n.name)}</h2><p class="department-name">${escape(n.department || "Sin departamento publicado")}</p><a class="text-link" href="${escape(n.source_url)}" target="_blank" rel="noreferrer">Ver perfil en CRIS ↗</a><div class="metric-grid"><div><strong>${m.degree}</strong><span>colaboradores en la cohorte</span></div><div><strong>${nf.format(m.weighted_degree)}</strong><span>registros compartidos</span></div><div><strong>${decimal(m.betweenness, 4)}</strong><span>intermediación observada</span></div><div><strong>${data.cross_department_neighbors}</strong><span>vecinos de otros departamentos</span></div></div><p class="scope-note">Métricas de la red observada completa.</p>${simulatedBridgeDetail(n.id)}<button id="neighbors-only" class="button neighbor-button${state.neighborsOnly ? " active" : ""}" aria-pressed="${state.neighborsOnly}">${state.neighborsOnly ? "Volver a toda la selección" : "Ver solo sus conexiones"}</button>${!m.degree ? '<div class="insight-note"><strong>Sin conexiones dentro de estos 104 perfiles.</strong> Sus trabajos pueden tener coautores externos; no equivale a investigar en solitario.</div>' : ""}<section class="detail-section"><h3>Intereses de investigación</h3>${n.research_areas.length ? tags(n.research_areas) : '<p class="scope-note">No publicados en el perfil.</p>'}${data.preparation?.biography_fallback ? '<p class="scope-note">Temática estimada desde la biografía: información limitada.</p>' : ""}</section><section class="detail-section"><h3>Pertenencias</h3>${
+    `<button class="back-button" data-back>← Volver al panorama</button><div class="person-head"><div class="person-head-info"><div class="eyebrow">INVESTIGADOR / UTEC</div><h2>${escape(n.name)}</h2><p class="department-name">${escape(n.department || "Sin departamento publicado")}</p></div><div class="avatar" style="color:${nodeColor(n)};background:${nodeColor(n)}18;border-color:${nodeColor(n)}55"><span>${escape(initials(n.name))}</span>${personPhoto(n.id)}</div></div><a class="text-link" href="${escape(n.source_url)}" target="_blank" rel="noreferrer">Ver perfil en CRIS ↗</a><div class="metric-grid"><div><strong>${m.degree}</strong><span>colaboradores en la cohorte</span></div><div><strong>${nf.format(m.weighted_degree)}</strong><span>registros compartidos</span></div><div><strong>${decimal(m.betweenness, 4)}</strong><span>intermediación observada</span></div><div><strong>${data.cross_department_neighbors}</strong><span>vecinos de otros departamentos</span></div></div><p class="scope-note">Métricas de la red observada completa.</p>${simulatedBridgeDetail(n.id)}<button id="neighbors-only" class="button neighbor-button${state.neighborsOnly ? " active" : ""}" aria-pressed="${state.neighborsOnly}">${state.neighborsOnly ? "Volver a toda la selección" : "Ver solo sus conexiones"}</button>${!m.degree ? '<div class="insight-note"><strong>Sin conexiones dentro de estos 104 perfiles.</strong> Sus trabajos pueden tener coautores externos; no equivale a investigar en solitario.</div>' : ""}<section class="detail-section"><h3>Intereses de investigación</h3>${n.research_areas.length ? tags(n.research_areas) : '<p class="scope-note">No publicados en el perfil.</p>'}${data.preparation?.biography_fallback ? '<p class="scope-note">Temática estimada desde la biografía: información limitada.</p>' : ""}</section><section class="detail-section"><h3>Pertenencias</h3>${
       n.affiliations
         .filter((a) => a.type !== "university")
         .map(
@@ -923,6 +929,10 @@ function renderPerson(data) {
     }</section>${data.neighbors.length ? `<section class="detail-section"><h3>Colaboradores registrados · ${data.neighbors.length}</h3>${data.neighbors.map((p) => `<button class="rank-row" data-pair="${n.id},${p.id}"><span class="rank-person">${escape(shortName(p.name))}<small>${p.relations.map(relationLabel).join(" · ")}</small></span><span class="rank-value">${nf.format(p.weight)}<small>registros</small></span></button>`).join("")}</section>` : ""}<details class="detail-section production-details" ${state.productionOpen ? "open" : ""}><summary>Publicaciones y proyectos</summary><div class="ranking-tabs"><button data-kind="publications" class="${data.kind === "publications" ? "active" : ""}">Publicaciones (${n.publication_count})</button><button data-kind="projects" class="${data.kind === "projects" ? "active" : ""}">Proyectos (${n.project_count})</button></div><div id="work-list">${renderWorks(data.works) || '<p class="empty-state">No hay registros de este tipo asociados al perfil.</p>'}</div>${data.has_more ? `<button id="load-person-works" class="button load-more" data-offset="20">Ver más registros</button>` : ""}</details>`;
   bindInspector();
   document.querySelector(".production-details").addEventListener("toggle", (event) => { state.productionOpen = event.currentTarget.open; });
+  $("inspector").querySelector(".avatar img")?.addEventListener("error", (event) => {
+    nodeById.get(data.node.id).photoFailed = true;
+    event.currentTarget.remove();
+  }, { once: true });
   $("neighbors-only").addEventListener("click", () => {
     state.neighborsOnly = !state.neighborsOnly;
     applyFilters();
@@ -1142,8 +1152,10 @@ function syncSuggestionControls() {
   $("prediction-toggle").disabled = !recommendations.length;
   $("prediction-toggle").setAttribute("aria-checked", String(state.predictions));
   $("prediction-options").disabled = !state.predictions;
-  $("prediction-options").hidden = !state.predictions;
-  if (!state.predictions) $("criteria-options").open = false;
+  $("criteria-options").open = true;
+  // The whole panel stays visible: while off it is greyed out and reads Top 0 %.
+  $("top-percent").value = state.predictions ? state.percent : 0;
+  $("top-percent-value").textContent = `${decimal(state.predictions ? state.percent : 0)} %`;
   document.querySelector(".prediction-controls").classList.toggle("showing-predictions", state.predictions);
 }
 
@@ -1296,8 +1308,8 @@ function wireControls() {
     $("search").value = "";
     $("search-results").hidden = true;
     document.querySelector(".color-legend").open = false;
-    $("top-percent").value = 1;
-    $("top-percent-value").textContent = "1 %";
+    $("top-percent").value = state.percent;
+    $("top-percent-value").textContent = `${decimal(state.percent)} %`;
     for (const [key, value] of Object.entries(state.weights)) {
       $(`weight-${key}`).value = value;
       $(`value-${key}`).textContent = `${value} %`;
