@@ -27,6 +27,7 @@ def verify_layout(page):
 
 
 def verify_edge_hover(page, kind):
+    page.wait_for_function("!window.d3.active(document.querySelector('#network-svg'))")
     point = page.locator(f".{kind}-hit").evaluate_all("""els => {
       for(const el of els) for(const fraction of [.5,.3,.7,.15,.85]) {
         const p=el.getPointAtLength(el.getTotalLength()*fraction).matrixTransform(el.getScreenCTM());
