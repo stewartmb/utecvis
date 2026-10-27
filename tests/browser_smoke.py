@@ -498,7 +498,7 @@ def run(url, channel):
         assert page.evaluate("""() => [...document.querySelectorAll('.node-photo')].every(el=>{
           if(getComputedStyle(el).display==='none') return true;
           const core=el.parentElement.querySelector('.node-core').getBoundingClientRect();
-          return core.width>=33.9 && el.getAttribute('href').startsWith('/static/photos/');
+          return core.width>=24.9 && el.getAttribute('href').startsWith('/static/photos/');
         })""")
         for key, text in [
             ("thematic", "Intereses"),

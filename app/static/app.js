@@ -66,6 +66,7 @@ const reducedMotion = window.matchMedia(
   "(prefers-reduced-motion: reduce)",
 ).matches;
 const duration = reducedMotion ? 0 : 300;
+const PHOTO_MIN_DIAMETER_PX = 25;
 const palette = [
   "#367d80",
   "#bc8850",
@@ -688,7 +689,7 @@ function renderGraph({ live = false } = {}) {
 function updateNodePhotos() {
   nodeSelection?.each(function (n) {
     const group = d3.select(this), r = radius(n);
-    const show = Boolean(n.photo_url && !n.photoFailed && r * 2 * zoomLevel >= 34);
+    const show = Boolean(n.photo_url && !n.photoFailed && r * 2 * zoomLevel >= PHOTO_MIN_DIAMETER_PX);
     const inner = Math.max(0, r - Math.max(2.5, 2 / zoomLevel));
     group.select(".photo-mask").attr("r", inner);
     const photo = group.select(".node-photo")

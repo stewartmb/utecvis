@@ -79,7 +79,7 @@ botón Restablecer recupera la vista y los parámetros iniciales.
 ## Fotos, coincidencias y respuesta de controles
 
 Se incluyen 102 fotos públicas de CRIS en `app/static/photos/`; dos perfiles no
-publican foto. Se muestran en nodos de al menos 34 px de diámetro en pantalla,
+publican foto. Se muestran en nodos de al menos 25 px de diámetro en pantalla,
 conservando el borde del departamento. En los demás aparecen iniciales. El zoom
 actualiza ese umbral. Las fotos se sirven localmente, sin solicitudes a CRIS al
 explorar; para reponerlas: `python -m extraccion_datos.photos` (requiere conexión).
