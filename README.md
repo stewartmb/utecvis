@@ -8,6 +8,13 @@ Este README reúne las fórmulas, variables, ejemplos y decisiones necesarias pa
 explicar el proyecto. La [guía del proyecto](GUIA_PROYECTO.md) amplía detalles de
 extracción, controles y parámetros físicos.
 
+## Preparar la presentación
+
+[PRESENTACIONES.md](PRESENTACIONES.md) contiene el brief completo para construir
+el PPT: secuencia de diapositivas, fórmulas con leyendas y ejemplos, capturas de
+origen por obtener, evidencias históricas incluidas, hallazgos, guion y cobertura
+de los 20 puntos de la rúbrica. Es la guía de trabajo; el PPT aún no está generado.
+
 ## Clonar el proyecto completo
 
 ```bash
