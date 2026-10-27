@@ -53,7 +53,12 @@ modelo de Duke ni atribuimos a ese proyecto nuestros pesos o embeddings.
 
 - [Descripción de perfiles, redes y explicación de conexiones](https://connects.catalyst.harvard.edu/profiles/about/default.aspx?type=About)
 - [Galería de visualizaciones de redes académicas](https://profiles.catalyst.harvard.edu/?pg=visualizations) — funciona, pero es una galería, no el grafo directo.
-- [Red de coautores de Griffin M. Weber: vista Cluster](https://connects.catalyst.harvard.edu/Profiles/display/person/32213/Network/CoAuthors/cluster) — enlace directo seguido desde la galería y comprobado en navegador: dibuja la red.
+- [Referencia exacta señalada por el usuario: red de Tagwa Ahmed Adam Idris, vista Cluster](https://connects.catalyst.harvard.edu/profiles/display/Person/182216/Network/CoAuthors/Cluster) — abierta y comprobada en navegador. Se conserva sin el parámetro de seguimiento `utm_source`.
+
+En esta vista, rojo identifica al perfil focal; verde a sus coautores; azul a
+coautores de coautores. El tamaño representa publicaciones del autor y el grosor,
+publicaciones compartidas. Sirve como referencia visual de la red; UTECVis mantiene
+su propia codificación de color por departamento y tamaño por la métrica elegida.
 
 **Qué respalda:** redes de coautores, conceptos de investigación, visualizaciones
 complementarias y páginas que explican por qué dos personas están relacionadas.
