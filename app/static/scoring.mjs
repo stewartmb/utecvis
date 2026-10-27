@@ -105,7 +105,7 @@ export function selectTop(pairs, weights, percent, visible = null) {
   );
   const ranked = rankCandidates(eligible, weights);
   const count = Math.ceil(
-    (eligible.length * Math.max(0, Math.min(10, Number(percent) || 0))) / 100,
+    (eligible.length * Math.max(0, Math.min(5, Number(percent) || 0))) / 100,
   );
   return {
     ranked,

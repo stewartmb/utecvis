@@ -788,7 +788,7 @@
           "structural": 10
         },
         "top_percent": 1,
-        "max_top_percent": 10
+        "max_top_percent": 5
       },
       "semantic_check": {
         "equivalent_languages": 0.835962,

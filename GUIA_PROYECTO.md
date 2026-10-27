@@ -142,7 +142,7 @@ Nunca se añaden sugerencias a la red usada para recalcular B, comunidades o R. 
 
 Hay `104 × 103 / 2 = 5.356` parejas posibles. Al excluir las 73 registradas quedan 5.283 candidatas. No hay autoenlaces ni duplicados A–B / B–A.
 
-Top % selecciona una fracción del ranking de candidatas con ambos extremos visibles en los filtros: `cantidad = techo(candidatas × porcentaje / 100)`. El rango es 0–10 %, con pasos de 0,1; inicio 1 %. Sin filtros: Top 1 % pide 53 parejas y Top 10 % pide 529. Solo se dibujan parejas con puntuación positiva; puede haber menos que las pedidas.
+Top % selecciona una fracción del ranking de candidatas con ambos extremos visibles en los filtros: `cantidad = techo(candidatas × porcentaje / 100)`. El rango es 0–5 %, con pasos de 0,1; inicio 1 %. Sin filtros: Top 1 % pide 53 parejas y Top 5 % pide 265. Solo se dibujan parejas con puntuación positiva; puede haber menos que las pedidas.
 
 El orden es puntuación descendente y, ante empate, identificadores estables. Un porcentaje del ranking no es probabilidad de colaboración. Las candidatas se exploran mediante las líneas del Top visible. Al desactivar la capa desaparecen las aristas sugeridas.
 
@@ -254,3 +254,5 @@ lista adicional de candidatos y notas técnicas de preparación del perfil. El m
 se explica en «Cómo interpretar»; las advertencias específicas y la evidencia de
 cada vínculo permanecen en el detalle de la pareja. La información original sigue
 en los cinco JSON.
+
+El máximo Top 5 % limita la vista completa a 338 aristas (73 registradas + 265 sugeridas), por debajo de la orientación E < 4N para nuestros 104 nodos. Es un límite visual propio, no una validación predictiva. La cantidad visible cambia al aplicar filtros.

@@ -205,8 +205,10 @@ No se rellenan recomendaciones con puntuaciones cero ni parejas existentes.
 
 **Top %:** porcentaje de las parejas sin vínculo dentro de los filtros actuales.
 Con toda la cohorte hay 5.283 parejas candidatas; Top 1 % muestra hasta 53. El rango
-0–10 % permite ampliar gradualmente sin saturar inicialmente la red. Seleccionar
-una pareja puede destacarla aunque esté fuera del Top dibujado.
+0–5 % permite ampliar gradualmente. Top 5 % muestra hasta 265 sugerencias:
+con las 73 conexiones registradas son 338 aristas, por debajo de 4 × 104 = 416.
+El límite es una decisión de diseño orientada a controlar la densidad visual;
+no es un umbral de precisión predictiva ni garantiza legibilidad por sí solo.
 
 **Límites:** no es una probabilidad ni un modelo validado de colaboración futura.
 Se comprueban las fórmulas, la sensibilidad a los pesos y un control multilingüe;

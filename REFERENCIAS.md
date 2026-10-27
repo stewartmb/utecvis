@@ -141,3 +141,7 @@ DRACoR validaron UTECVis. El Top % es una fracción del ranking de candidatos.
 - [Gratzl et al., LineUp: Visual Analysis of Multi-Attribute Rankings, IEEE TVCG / InfoVis (2013)](https://vdl.sci.utah.edu/publications/2013_infovis_lineup/), DOI 10.1109/TVCG.2013.173: propone barras interactivas para analizar rankings y cambios de ponderaciones.
 
 Estas fuentes respaldan los rankings visuales; no obligan a añadir uno a toda aplicación. En UTECVis se retiró «Ver ranking», que presentaba una lista de nombres y números. Es una decisión de simplificación de esta interfaz, no una prohibición de Munzner. El tamaño y los detalles conservan las métricas; comparar un orden exacto es menos directo. El ranking interno de parejas candidatas para Top % permanece porque forma parte del cálculo de sugerencias.
+
+## Límite visual de sugerencias
+
+Se fija Top 5 % como máximo, con inicio en 1 % y pasos de 0,1 %. En la cohorte completa son hasta 265 sugerencias y 338 aristas totales. La decisión se apoya en la orientación de escalabilidad E < 4N presentada por [Munzner para diagramas nodo-enlace](https://www.cs.ubc.ca/~tmm/talks/minicourse14/minicourse14-session2-4x4.pdf): 338 < 416. Esta relación no garantiza legibilidad ni convierte el porcentaje en probabilidad. El 5 % es una decisión de diseño de UTECVis; no se atribuye al artículo de CollaborationViz una justificación que no explica.

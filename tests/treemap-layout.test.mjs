@@ -49,11 +49,11 @@ test("Treemap: 104 investigadores por departamento, área proporcional y métric
   assert.equal(JSON.stringify(nodes.map((n) => n.network_metrics)), metrics);
 });
 
-test("Treemap mantiene contención y separación con Top 1, 2 y 10 %, pesos extremos y filtros", () => {
+test("Treemap mantiene contención y separación con Top 1, 2 y 5 %, pesos extremos y filtros", () => {
   const {nodes, layout, radius, update} = fixture();
-  for (const p of [0, 1, 2, 10, 0]) { update(p); verify(layout, radius); }
+  for (const p of [0, 1, 2, 5, 0]) { update(p); verify(layout, radius); }
   for (const key of Object.keys(DEFAULT_WEIGHTS)) {
-    update(10, {thematic:0, institutional:0, structural:0, [key]:100}); verify(layout, radius);
+    update(5, {thematic:0, institutional:0, structural:0, [key]:100}); verify(layout, radius);
   }
   update(1, DEFAULT_WEIGHTS, nodes.filter((n) => n.department === nodes[0].department)); verify(layout, radius);
   update(0, DEFAULT_WEIGHTS, [nodes[0]]); verify(layout, radius);

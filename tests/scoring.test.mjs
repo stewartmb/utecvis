@@ -102,8 +102,9 @@ test("Top % usa parejas elegibles, respeta filtros y no rellena con puntuaciones
     });
   assert.equal(selectTop(pairs, DEFAULT_WEIGHTS, 1).display.length, 1);
   assert.equal(selectTop(pairs, DEFAULT_WEIGHTS, 0).display.length, 0);
-  assert.equal(selectTop(pairs, DEFAULT_WEIGHTS, 10).display.length, 10);
-  const filtered = selectTop(pairs, DEFAULT_WEIGHTS, 10, new Set([1, 2, 3]));
+  assert.equal(selectTop(pairs, DEFAULT_WEIGHTS, 5).display.length, 5);
+  assert.equal(selectTop(pairs, DEFAULT_WEIGHTS, 10).display.length, 5);
+  const filtered = selectTop(pairs, DEFAULT_WEIGHTS, 5, new Set([1, 2, 3]));
   assert.equal(filtered.eligible, 2);
   assert.equal(filtered.display.length, 1);
   const tied = rankCandidates(

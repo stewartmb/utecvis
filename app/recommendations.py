@@ -328,7 +328,7 @@ def prepare(folder):
             "defaults": {
                 "weights": DEFAULT_WEIGHTS,
                 "top_percent": 1,
-                "max_top_percent": 10,
+                "max_top_percent": 5,
             },
             "semantic_check": checks,
         },
